@@ -11,14 +11,11 @@ export default function Home() {
       <section className="hero">
         <header className="header shell">
           <a href="#" className="brand">
-            <div className="mark">
-              <strong>WPU</strong>
-              <span>●</span>
-            </div>
-            <div className="brandText">
-              <strong>WORLD PICKLEBALL UNION</strong>
-              <small>UNITING PICKLEBALL WORLDWIDE</small>
-            </div>
+            <img
+              src="/brand/wpu-logo.svg"
+              alt="World Pickleball Union"
+              className="brandLogo"
+            />
           </a>
 
           <nav>
@@ -34,61 +31,36 @@ export default function Home() {
         </header>
 
         <div className="heroContent shell">
-          <div>
+          <div className="heroCopy">
             <p className="eyebrow lime">WORLD PICKLEBALL UNION</p>
 
-            <h1>
-              Uniting
-              <br />
-              pickleball
-              <br />
-              worldwide.
-            </h1>
+            <h1>Uniting Pickleball Worldwide.</h1>
 
             <p className="intro">
-              World Pickleball Union is an international non-profit
-              governing body created to govern, develop and advance
-              pickleball through global cooperation, competition,
-              standards and integrity.
+              World Pickleball Union is being established as an international
+              non-profit governing body supporting the global development of
+              pickleball through cooperation, competition, standards and integrity.
             </p>
 
             <div className="actions">
-              <a href="#about" className="primary">
-                Explore WPU →
-              </a>
-
-              <a href="#members" className="secondary">
-                Membership
-              </a>
+              <a href="#about" className="primary">Explore WPU →</a>
+              <a href="#members" className="secondary">Membership</a>
             </div>
           </div>
 
-          <div className="worldGraphic">
-            <div className="orbit orbitOne" />
-            <div className="orbit orbitTwo" />
-
-            <div className="globe">
-              <div className="latitude one" />
-              <div className="latitude two" />
-              <div className="longitude one" />
-              <div className="longitude two" />
-
-              <div className="ball">
-                <i />
-                <i />
-                <i />
-                <i />
-                <i />
-              </div>
+          <div className="heroIdentity">
+            <div className="trajectory">
+              <span className="trajectoryLine lineOne" />
+              <span className="trajectoryLine lineTwo" />
+              <span className="trajectoryLine lineThree" />
+              <span className="heroBall">
+                <i /><i /><i /><i /><i />
+              </span>
             </div>
 
-            <div className="globalLabel">
-              <span>GLOBAL FRAMEWORK</span>
-              <strong>
-                Governance. Competition.
-                <br />
-                Development. Standards.
-              </strong>
+            <div className="heroStatement">
+              <span>ONE SPORT. MANY NATIONS.</span>
+              <strong>One international framework for pickleball.</strong>
             </div>
           </div>
         </div>
@@ -98,25 +70,25 @@ export default function Home() {
             <div>
               <span>01</span>
               <strong>Independent</strong>
-              <p>Standalone international governing body</p>
+              <p>Standalone international sporting institution</p>
             </div>
 
             <div>
               <span>02</span>
               <strong>Non-profit</strong>
-              <p>Resources reinvested into the sport</p>
+              <p>Resources reinvested into the development of the sport</p>
             </div>
 
             <div>
               <span>03</span>
-              <strong>Global</strong>
-              <p>Built to serve pickleball worldwide</p>
+              <strong>International</strong>
+              <p>Connecting national pickleball organisations worldwide</p>
             </div>
 
             <div>
               <span>04</span>
               <strong>Transparent</strong>
-              <p>Clear governance, rules and standards</p>
+              <p>Clear governance, standards and sporting processes</p>
             </div>
           </div>
         </div>
@@ -126,10 +98,7 @@ export default function Home() {
         <div className="shell split">
           <div>
             <p className="eyebrow">ABOUT WPU</p>
-
-            <h2>
-              A world body built for the long-term development of pickleball.
-            </h2>
+            <h2>A world body built for the long-term development of pickleball.</h2>
           </div>
 
           <div className="copy">
@@ -139,7 +108,7 @@ export default function Home() {
             </p>
 
             <p>
-              Its purpose is to bring national organizations together,
+              Its purpose is to bring national organisations together,
               establish common sporting frameworks and help pickleball grow
               internationally with credibility, integrity and transparency.
             </p>
@@ -163,8 +132,8 @@ export default function Home() {
             </div>
 
             <p>
-              Equipment certification is one responsibility of WPU. The
-              institution itself exists to govern and develop the whole sport.
+              WPU is being developed to support the whole sport, from governance
+              and competition to technical standards and global development.
             </p>
           </div>
 
@@ -185,7 +154,6 @@ export default function Home() {
         <div className="shell split">
           <div>
             <p className="eyebrow lime">GOVERNANCE</p>
-
             <h2>Credibility starts with the institution.</h2>
           </div>
 
@@ -210,9 +178,7 @@ export default function Home() {
               <i />
               <section>
                 <strong>Technical Commissions</strong>
-                <p>
-                  Rules, competition, equipment, officiating and development.
-                </p>
+                <p>Rules, competition, equipment, officiating and development.</p>
               </section>
             </div>
 
@@ -229,25 +195,20 @@ export default function Home() {
 
       <section id="members" className="section cream">
         <div className="shell memberSection">
-          <div className="memberGlobe">
-            <div className="memberCircle">
-              <i className="point p1" />
-              <i className="point p2" />
-              <i className="point p3" />
-              <i className="point p4" />
-              <i className="point p5" />
+          <div className="memberVisual">
+            <div className="courtShape">
+              <span className="courtLine vertical" />
+              <span className="courtLine horizontal" />
+              <span className="courtBall" />
             </div>
           </div>
 
           <div>
             <p className="eyebrow">MEMBER NATIONS</p>
-
-            <h2>
-              National bodies are the foundation of a world federation.
-            </h2>
+            <h2>National bodies are the foundation of international sport.</h2>
 
             <p className="largeText">
-              WPU membership will bring national pickleball organizations
+              WPU membership will bring national pickleball organisations
               together through a common international framework while
               respecting the development of the sport within each country.
             </p>
@@ -264,10 +225,7 @@ export default function Home() {
           <div className="sectionIntro">
             <div>
               <p className="eyebrow">COMPETITION</p>
-
-              <h2>
-                From national competition to international representation.
-              </h2>
+              <h2>From national competition to international representation.</h2>
             </div>
 
             <p>
@@ -326,7 +284,6 @@ export default function Home() {
 
             <div>
               <p className="eyebrow">APPROVED EQUIPMENT</p>
-
               <h3>Public certification registry</h3>
 
               <p>
@@ -354,13 +311,12 @@ export default function Home() {
           <div className="sectionIntro">
             <div>
               <p className="eyebrow">DEVELOPMENT</p>
-
               <h2>Develop the whole ecosystem.</h2>
             </div>
 
             <p>
               Sustainable global growth requires athletes, coaches, officials,
-              national organizations, youth pathways and developing pickleball
+              national organisations, youth pathways and developing pickleball
               nations.
             </p>
           </div>
@@ -385,8 +341,8 @@ export default function Home() {
             </div>
 
             <p>
-              WPU should clearly distinguish between what exists today and what
-              is still being developed.
+              WPU will clearly distinguish between what exists today and what is
+              still being developed.
             </p>
           </div>
 
@@ -405,7 +361,7 @@ export default function Home() {
               <h3>Membership</h3>
               <p>
                 A transparent application framework for national pickleball
-                organizations.
+                organisations.
               </p>
             </article>
 
@@ -423,10 +379,8 @@ export default function Home() {
 
       <footer>
         <div className="shell footerGrid">
-          <div>
-            <div className="footerWpu">WPU</div>
-            <strong>WORLD PICKLEBALL UNION</strong>
-            <small>UNITING PICKLEBALL WORLDWIDE</small>
+          <div className="footerBrand">
+            <img src="/brand/wpu-logo.svg" alt="World Pickleball Union" />
           </div>
 
           <div>
@@ -451,7 +405,7 @@ export default function Home() {
 
         <div className="shell copyright">
           <span>© 2026 World Pickleball Union</span>
-          <span>International non-profit sports governing body</span>
+          <span>International non-profit sports governing body in development</span>
         </div>
       </footer>
     </main>
