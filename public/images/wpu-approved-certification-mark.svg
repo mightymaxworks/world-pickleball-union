@@ -1,0 +1,58 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 720" role="img" aria-labelledby="title desc">
+<title id="title">WPU Approved Certification Mark</title>
+<desc id="desc">World Pickleball Union approved certification shield.</desc>
+<defs>
+  <linearGradient id="gold" x1="0" y1="0" x2="1" y2="1">
+    <stop offset="0" stop-color="#E8B84E"/>
+    <stop offset=".48" stop-color="#F6D97D"/>
+    <stop offset="1" stop-color="#D79A2F"/>
+  </linearGradient>
+</defs>
+
+<!-- shield -->
+<path d="M300 22 526 86v374c0 106-83 184-226 238C157 644 74 566 74 460V86Z"
+      fill="url(#gold)" stroke="#0B205B" stroke-width="18" stroke-linejoin="round"/>
+<path d="M300 43 506 101v354c0 94-74 163-206 214C168 618 94 549 94 455V101Z"
+      fill="none" stroke="#C88922" stroke-width="5"/>
+
+<!-- WPU -->
+<text x="300" y="215" text-anchor="middle"
+      font-family="Montserrat,Arial,sans-serif" font-size="142" font-weight="900"
+      letter-spacing="-15" fill="#0B205B">WPU</text>
+
+<!-- trajectory through logo -->
+<path d="M132 231 C207 163 287 150 363 157"
+      fill="none" stroke="#0B205B" stroke-width="15" stroke-linecap="round"/>
+<path d="M138 216 C210 153 287 142 361 150"
+      fill="none" stroke="#D9F93C" stroke-width="9" stroke-linecap="round"/>
+
+<!-- pickleball -->
+<circle cx="354" cy="151" r="35" fill="#F8F6EE" stroke="#0B205B" stroke-width="8"/>
+<g fill="#0B205B">
+ <circle cx="342" cy="135" r="5"/><circle cx="365" cy="136" r="5"/>
+ <circle cx="354" cy="152" r="5"/><circle cx="339" cy="164" r="5"/>
+ <circle cx="367" cy="166" r="5"/>
+</g>
+
+<!-- approved band -->
+<rect x="76" y="274" width="448" height="118" fill="#0B205B"/>
+<text x="300" y="355" text-anchor="middle"
+      font-family="Montserrat,Arial,sans-serif" font-size="70" font-weight="800"
+      letter-spacing="2" fill="#F8F6EE">APPROVED</text>
+
+<!-- certification copy -->
+<text x="300" y="444" text-anchor="middle"
+      font-family="Montserrat,Arial,sans-serif" font-size="26" font-weight="700"
+      letter-spacing="8" fill="#0B205B">CERTIFIED FOR</text>
+<text x="300" y="480" text-anchor="middle"
+      font-family="Montserrat,Arial,sans-serif" font-size="26" font-weight="700"
+      letter-spacing="8" fill="#0B205B">COMPETITION</text>
+
+<!-- bottom ball -->
+<circle cx="300" cy="584" r="49" fill="#0B205B"/>
+<g fill="#D9F93C">
+ <circle cx="283" cy="562" r="6"/><circle cx="314" cy="560" r="6"/>
+ <circle cx="300" cy="582" r="6"/><circle cx="279" cy="599" r="6"/>
+ <circle cx="320" cy="600" r="6"/>
+</g>
+</svg>
