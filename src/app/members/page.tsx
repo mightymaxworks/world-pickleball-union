@@ -3,9 +3,38 @@ import Link from "next/link";
 import SiteHeader from "@/components/SiteHeader";
 
 export const metadata = {
-  title: "Membership | World Pickleball Union",
+  title: "Membership",
   description:
-    "Learn about the developing membership framework of the World Pickleball Union and register your organisation's interest in becoming part of WPU.",
+    "Learn about the developing World Pickleball Union membership framework and how national pickleball organisations can express interest in participating.",
+
+  alternates: {
+    canonical: "/members",
+  },
+
+  openGraph: {
+    type: "website",
+    url: "/members",
+    siteName: "World Pickleball Union",
+    title: "Membership | World Pickleball Union",
+    description:
+      "Learn about the developing World Pickleball Union membership framework and how national pickleball organisations can express interest in participating.",
+    images: [
+      {
+        url: "/opengraph-image.png",
+        width: 1200,
+        height: 630,
+        alt: "World Pickleball Union — Uniting Pickleball Worldwide",
+      },
+    ],
+  },
+
+  twitter: {
+    card: "summary_large_image",
+    title: "Membership | World Pickleball Union",
+    description:
+      "Learn about the developing World Pickleball Union membership framework and how national pickleball organisations can express interest in participating.",
+    images: ["/opengraph-image.png"],
+  },
 };
 
 const membershipBenefits = [

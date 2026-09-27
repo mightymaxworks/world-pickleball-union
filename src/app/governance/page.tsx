@@ -5,7 +5,36 @@ import SiteHeader from "@/components/SiteHeader";
 export const metadata = {
   title: "Governance",
   description:
-    "The developing governance framework of the World Pickleball Union, including representation, leadership, accountability and institutional transparency.",
+    "Explore the developing World Pickleball Union governance framework for representation, leadership, accountability, independence and transparency.",
+
+  alternates: {
+    canonical: "/governance",
+  },
+
+  openGraph: {
+    type: "website",
+    url: "/governance",
+    siteName: "World Pickleball Union",
+    title: "Governance | World Pickleball Union",
+    description:
+      "Explore the developing World Pickleball Union governance framework for representation, leadership, accountability, independence and transparency.",
+    images: [
+      {
+        url: "/opengraph-image.png",
+        width: 1200,
+        height: 630,
+        alt: "World Pickleball Union — Uniting Pickleball Worldwide",
+      },
+    ],
+  },
+
+  twitter: {
+    card: "summary_large_image",
+    title: "Governance | World Pickleball Union",
+    description:
+      "Explore the developing World Pickleball Union governance framework for representation, leadership, accountability, independence and transparency.",
+    images: ["/opengraph-image.png"],
+  },
 };
 
 const principles = [

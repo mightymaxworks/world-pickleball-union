@@ -6,9 +6,38 @@ import NationalCompetitionPath from "@/components/NationalCompetitionPath";
 import CompetitionRankingBoard from "@/components/CompetitionRankingBoard";
 
 export const metadata = {
-  title: "Competitions | World Pickleball Union",
+  title: "Competitions",
   description:
-    "Explore the developing World Pickleball Union competition ecosystem, connecting communities, clubs and national organisations with international pickleball.",
+    "Explore the developing World Pickleball Union competition ecosystem connecting community, club and national pathways with international pickleball.",
+
+  alternates: {
+    canonical: "/competitions",
+  },
+
+  openGraph: {
+    type: "website",
+    url: "/competitions",
+    siteName: "World Pickleball Union",
+    title: "Competitions | World Pickleball Union",
+    description:
+      "Explore the developing World Pickleball Union competition ecosystem connecting community, club and national pathways with international pickleball.",
+    images: [
+      {
+        url: "/opengraph-image.png",
+        width: 1200,
+        height: 630,
+        alt: "World Pickleball Union — Uniting Pickleball Worldwide",
+      },
+    ],
+  },
+
+  twitter: {
+    card: "summary_large_image",
+    title: "Competitions | World Pickleball Union",
+    description:
+      "Explore the developing World Pickleball Union competition ecosystem connecting community, club and national pathways with international pickleball.",
+    images: ["/opengraph-image.png"],
+  },
 };
 
 

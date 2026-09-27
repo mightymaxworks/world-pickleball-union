@@ -5,7 +5,36 @@ import SiteHeader from "@/components/SiteHeader";
 export const metadata = {
   title: "About WPU",
   description:
-    "Learn about the World Pickleball Union and its purpose, principles and vision for the international development of pickleball.",
+    "Learn about the World Pickleball Union, its purpose, principles and vision for the responsible international development of pickleball.",
+
+  alternates: {
+    canonical: "/about",
+  },
+
+  openGraph: {
+    type: "website",
+    url: "/about",
+    siteName: "World Pickleball Union",
+    title: "About WPU | World Pickleball Union",
+    description:
+      "Learn about the World Pickleball Union, its purpose, principles and vision for the responsible international development of pickleball.",
+    images: [
+      {
+        url: "/opengraph-image.png",
+        width: 1200,
+        height: 630,
+        alt: "World Pickleball Union — Uniting Pickleball Worldwide",
+      },
+    ],
+  },
+
+  twitter: {
+    card: "summary_large_image",
+    title: "About WPU | World Pickleball Union",
+    description:
+      "Learn about the World Pickleball Union, its purpose, principles and vision for the responsible international development of pickleball.",
+    images: ["/opengraph-image.png"],
+  },
 };
 
 const principles = [

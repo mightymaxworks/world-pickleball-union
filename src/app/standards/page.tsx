@@ -3,9 +3,38 @@ import Link from "next/link";
 import SiteHeader from "@/components/SiteHeader";
 
 export const metadata = {
-  title: "Standards | World Pickleball Union",
+  title: "Standards",
   description:
-    "Explore the developing World Pickleball Union standards and certification framework for equipment, coaching, officiating, facilities, competition and integrity.",
+    "Explore WPU's developing international pickleball standards for equipment, coaching, officiating, courts, competition, integrity and certification.",
+
+  alternates: {
+    canonical: "/standards",
+  },
+
+  openGraph: {
+    type: "website",
+    url: "/standards",
+    siteName: "World Pickleball Union",
+    title: "Standards | World Pickleball Union",
+    description:
+      "Explore WPU's developing international pickleball standards for equipment, coaching, officiating, courts, competition, integrity and certification.",
+    images: [
+      {
+        url: "/opengraph-image.png",
+        width: 1200,
+        height: 630,
+        alt: "World Pickleball Union — Uniting Pickleball Worldwide",
+      },
+    ],
+  },
+
+  twitter: {
+    card: "summary_large_image",
+    title: "Standards | World Pickleball Union",
+    description:
+      "Explore WPU's developing international pickleball standards for equipment, coaching, officiating, courts, competition, integrity and certification.",
+    images: ["/opengraph-image.png"],
+  },
 };
 
 const framework = [

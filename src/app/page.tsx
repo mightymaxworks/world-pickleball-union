@@ -1,6 +1,13 @@
 import Image from "next/image";
 import SiteHeader from "@/components/SiteHeader";
 
+
+export const metadata = {
+  alternates: {
+    canonical: "/",
+  },
+};
+
 const pillars = [
   {
     number: "01",
