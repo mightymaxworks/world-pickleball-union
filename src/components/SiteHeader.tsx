@@ -21,7 +21,7 @@ export default function SiteHeader() {
           <Link href="/members">Members</Link>
           <Link href="/competitions">Competitions</Link>
           <Link href="/standards">Standards</Link>
-          <Link href="/#development">Development</Link>
+          <Link href="/development">Development</Link>
         </nav>
 
         <Link className="nav-cta" href="/members">
@@ -41,7 +41,7 @@ export default function SiteHeader() {
             <Link href="/members">Members</Link>
             <Link href="/competitions">Competitions</Link>
             <Link href="/standards">Standards</Link>
-            <Link href="/#development">Development</Link>
+            <Link href="/development">Development</Link>
             <Link className="mobile-nav-join" href="/members">
               Join WPU <span>→</span>
             </Link>
