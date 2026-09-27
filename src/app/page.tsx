@@ -1,4 +1,5 @@
 import Image from "next/image";
+import SiteHeader from "@/components/SiteHeader";
 
 const pillars = [
   {
@@ -33,32 +34,7 @@ const principles = [
 export default function Home() {
   return (
     <main>
-      <header className="site-header">
-        <div className="nav-shell">
-          <a className="brand" href="#top" aria-label="World Pickleball Union">
-            <Image
-              src="/brand/wpu-logo.svg"
-              alt="World Pickleball Union"
-              width={240}
-              height={80}
-              priority
-            />
-          </a>
-
-          <nav className="desktop-nav" aria-label="Main navigation">
-            <a href="#about">About</a>
-            <a href="#governance">Governance</a>
-            <a href="#members">Members</a>
-            <a href="#competition">Competitions</a>
-            <a href="#standards">Standards</a>
-            <a href="#development">Development</a>
-          </nav>
-
-          <a className="nav-cta" href="#members">
-            Join WPU
-          </a>
-        </div>
-      </header>
+      <SiteHeader />
 
       <section className="hero" id="top">
         <div className="hero-copy">
@@ -380,7 +356,7 @@ export default function Home() {
       <footer>
         <div className="footer-inner">
           <Image
-            src="/brand/wpu-logo.svg"
+            src="/brand/wpu-logo-approved.png"
             alt="World Pickleball Union"
             width={220}
             height={75}

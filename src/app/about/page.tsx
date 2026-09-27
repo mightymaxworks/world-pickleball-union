@@ -1,5 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
+import SiteHeader from "@/components/SiteHeader";
 
 export const metadata = {
   title: "About WPU",
@@ -41,33 +42,8 @@ const responsibilities = [
 
 export default function AboutPage() {
   return (
-    <main>
-      <header className="site-header">
-        <div className="nav-shell">
-          <Link className="brand" href="/" aria-label="World Pickleball Union home">
-            <Image
-              src="/brand/wpu-logo.svg"
-              alt="World Pickleball Union"
-              width={255}
-              height={70}
-              priority
-            />
-          </Link>
-
-          <nav className="desktop-nav" aria-label="Primary navigation">
-            <Link href="/about">About</Link>
-            <Link href="/#governance">Governance</Link>
-            <Link href="/#members">Members</Link>
-            <Link href="/#competition">Competitions</Link>
-            <Link href="/#standards">Standards</Link>
-            <Link href="/#development">Development</Link>
-          </nav>
-
-          <Link className="nav-cta" href="/#members">
-            Join WPU
-          </Link>
-        </div>
-      </header>
+    <main className="about-page">
+      <SiteHeader />
 
       <section
         style={{
@@ -530,7 +506,7 @@ export default function AboutPage() {
         <div className="footer-inner">
           <Link href="/" aria-label="World Pickleball Union home">
             <Image
-              src="/brand/wpu-logo.svg"
+              src="/brand/wpu-logo-approved.png"
               alt="World Pickleball Union"
               width={245}
               height={70}

@@ -1,5 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
+import SiteHeader from "@/components/SiteHeader";
 
 export const metadata = {
   title: "Governance",
@@ -26,22 +27,7 @@ const documents = [
 export default function GovernancePage() {
   return (
     <main className="governance-page">
-      <header className="site-header">
-        <div className="nav-shell">
-          <Link className="brand" href="/" aria-label="World Pickleball Union home">
-            <Image src="/brand/wpu-logo.svg" alt="World Pickleball Union" width={255} height={70} priority />
-          </Link>
-          <nav className="desktop-nav" aria-label="Primary navigation">
-            <Link href="/about">About</Link>
-            <Link href="/governance">Governance</Link>
-            <Link href="/#members">Members</Link>
-            <Link href="/#competition">Competitions</Link>
-            <Link href="/#standards">Standards</Link>
-            <Link href="/#development">Development</Link>
-          </nav>
-          <Link className="nav-cta" href="/#members">Join WPU</Link>
-        </div>
-      </header>
+      <SiteHeader />
 
       <section className="gov2-hero">
         <div className="gov2-hero-copy">
@@ -131,6 +117,61 @@ export default function GovernancePage() {
               </svg>
             </div>
             <div className="gov2-cycle-callout">A continuous<br />cycle for a<br /><strong>stronger sport.</strong></div>
+
+            <div className="gov2-cycle-mobile" aria-label="WPU decision and accountability cycle">
+              <div className="gov2-mobile-step">
+                <b>01</b>
+                <div>
+                  <strong>NATIONAL ORGANISATIONS</strong>
+                  <small>Share needs and perspectives</small>
+                </div>
+              </div>
+
+              <span className="gov2-mobile-arrow">↓</span>
+
+              <div className="gov2-mobile-step">
+                <b>02</b>
+                <div>
+                  <strong>GENERAL ASSEMBLY</strong>
+                  <small>Collective authority</small>
+                </div>
+              </div>
+
+              <span className="gov2-mobile-arrow">↓</span>
+
+              <div className="gov2-mobile-step">
+                <b>03</b>
+                <div>
+                  <strong>BOARD / EXECUTIVE</strong>
+                  <small>Direction and oversight</small>
+                </div>
+              </div>
+
+              <span className="gov2-mobile-arrow">↓</span>
+
+              <div className="gov2-mobile-step">
+                <b>04</b>
+                <div>
+                  <strong>IMPLEMENTATION</strong>
+                  <small>Programmes and services</small>
+                </div>
+              </div>
+
+              <span className="gov2-mobile-arrow">↓</span>
+
+              <div className="gov2-mobile-step">
+                <b>05</b>
+                <div>
+                  <strong>REPORTING BACK</strong>
+                  <small>Progress and accountability</small>
+                </div>
+              </div>
+
+              <div className="gov2-mobile-return">
+                <span>↺</span>
+                <p>ACCOUNTABILITY BACK TO MEMBERS</p>
+              </div>
+            </div>
           </div>
         </div>
       </section>
@@ -208,7 +249,7 @@ export default function GovernancePage() {
 
       <footer>
         <div className="footer-inner">
-          <Link href="/"><Image src="/brand/wpu-logo.svg" alt="World Pickleball Union" width={245} height={70} /></Link>
+          <Link href="/"><Image src="/brand/wpu-logo-approved.png" alt="World Pickleball Union" width={245} height={70} /></Link>
           <div className="footer-copy"><p>UNITING PICKLEBALL WORLDWIDE.</p><small>World Pickleball Union</small></div>
         </div>
       </footer>
