@@ -40,6 +40,11 @@ export default function BrandPage() {
         <p style={{lineHeight:1.7,maxWidth:760}}>This versioned shield is a proposed production master, not a live certification or an issued approval. Its artwork will be locked after final review.</p>
         <Image src="/brand/candidates/wpu-approved-shield-v1.svg" alt="Proposed WPU Approved equipment shield" width={240} height={288} style={{width:240,height:"auto",maxWidth:"100%"}} />
       </section>
+      <section style={{padding:"60px 6vw",maxWidth:1250,margin:"auto"}}>
+        <h2 style={{fontSize:32}}>NFC verification label — design candidate</h2>
+        <p style={{lineHeight:1.7,maxWidth:760}}>This template reserves space for a QR code. No QR destination or certification record is active yet.</p>
+        <Image src="/brand/candidates/wpu-nfc-label-v1.svg" alt="WPU NFC verification label design candidate with reserved QR area" width={480} height={270} style={{width:"100%",maxWidth:480,height:"auto"}} />
+      </section>
       <section style={{background:"#eef2f8",padding:"60px 6vw"}}>
         <div style={{maxWidth:1100,margin:"auto"}}>
           <h2 style={{fontSize:32}}>Equipment approval and verification</h2>
