@@ -35,7 +35,12 @@ export default function BrandPage() {
           </div>)}
         </div>
       </section>
-      <section style={{padding:"60px 6vw",maxWidth:1250,margin:"auto"}}>\n        <h2 style={{fontSize:32}}>Certification mark — design candidate</h2>\n        <p style={{lineHeight:1.7,maxWidth:760}}>This versioned shield is a proposed production master, not a live certification or an issued approval. Its artwork will be locked after final review.</p>\n        <Image src="/brand/candidates/wpu-approved-shield-v1.svg" alt="Proposed WPU Approved equipment shield" width={240} height={288} style={{width:240,height:"auto",maxWidth:"100%"}} />\n      </section>\n      <section style={{background:"#eef2f8",padding:"60px 6vw"}}>
+      <section style={{padding:"60px 6vw",maxWidth:1250,margin:"auto"}}>
+        <h2 style={{fontSize:32}}>Certification mark — design candidate</h2>
+        <p style={{lineHeight:1.7,maxWidth:760}}>This versioned shield is a proposed production master, not a live certification or an issued approval. Its artwork will be locked after final review.</p>
+        <Image src="/brand/candidates/wpu-approved-shield-v1.svg" alt="Proposed WPU Approved equipment shield" width={240} height={288} style={{width:240,height:"auto",maxWidth:"100%"}} />
+      </section>
+      <section style={{background:"#eef2f8",padding:"60px 6vw"}}>
         <div style={{maxWidth:1100,margin:"auto"}}>
           <h2 style={{fontSize:32}}>Equipment approval and verification</h2>
           <p style={{lineHeight:1.8,maxWidth:760}}>WPU is developing an accessible equipment certification system. A consistent WPU Approved mark will identify certified equipment; NFC and QR technology are intended to link to authoritative, time-limited certification records. Public verification is not yet available.</p>
