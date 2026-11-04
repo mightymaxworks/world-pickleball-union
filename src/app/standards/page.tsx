@@ -205,10 +205,10 @@ export default function StandardsPage() {
               </strong>
 
               <p>
-                WPU is developing an affordable and accessible equipment
-                certification framework for manufacturers of all sizes, based on
-                clear technical requirements and supported by recognised
-                international engineering and technical institutions.
+                WPU is designing an accessible equipment certification framework
+                for manufacturers of all sizes. The proposed model is USD 50
+                per paddle model for a 12-month certification term, subject to
+                final technical criteria and published programme terms.
               </p>
             </div>
           </div>
@@ -291,8 +291,8 @@ export default function StandardsPage() {
                   <span>01</span>
                   <strong>TECHNICAL TESTING</strong>
                   <p>
-                    Assessment supported by recognised international engineering
-                    and technical institutions.
+                    Assessment against documented technical criteria, with external
+                    technical collaboration subject to formal confirmation.
                   </p>
                 </div>
 
@@ -318,8 +318,9 @@ export default function StandardsPage() {
                   <span>04</span>
                   <strong>DIGITAL VERIFICATION</strong>
                   <p>
-                    Certified equipment can be connected to secure digital
-                    verification technology for simple status checking.
+                    The planned NFC-linked record will show current approval status,
+                    including expiry, suspension or revocation. The public
+                    verification service is not yet live.
                   </p>
                 </div>
               </div>
