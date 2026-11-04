@@ -56,10 +56,9 @@ export default function Home() {
           </h1>
 
           <p className="hero-intro">
-            World Pickleball Union is being established as an international
-            non-profit governing body supporting the global development of
-            pickleball through cooperation, competition, standards and
-            integrity.
+            World Pickleball Union is being established as an international pickleball organisation focused on accessible
+            standards, transparent governance and global cooperation.
+            Its structures and programmes are being developed.
           </p>
 
           <div className="hero-actions">
@@ -262,8 +261,9 @@ export default function Home() {
             </p>
 
             <p>
-              Equipment certification, technical standards and public
-              verification systems are in development.
+              WPU is designing an accessible paddle certification process,
+              including time-limited approvals and digital verification.
+              Testing criteria and the public register are still in development.
             </p>
           </div>
 
