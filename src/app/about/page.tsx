@@ -129,7 +129,7 @@ export default function AboutPage() {
               }}
             >
               The World Pickleball Union is being established as an
-              international non-profit governing body for pickleball.
+              international pickleball organisation. Its future governance and\n              membership arrangements are being developed.
             </p>
 
             <p

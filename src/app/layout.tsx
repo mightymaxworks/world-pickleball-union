@@ -1,12 +1,15 @@
 import type { Metadata, Viewport } from "next";
-import { Montserrat } from "next/font/google";
+import { Montserrat, Inter } from "next/font/google";
 import "./globals.css";
+import "./brand-tokens.css";
 
 const montserrat = Montserrat({
   variable: "--font-montserrat",
   subsets: ["latin"],
   display: "swap",
 });
+
+const inter = Inter({ variable: "--font-inter", subsets: ["latin"], display: "swap" });
 
 export const viewport: Viewport = {
   width: "device-width",
@@ -22,7 +25,7 @@ export const metadata: Metadata = {
   },
 
   description:
-    "World Pickleball Union is being established as an international non-profit governing body supporting the global development of pickleball through governance, competition, standards and integrity.",
+    "World Pickleball Union is being established as an international pickleball organisation intended to support the global development of pickleball through governance, competition, standards and integrity.",
 
   applicationName: "World Pickleball Union",
 
@@ -54,7 +57,7 @@ export const metadata: Metadata = {
     siteName: "World Pickleball Union",
     title: "World Pickleball Union | Uniting Pickleball Worldwide",
     description:
-      "An international non-profit governing body being established to support the global development of pickleball through governance, competition, standards and integrity.",
+      "An international pickleball organisation being established to support the global development of pickleball through governance, competition, standards and integrity.",
     images: [
       {
         url: "/opengraph-image.png",
@@ -98,7 +101,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={montserrat.variable}>
+    <html lang="en" className={`${montserrat.variable} ${inter.variable}`}>
       <body>
         <script
           type="application/ld+json"
@@ -117,7 +120,7 @@ export default function RootLayout({
                     url: "https://worldpickleball.world/brand/wpu-logo-approved.png",
                   },
                   description:
-                    "World Pickleball Union is being established as an international non-profit governing body supporting the global development of pickleball.",
+                    "World Pickleball Union is being established as an international pickleball organisation intended to support the global development of pickleball.",
                 },
                 {
                   "@type": "WebSite",

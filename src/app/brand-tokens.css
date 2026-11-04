@@ -1,0 +1,15 @@
+/* WPU brand v1: shared identity tokens and conservative global alignment. */
+:root {
+  --wpu-navy: #0B2A66;
+  --wpu-lime: #C6FF3D;
+  --wpu-blue: #2B6FFF;
+  --wpu-grey: #E6E9EF;
+  --wpu-white: #FFFFFF;
+  --navy: var(--wpu-navy);
+  --ink: var(--wpu-navy);
+  --lime: var(--wpu-lime);
+  --line: rgba(11,42,102,.15);
+}
+body { font-family: var(--font-inter), Arial, sans-serif; }
+h1,h2,h3,h4,h5,h6,.desktop-nav,.nav-cta,.eyebrow { font-family: var(--font-montserrat), Arial, sans-serif; }
+:focus-visible { outline: 3px solid var(--wpu-blue); outline-offset: 3px; }
