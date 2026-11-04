@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 720" role="img" aria-labelledby="title desc">
+<title id="title">WPU Approved equipment certification shield — production candidate</title>
+<desc id="desc">Navy shield with lime border and a white Approved band. Production candidate pending final brand review.</desc>
+<path d="M300 24 522 91v342c0 124-85 211-222 264C163 644 78 557 78 433V91Z" fill="#0B2A66" stroke="#C6FF3D" stroke-width="16" stroke-linejoin="round"/>
+<path d="M300 49 499 109v324c0 107-70 183-199 235C171 616 101 540 101 433V109Z" fill="none" stroke="#FFFFFF" stroke-width="5" opacity=".9"/>
+<text x="300" y="220" text-anchor="middle" fill="#FFFFFF" font-family="Montserrat,Arial,sans-serif" font-size="128" font-weight="900" letter-spacing="-10">WPU</text>
+<path d="M158 242Q263 172 385 195" fill="none" stroke="#C6FF3D" stroke-width="13" stroke-linecap="round"/>
+<circle cx="383" cy="193" r="32" fill="#FFFFFF" stroke="#0B2A66" stroke-width="5"/>
+<g fill="#0B2A66"><circle cx="373" cy="181" r="5"/><circle cx="394" cy="181" r="5"/><circle cx="383" cy="195" r="5"/><circle cx="370" cy="207" r="5"/><circle cx="396" cy="207" r="5"/></g>
+<rect x="52" y="298" width="496" height="112" rx="15" fill="#FFFFFF" stroke="#0B2A66" stroke-width="6"/>
+<text x="300" y="372" text-anchor="middle" fill="#0B2A66" font-family="Montserrat,Arial,sans-serif" font-size="71" font-weight="900">APPROVED</text>
+<text x="300" y="476" text-anchor="middle" fill="#FFFFFF" font-family="Montserrat,Arial,sans-serif" font-size="26" font-weight="700" letter-spacing="4">EQUIPMENT</text>
+<circle cx="300" cy="570" r="48" fill="#FFFFFF"/><g fill="#0B2A66"><circle cx="285" cy="552" r="7"/><circle cx="315" cy="552" r="7"/><circle cx="300" cy="576" r="7"/><circle cx="281" cy="595" r="7"/><circle cx="319" cy="595" r="7"/></g>
+</svg>
