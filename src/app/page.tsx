@@ -269,7 +269,7 @@ export default function Home() {
 
           <div className="certification-visual">
             <Image
-              src="/images/wpu-approved-certification-mark.svg"
+              src="/brand/candidates/wpu-approved-shield-v1.svg"
               alt="WPU Approved — Certified for Competition"
               width={520}
               height={624}
