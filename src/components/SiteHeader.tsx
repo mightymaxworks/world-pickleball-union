@@ -22,6 +22,7 @@ export default function SiteHeader() {
           <Link href="/competitions">Competitions</Link>
           <Link href="/standards">Standards</Link>
           <Link href="/development">Development</Link>
+          <Link href="/initiatives/global-marina">Global Marina</Link>
           <Link href="/brand">Brand</Link>
         </nav>
 
@@ -43,6 +44,7 @@ export default function SiteHeader() {
             <Link href="/competitions">Competitions</Link>
             <Link href="/standards">Standards</Link>
             <Link href="/development">Development</Link>
+          <Link href="/initiatives/global-marina">Global Marina</Link>
             <Link href="/brand">Brand</Link>
             <Link className="mobile-nav-join" href="/members">
               Join WPU <span>→</span>
