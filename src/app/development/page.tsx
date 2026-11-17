@@ -158,6 +158,12 @@ export default function DevelopmentPage() {
         </div>
       </section>
 
+      <section className="section-shell" style={{padding:"70px 0"}} aria-label="Global Marina Initiative">
+        <p className="dev-section-label"><b>NEW</b> GLOBAL INITIATIVE</p>
+        <h2>Play. Sail. <em>Grow. Together.</em></h2>
+        <p style={{maxWidth:760,lineHeight:1.8}}>WPU is developing a Global Marina Initiative to connect pickleball and sailing communities through 1–4 court marina hubs, family programmes, coach upskilling, dual-sport athlete opportunities and international exchanges.</p>
+        <Link href="/initiatives/global-marina" className="button-primary">Explore the Global Marina Initiative →</Link>
+      </section>
       <section className="dev-mission">
         <div className="section-shell dev-mission-grid">
           <div>
