@@ -56,7 +56,7 @@ export default function MarinaPage() {
     </section>
     <section className="marina-partner" id="partner"><div className="marina-wrap marina-partner-inner">
       <div><p className="marina-kicker">PARTNER WITH WPU</p><h2>Help build the next generation of marina communities.</h2><p>We welcome exploratory conversations with marina operators, sailing clubs, national organisations, schools, coaches and community partners.</p><p>Potential partnerships and programme standards remain subject to agreement and implementation planning.</p></div>
-      <div className="marina-partner-card"><h3>Interested in participating?</h3><p>Tell WPU about your organisation, location, facilities and development interests.</p><a href="mailto:info@worldpickleball.world?subject=WPU%20Global%20Marina%20Initiative%20-%20Expression%20of%20Interest" className="marina-primary">Express interest →</a><small>Please verify the contact address before external distribution.</small></div>
+      <div className="marina-partner-card"><h3>Interested in participating?</h3><p>Tell WPU about your organisation, location, facilities and development interests.</p><a href="mailto:info@worldpickleball.world?subject=WPU%20Global%20Marina%20Initiative%20-%20Expression%20of%20Interest" className="marina-primary">Express interest →</a><small>WPU will review enquiries before confirming any programme partnership.</small></div>
     </div></section>
     <footer className="marina-footer"><div className="marina-wrap"><Link href="/development">← Development</Link><span>World Pickleball Union · Uniting Pickleball Worldwide</span></div></footer>
   </main>;
