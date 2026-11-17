@@ -115,6 +115,10 @@ export default function Home() {
         </div>
       </section>
 
+      <section className="section-shell" aria-label="Global Marina Initiative" style={{padding:"76px 0",display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(280px,1fr))",gap:36,alignItems:"center"}}>
+        <div><p className="eyebrow">WPU GLOBAL INITIATIVE</p><h2 style={{fontSize:"clamp(38px,4vw,62px)",lineHeight:1.05,letterSpacing:"-.05em"}}>Play. Sail.<br/>Grow. Together.</h2><p style={{lineHeight:1.8,maxWidth:580}}>Explore the proposed Global Marina Initiative: 1–4 pickleball courts, family participation, coach upskilling and opportunities for athletes to discover both pickleball and sailing.</p><a className="button-primary" href="/initiatives/global-marina">Explore the initiative <span>→</span></a></div>
+        <div style={{position:"relative",minHeight:300,overflow:"hidden"}}><Image src="/images/wpu-development-youth.png" alt="Young pickleball players participating together" fill sizes="(max-width:900px) 100vw, 45vw" style={{objectFit:"cover"}} /></div>
+      </section>
       <section className="principles" aria-label="WPU principles">
         <div className="principles-inner">
           {principles.map(([number, title, text]) => (
