@@ -1,3 +1,4 @@
+import InquiryForm from "@/components/InquiryForm";
 import Image from "next/image";
 import Link from "next/link";
 import SiteHeader from "@/components/SiteHeader";
@@ -413,7 +414,7 @@ export default function MembersPage() {
             </p>
           </div>
 
-          <form className="mem-form">
+          <InquiryForm type="membership">
             <div className="mem-form-row">
               <label>
                 ORGANISATION / FEDERATION NAME *
@@ -505,13 +506,13 @@ export default function MembersPage() {
               </span>
             </label>
 
-            <button type="submit">SUBMIT INTEREST →</button>
+            
 
             <small className="mem-form-disclaimer">
               Registration of interest does not constitute WPU membership or
               guarantee future admission.
             </small>
-          </form>
+          </InquiryForm>
         </div>
       </section>
 
