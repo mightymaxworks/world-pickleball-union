@@ -315,6 +315,13 @@ export default function Home() {
         </div>
       </section>
 
+      <section className="section-shell" aria-labelledby="support-network-heading" style={{padding:"76px 0"}}>
+        <div className="section-label"><span>06</span><p>GLOBAL SUPPORT NETWORK</p></div>
+        <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(280px,1fr))",gap:35,alignItems:"center"}}>
+          <h2 id="support-network-heading" style={{fontSize:"clamp(38px,5vw,64px)",lineHeight:1.06,letterSpacing:"-.05em"}}>United in support.<br/><em>Connected by pickleball.</em></h2>
+          <div><p style={{lineHeight:1.8,marginBottom:24}}>Meet the organisations pledging support for an inclusive, connected global pickleball community. Supporting WPU is distinct from formal membership.</p><a className="button-primary" href="/supporters">Explore our global support network <span>→</span></a></div>
+        </div>
+      </section>
       <section className="development section-shell" id="development">
         <div className="section-label">
           <span>06</span>
