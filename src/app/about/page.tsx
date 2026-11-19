@@ -525,7 +525,7 @@ export default function AboutPage() {
             <em>One future.</em>
           </h2>
           <div className="about-final-action">
-            <Link href="/#members">BUILD WITH WPU →</Link>
+            <Link href="/supporters">EXPLORE OUR GLOBAL SUPPORT NETWORK →</Link>
             <p>NATIONAL ORGANISATIONS · PARTNERS · CONTRIBUTORS</p>
           </div>
         </div>
