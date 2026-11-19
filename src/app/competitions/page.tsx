@@ -1,3 +1,4 @@
+import InquiryForm from "@/components/InquiryForm";
 import Image from "next/image";
 import Link from "next/link";
 import SiteHeader from "@/components/SiteHeader";
@@ -551,7 +552,7 @@ export default function CompetitionsPage() {
             </p>
           </div>
 
-          <form className="comp-form">
+          <InquiryForm type="competition">
             <div className="comp-form-row">
               <label>
                 ORGANISATION *
@@ -613,13 +614,13 @@ export default function CompetitionsPage() {
               </span>
             </label>
 
-            <button type="submit">SUBMIT INTEREST →</button>
+            
 
             <small>
               Submission of interest does not constitute sanctioning,
               endorsement or confirmation of a WPU event.
             </small>
-          </form>
+          </InquiryForm>
         </div>
       </section>
 
