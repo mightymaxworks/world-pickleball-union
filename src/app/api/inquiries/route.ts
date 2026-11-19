@@ -8,6 +8,7 @@ export async function POST(req:Request){
  let data:Record<string,unknown>;
  try{if(Number(req.headers.get("content-length")||0)>12000)return bad("Submission too large",413);data=await req.json();}catch{return bad("Invalid request");}
  if(data.company_fax)return NextResponse.json({ok:true});
+ const origin=req.headers.get("origin");if(origin&&new URL(origin).hostname!=="worldpickleball.world"&&new URL(origin).hostname!=="www.worldpickleball.world"&&new URL(origin).hostname!=="localhost")return bad("Invalid origin",403);
  const type=String(data.form_type||"");
  if(!allowed.includes(type))return bad("Invalid form type");
  const organisation=String(data.organisation||"").trim(),country=String(data.country||"").trim();
