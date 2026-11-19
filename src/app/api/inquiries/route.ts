@@ -11,7 +11,7 @@ export async function POST(req:Request){
  const type=String(data.form_type||"");
  if(!allowed.includes(type))return bad("Invalid form type");
  const organisation=String(data.organisation||"").trim(),country=String(data.country||"").trim();
- const contact=String(type==="membership"?data.contactName:data.name||"").trim(),email=String(data.email||"").trim();
+ const contact=String((type==="membership"?data.contactName:data.name)||"").trim(),email=String(data.email||"").trim();
  if(!organisation||!country||!contact||!email||data.consent!=="yes")return bad("Complete all required fields and consent");
  if([organisation,country,contact].some(s=>s.length>160)||email.length>254||!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))return bad("Invalid contact details");
  const details:Record<string,string>={};
