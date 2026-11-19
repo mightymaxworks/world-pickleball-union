@@ -1,3 +1,4 @@
+import {queryD1} from "@/lib/supporters-db";
 import {NextResponse} from "next/server";
 import {randomUUID} from "node:crypto";
 export const runtime="nodejs";
@@ -5,8 +6,6 @@ const categories=["National & Regional Organisations","Clubs & Communities","Edu
 const regions=["Africa","Americas","Asia","Europe","Oceania"];
 function error(message:string,status:number){return NextResponse.json({error:message},{status});}
 export async function POST(request:Request){
- const env=process.env;
- if(!env.WPU_CF_ACCOUNT_ID||!env.WPU_CF_D1_DATABASE_ID||!env.WPU_CF_API_TOKEN)return error("Pledge submissions are not yet enabled. Please try again later.",503);
  let body:Record<string,unknown>;
  try{body=await request.json();}catch{return error("Invalid submission.",400);}
  if(body.company_fax)return NextResponse.json({ok:true});
@@ -19,9 +18,7 @@ export async function POST(request:Request){
  if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(body.email)))return error("Enter a valid email.",400);
  const id=randomUUID();const statement="INSERT INTO supporter_pledges (id,name,country,region,category,website,representative,email,status,authority_confirmed,publication_consent,created_at) VALUES (?,?,?,?,?,?,?,?, 'pending',1,1,datetime('now'))";
  try{
- const response=await fetch(`https://api.cloudflare.com/client/v4/accounts/${env.WPU_CF_ACCOUNT_ID}/d1/database/${env.WPU_CF_D1_DATABASE_ID}/query`,{method:"POST",headers:{"Authorization":`Bearer ${env.WPU_CF_API_TOKEN}`,"Content-Type":"application/json"},body:JSON.stringify({sql:statement,params:[id,...fields.map(k=>String(body[k]).trim())]}),cache:"no-store"});
- const result=await response.json() as {success?:boolean;errors?:unknown[]};
- if(!response.ok||!result.success)throw new Error("Database unavailable");
+ await queryD1(statement,[id,...fields.map(k=>String(body[k]).trim())]);
  return NextResponse.json({ok:true,id},{status:201});
  }catch{return error("We could not save the pledge. Please try again later.",503);}
 }
