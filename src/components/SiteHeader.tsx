@@ -42,6 +42,7 @@ export default function SiteHeader() {
             <Link href="/about">About</Link>
             <Link href="/governance">Governance</Link>
             <Link href="/members">Members</Link>
+            <Link href="/supporters">Supporters</Link>
             <Link href="/competitions">Competitions</Link>
             <Link href="/standards">Standards</Link>
             <Link href="/development">Development</Link>
