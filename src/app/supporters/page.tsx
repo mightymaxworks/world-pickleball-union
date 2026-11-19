@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import SiteHeader from "@/components/SiteHeader";
 import SupporterDirectory from "./SupporterDirectory";
+import PledgeForm from "./PledgeForm";
 
 export const metadata: Metadata = {
   title: "Global Support Network",
@@ -36,10 +37,7 @@ export default function SupportersPage() {
             <p style={{lineHeight:1.8}}>Supporting the mission is voluntary, non-exclusive and does not create membership, commercial obligations or governing authority.</p>
           </div>
           <div style={{background:"white",padding:"clamp(22px,4vw,40px)",border:"1px solid #dce4ed"}}>
-            <h3 style={{fontSize:24,marginBottom:16}}>Organisation pledge</h3>
-            <p style={{lineHeight:1.75}}>Our organisation supports the World Pickleball Union’s mission to advance an inclusive, accessible and globally connected pickleball community. We recognise the value of collaboration, grassroots development, education and opportunities for players of all backgrounds.</p>
-            <p style={{fontSize:14,lineHeight:1.7,marginTop:20}}>To request inclusion, please provide your organisation name, country, website, representative contact, organisation category and permission to display its name and logo. All submissions are reviewed before publication.</p>
-            <a href="mailto:membership@worldpickleball.world?subject=WPU%20Organisation%20Pledge%20of%20Support&body=Organisation%20name%3A%0ACountry%3A%0AWebsite%3A%0AOrganisation%20category%3A%0AAuthorised%20representative%3A%0AContact%20email%3A%0A%0AI%20confirm%20that%20I%20am%20authorised%20to%20pledge%20support%20on%20behalf%20of%20the%20organisation%20and%20permit%20WPU%20to%20publish%20its%20name%20and%20logo%20after%20verification%3A%20Yes%2FNo" style={{display:"inline-block",background:"#0b205b",color:"white",padding:"16px 22px",fontWeight:800,textDecoration:"none",marginTop:22}}>Submit an organisation pledge →</a>
+            <PledgeForm />
           </div>
         </div>
       </section>
