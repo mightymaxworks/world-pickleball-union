@@ -43,7 +43,7 @@ export default function SupportersPage() {
           </div>
         </div>
       </section>
-      <footer style={{padding:"30px 24px",textAlign:"center",fontSize:14}}><Link href="/">World Pickleball Union</Link> · <Link href="/members">Membership</Link> · <Link href="/supporters">Global Support Network</Link></footer>
+      <footer><div className="footer-inner"><Link href="/" aria-label="World Pickleball Union home"><img src="/brand/wpu-logo-approved.png" alt="World Pickleball Union" width="220" height="75" style={{objectFit:"contain"}} /></Link><div className="footer-copy"><p>UNITING PICKLEBALL WORLDWIDE.</p><small>© {new Date().getFullYear()} World Pickleball Union. All rights reserved.</small><p><Link href="/members">Membership</Link> · <Link href="/supporters">Global Support Network</Link></p></div></div></footer>
     </main>
   );
 }
