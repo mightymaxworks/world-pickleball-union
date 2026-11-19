@@ -1,5 +1,5 @@
 import {NextResponse} from "next/server";
-import {createHmac,randomUUID,timingSafeEqual} from "node:crypto";
+import {randomUUID} from "node:crypto";
 export const runtime="nodejs";
 const categories=["National & Regional Organisations","Clubs & Communities","Education & Development","Industry & Commercial","Institutional & Strategic"];
 const regions=["Africa","Americas","Asia","Europe","Oceania"];
