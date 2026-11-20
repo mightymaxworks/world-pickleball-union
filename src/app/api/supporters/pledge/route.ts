@@ -8,7 +8,8 @@ const regions=["Africa","Americas","Asia","Europe","Oceania"];
 function error(message:string,status:number){return NextResponse.json({error:message},{status});}
 export async function POST(request:Request){
  let body:Record<string,unknown>;
- try{body=await request.json();}catch{return error("Invalid submission.",400);}
+ try{if(Number(request.headers.get("content-length")||0)>12000)return error("Submission too large.",413);body=await request.json();}catch{return error("Invalid submission.",400);}
+ const origin=request.headers.get("origin");if(origin){let hostname="";try{hostname=new URL(origin).hostname}catch{return error("Invalid origin.",403)}if(!["worldpickleball.world","www.worldpickleball.world","localhost"].includes(hostname))return error("Invalid origin.",403);}
  if(body.company_fax)return NextResponse.json({ok:true});
  const fields=["name","country","region","category","website","representative","email"];
  if(fields.some(k=>typeof body[k]!=="string"||!(body[k] as string).trim()))return error("Complete all required fields.",400);
