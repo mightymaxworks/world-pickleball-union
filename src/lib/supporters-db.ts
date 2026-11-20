@@ -1,10 +1,23 @@
-// Cloudflare D1 is provided as a native Worker binding.
-// No REST API token or third-party service is required.
-// In OpenNext's Node compatibility runtime, bindings are available on process.env.
-type D1 = {prepare:(sql:string)=>{bind:(...params:unknown[])=>{all:()=>Promise<{results:Record<string,unknown>[]}>}}};
+// Native Cloudflare D1 access for the existing OpenNext Worker runtime.
+// OpenNext publishes request-scoped bindings on Symbol.for("__cloudflare-context__").
+// Keep process.env fallback for environments that expose native bindings there.
+// No REST API token or external service is used.
+type D1 = {
+ prepare:(sql:string)=>{bind:(...params:unknown[])=>{all:()=>Promise<{results:Record<string,unknown>[]}>}}
+};
+type CloudflareContext = {env?:{WPU_DB?:D1}};
+function nativeDatabase():D1|undefined {
+ const contextKey=Symbol.for("__cloudflare-context__");
+ const context=(globalThis as unknown as Record<symbol,CloudflareContext|undefined>)[contextKey];
+ const fromContext=context?.env?.WPU_DB;
+ if(fromContext&&typeof fromContext.prepare==="function")return fromContext;
+ const fromProcess=(process.env as unknown as {WPU_DB?:D1}).WPU_DB;
+ if(fromProcess&&typeof fromProcess.prepare==="function")return fromProcess;
+ return undefined;
+}
 export async function queryD1(sql:string,params:unknown[]=[]):Promise<Record<string,unknown>[]>{
- const database=(process.env as unknown as {WPU_DB?:D1}).WPU_DB;
- if(!database||typeof database.prepare!=="function")throw new Error("WPU_DB_NATIVE_BINDING_MISSING");
+ const database=nativeDatabase();
+ if(!database)throw new Error("WPU_DB_NATIVE_BINDING_MISSING");
  const result=await database.prepare(sql).bind(...params).all();
  return result.results||[];
 }
