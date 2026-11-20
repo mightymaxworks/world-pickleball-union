@@ -1,0 +1,35 @@
+name: Cloudflare OpenNext migration validation (no deploy)
+on:
+  push:
+    branches:
+      - chore/cloudflare-opennext-migration
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci
+      - name: Install Cloudflare adapter in isolated runner
+        run: npm install --no-save --package-lock=false @opennextjs/cloudflare wrangler
+      - name: Run adapter build without deploying
+        shell: bash
+        run: |
+          set -euo pipefail
+          npx opennextjs-cloudflare build
+          test -f .open-next/worker.js
+          test -d .open-next/assets
+      - name: Inspect generated output
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo "## OpenNext generated deployment files" >> "$GITHUB_STEP_SUMMARY"
+          find .open-next -maxdepth 2 -type f | head -40
+          echo "No deployment was executed." >> "$GITHUB_STEP_SUMMARY"
