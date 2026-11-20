@@ -21,8 +21,8 @@ export async function PATCH(req:Request){
  try{body=await req.json();}catch{return NextResponse.json({error:"Invalid JSON"},{status:400});}
  if(!body.id||!(/^[0-9a-f-]{36}$/i.test(body.id))||!["approved","rejected"].includes(body.decision||""))return NextResponse.json({error:"Invalid decision"},{status:400});
  try{
-  const rows=await queryD1("UPDATE supporter_pledges SET status=?,reviewed_at=datetime('now'),reviewed_by='authorised-admin',review_note=? WHERE id=? AND status='pending' RETURNING id,status",[body.decision,(body.note||"").slice(0,500),body.id]);
-  if(!rows.length)return NextResponse.json({error:"Pledge not found or already reviewed"},{status:404});
+  const rows=await queryD1("UPDATE supporter_pledges SET status=?,reviewed_at=datetime('now'),reviewed_by='authorised-admin',review_note=? WHERE id=? AND status='pending' AND ( ?='rejected' OR verification_status='verified') RETURNING id,status",[body.decision,(body.note||"").slice(0,500),body.id,body.decision]);
+  if(!rows.length)return NextResponse.json({error:"Pledge not found, already reviewed, or not independently verified"},{status:404});
   await queryD1("INSERT INTO supporter_audit (id,pledge_id,action,actor,reason,policy_version) VALUES (?,?,?,?,?,?)",[randomUUID(),body.id,body.decision,"authorised-admin",(body.note||"").slice(0,500),"wpu-supporters-v1"]);
   return NextResponse.json({ok:true,status:rows[0].status});
  }catch{return NextResponse.json({error:"Database unavailable"},{status:503});}
