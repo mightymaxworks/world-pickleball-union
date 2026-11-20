@@ -10,7 +10,7 @@ export default function SupporterDirectory(){
  const [unavailable,setUnavailable]=useState(false);
  useEffect(()=>{let active=true;fetch("/api/supporters",{cache:"no-store"}).then(async res=>{if(!res.ok)throw Error();return res.json()}).then(data=>{if(active)setSupporters(data.supporters||[])}).catch(()=>{if(active)setUnavailable(true)}).finally(()=>{if(active)setLoading(false)});return()=>{active=false}},[]);
  const [query,setQuery]=useState(""); const [region,setRegion]=useState("All regions"); const [category,setCategory]=useState("All categories");
- const filtered=useMemo(()=>supporters.filter(s=>(region==="All regions"||s.region===region)&&(category==="All categories"||s.category===category)&&[s.name,s.country].join(" ").toLowerCase().includes(query.toLowerCase())),[query,region,category]);
+ const filtered=useMemo(()=>supporters.filter(s=>(region==="All regions"||s.region===region)&&(category==="All categories"||s.category===category)&&[s.name,s.country].join(" ").toLowerCase().includes(query.toLowerCase())),[supporters,query,region,category]);
  const control={padding:"13px 15px",border:"1px solid #b9c7d9",borderRadius:4,background:"white",color:"#14233d",width:"100%",fontSize:15};
  return <div>
   <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(210px,1fr))",gap:12,marginBottom:30}}>
