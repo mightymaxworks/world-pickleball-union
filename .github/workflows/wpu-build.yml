@@ -16,5 +16,6 @@ jobs:
           node-version: '24'
           cache: npm
       - run: npm ci
+      - run: node --experimental-strip-types --test tests/*.test.mjs
       - run: npm run build
       - run: npm run lint
