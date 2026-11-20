@@ -8,11 +8,27 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - name: Verify public supporter directory
+      - name: Check production supporter directory
         shell: bash
         run: |
           set -euo pipefail
-          curl --fail --silent --show-error --max-time 20 --retry 2 --retry-delay 2 \
+          status=$(curl --silent --show-error --max-time 20 --retry 2 --retry-delay 2 \
             -H 'Accept: application/json' \
-            'https://worldpickleball.world/api/supporters' -o response.json
-          node -e 'const d=require("./response.json");if(!Array.isArray(d.supporters)||d.error)process.exit(1);console.log("Supporter directory API healthy; records:",d.supporters.length)'
+            -o response.json -w '%{http_code}' \
+            'https://worldpickleball.world/api/supporters')
+          echo "HTTP status: $status"\n          echo "$status" > http-status.txt
+          node - <<'NODE'
+          const fs=require("node:fs");
+          const data=JSON.parse(fs.readFileSync("response.json","utf8"));
+          const healthy=Array.isArray(data.supporters)&&!data.error;
+          const summary=[
+            "## WPU production supporter directory",
+            "HTTP response: "+fs.readFileSync("http-status.txt","utf8").trim(),
+            "Database health: "+(healthy?"PASS":"FAIL"),
+            "Diagnostic: "+(data.diagnostic||"none"),
+            "Published supporters: "+(Array.isArray(data.supporters)?data.supporters.length:"invalid")
+          ].join("\n");
+          fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY,summary+"\n");
+          console.log(summary);
+          if(process.env.HTTP_STATUS!=="200"||!healthy)process.exit(1);
+          NODE
