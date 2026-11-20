@@ -6,6 +6,12 @@ type D1 = {
  prepare:(sql:string)=>{bind:(...params:unknown[])=>{all:()=>Promise<{results:Record<string,unknown>[]}>}}
 };
 type CloudflareContext = {env?:{WPU_DB?:D1}};
+export function bindingDiagnostics(){
+ const context=(globalThis as unknown as Record<symbol,CloudflareContext|undefined>)[Symbol.for("__cloudflare-context__")];
+ const binding=context?.env?.WPU_DB;
+ const processBinding=(process.env as unknown as {WPU_DB?:D1}).WPU_DB;
+ return {contextPresent:!!context,contextEnvPresent:!!context?.env,contextBindingPresent:!!binding,contextBindingUsable:typeof binding?.prepare==="function",processBindingPresent:!!processBinding,processBindingUsable:typeof processBinding?.prepare==="function"};
+}
 function nativeDatabase():D1|undefined {
  const contextKey=Symbol.for("__cloudflare-context__");
  const context=(globalThis as unknown as Record<symbol,CloudflareContext|undefined>)[contextKey];
