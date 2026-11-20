@@ -10,7 +10,7 @@ export default function CompetitionRankingBoard() {
     const element = ref.current;
     if (!element) return;
 
-    let timers: ReturnType<typeof setTimeout>[] = [];
+    const timers: ReturnType<typeof setTimeout>[] = [];
 
     const observer = new IntersectionObserver(
       ([entry]) => {
