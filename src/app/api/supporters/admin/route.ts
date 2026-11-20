@@ -1,5 +1,5 @@
 import {NextResponse} from "next/server";
-import {timingSafeEqual} from "node:crypto";
+import {timingSafeEqual,randomUUID} from "node:crypto";
 import {queryD1} from "@/lib/supporters-db";
 export const runtime="nodejs";
 export const dynamic="force-dynamic";
@@ -23,6 +23,7 @@ export async function PATCH(req:Request){
  try{
   const rows=await queryD1("UPDATE supporter_pledges SET status=?,reviewed_at=datetime('now'),reviewed_by='authorised-admin',review_note=? WHERE id=? AND status='pending' RETURNING id,status",[body.decision,(body.note||"").slice(0,500),body.id]);
   if(!rows.length)return NextResponse.json({error:"Pledge not found or already reviewed"},{status:404});
+  await queryD1("INSERT INTO supporter_audit (id,pledge_id,action,actor,reason,policy_version) VALUES (?,?,?,?,?,?)",[randomUUID(),body.id,body.decision,"authorised-admin",(body.note||"").slice(0,500),"wpu-supporters-v1"]);
   return NextResponse.json({ok:true,status:rows[0].status});
  }catch{return NextResponse.json({error:"Database unavailable"},{status:503});}
 }
