@@ -518,7 +518,7 @@ export default function MembersPage() {
 
       <section className="section-shell" style={{padding:"65px 0"}}>
         <h2 style={{fontSize:"clamp(30px,4vw,48px)",letterSpacing:"-.04em"}}>Support WPU without applying for membership.</h2>
-        <p style={{maxWidth:680,lineHeight:1.8}}>Organisations wishing to pledge support for WPU's mission can join the Global Support Network. A pledge is separate from membership, representation and admission.</p>
+        <p style={{maxWidth:680,lineHeight:1.8}}>Organisations wishing to pledge support for WPU&apos;s mission can join the Global Support Network. A pledge is separate from membership, representation and admission.</p>
         <Link href="/supporters" className="button-primary">Explore the Global Support Network →</Link>
       </section>
       <section className="final-cta">
