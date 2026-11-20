@@ -16,7 +16,8 @@ jobs:
             -H 'Accept: application/json' \
             -o response.json -w '%{http_code}' \
             'https://worldpickleball.world/api/supporters')
-          echo "HTTP status: $status"\n          echo "$status" > http-status.txt
+          echo "HTTP status: $status"
+          echo "$status" > http-status.txt
           node - <<'NODE'
           const fs=require("node:fs");
           const data=JSON.parse(fs.readFileSync("response.json","utf8"));
@@ -30,5 +31,5 @@ jobs:
           ].join("\n");
           fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY,summary+"\n");
           console.log(summary);
-          if(process.env.HTTP_STATUS!=="200"||!healthy)process.exit(1);
+          if(fs.readFileSync("http-status.txt","utf8").trim()!=="200"||!healthy)process.exit(1);
           NODE
