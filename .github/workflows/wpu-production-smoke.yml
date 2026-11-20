@@ -27,6 +27,7 @@ jobs:
             "HTTP response: "+fs.readFileSync("http-status.txt","utf8").trim(),
             "Database health: "+(healthy?"PASS":"FAIL"),
             "Diagnostic: "+(data.diagnostic||"none"),
+            "Binding checks: "+JSON.stringify(data.bindingChecks||{}),
             "Published supporters: "+(Array.isArray(data.supporters)?data.supporters.length:"invalid")
           ].join("\n");
           fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY,summary+"\n");
