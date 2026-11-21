@@ -19,11 +19,18 @@ jobs:
       - run: npm ci
       - name: Install Cloudflare adapter in isolated runner
         run: npm install --no-save --package-lock=false next@16.4.5 @opennextjs/cloudflare@1.20.18 wrangler@4
+      - name: Prepare isolated OpenNext configuration
+        shell: bash
+        run: |
+          cat > open-next.config.ts <<'EOF'
+          import { defineCloudflareConfig } from "@opennextjs/cloudflare";
+          export default defineCloudflareConfig();
+          EOF
       - name: Run adapter build without deploying
         shell: bash
         run: |
           set -euo pipefail
-          npx opennextjs-cloudflare build
+          npx opennextjs-cloudflare build --skipWranglerConfigCheck
           test -f .open-next/worker.js
           test -d .open-next/assets
       - name: Inspect generated output
