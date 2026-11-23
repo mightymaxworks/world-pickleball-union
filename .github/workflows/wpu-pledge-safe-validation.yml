@@ -32,6 +32,12 @@ jobs:
           echo '## WPU pledge API safe validation' >> "$GITHUB_STEP_SUMMARY"
           check 'Invalid JSON' 400 '{'
           check 'Missing required fields' 400 '{}'
+          # All following requests are deliberately invalid and cannot insert a pledge.
+          valid_fields='{"name":"WPU Validation Only","country":"Singapore","region":"Asia","category":"Clubs & Communities","website":"https://example.org","representative":"Validation Runner","email":"runner@example.org"'
+          check 'Missing authority consent' 400 "${valid_fields},\"authority\":\"no\",\"publication\":\"yes\"}"
+          check 'Missing publication consent' 400 "${valid_fields},\"authority\":\"yes\",\"publication\":\"no\"}"
+          check 'Invalid website scheme' 400 "${valid_fields/https:\/\/example.org/javascript:alert(1)},\"authority\":\"yes\",\"publication\":\"yes\"}"
+          check 'Invalid region' 400 "${valid_fields/\"region\":\"Asia\"/\"region\":\"Atlantis\"},\"authority\":\"yes\",\"publication\":\"yes\"}"
           status=$(curl --silent --show-error --max-time 20 -o response.json -w '%{http_code}' \
             -H 'Content-Type: application/json' \
             -H 'Origin: https://untrusted.example' \
