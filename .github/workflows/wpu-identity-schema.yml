@@ -4,6 +4,7 @@ on:
   pull_request:
     paths:
       - 'database/wpu-identity-foundation-v1.sql'
+      - 'database/wpu-identity-invariants-v1.sql'
       - 'database/test-wpu-identity-foundation.sql'
       - '.github/workflows/wpu-identity-schema.yml'
 permissions:
@@ -24,6 +25,7 @@ jobs:
           npx wrangler d1 execute wpu-supporters --local --file database/supporters.sql
           npx wrangler d1 execute wpu-supporters --local --file database/supporters-review-migration.sql
           npx wrangler d1 execute wpu-supporters --local --file database/wpu-identity-foundation-v1.sql
+          npx wrangler d1 execute wpu-supporters --local --file database/wpu-identity-invariants-v1.sql
       - name: Verify identity records and existing supporter tables
         shell: bash
         run: |
