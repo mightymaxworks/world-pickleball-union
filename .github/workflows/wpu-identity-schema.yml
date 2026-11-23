@@ -1,0 +1,44 @@
+name: WPU identity schema isolated D1 tests
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - 'database/wpu-identity-foundation-v1.sql'
+      - 'database/wpu-identity-invariants-v1.sql'
+      - 'database/wpu-passwordless-auth-v1.sql'
+      - 'database/test-wpu-identity-foundation.sql'
+      - '.github/workflows/wpu-identity-schema.yml'
+permissions:
+  contents: read
+jobs:
+  identity-d1:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci
+      - name: Apply existing supporter schema and new identity schema to isolated local D1
+        run: |
+          npx wrangler d1 execute wpu-supporters --local --file database/supporters.sql
+          npx wrangler d1 execute wpu-supporters --local --file database/supporters-review-migration.sql
+          npx wrangler d1 execute wpu-supporters --local --file database/wpu-identity-foundation-v1.sql
+          npx wrangler d1 execute wpu-supporters --local --file database/wpu-identity-invariants-v1.sql
+          npx wrangler d1 execute wpu-supporters --local --file database/wpu-passwordless-auth-v1.sql
+      - name: Verify identity records and existing supporter tables
+        shell: bash
+        run: |
+          set -euo pipefail
+          npx wrangler d1 execute wpu-supporters --local --file database/test-wpu-identity-foundation.sql > /tmp/wpu-identity-result.txt
+          cat /tmp/wpu-identity-result.txt
+          grep -q IDENTITY_FIXTURE_PASS /tmp/wpu-identity-result.txt
+          grep -q IDENTITY_INVARIANTS_PASS /tmp/wpu-identity-result.txt
+          grep -q REGISTRATION_PRIVACY_PASS /tmp/wpu-identity-result.txt
+          grep -q PASSWORDLESS_SCHEMA_PASS /tmp/wpu-identity-result.txt
+          npx wrangler d1 execute wpu-supporters --local --command "SELECT name FROM sqlite_master WHERE type='table' AND name='supporter_pledges'" > /tmp/wpu-supporters-result.txt
+          grep -q supporter_pledges /tmp/wpu-supporters-result.txt
+          echo 'Identity schema fixture and legacy supporter table: PASS' >> "$GITHUB_STEP_SUMMARY"
+          echo 'No production database touched.' >> "$GITHUB_STEP_SUMMARY"
