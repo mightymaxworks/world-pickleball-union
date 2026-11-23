@@ -63,7 +63,8 @@ jobs:
           id=$(jq -r '.id' /tmp/pledge-response.json)
           status=$(curl -sS --max-time 20 -o /tmp/verify-unauth.json -w '%{http_code}' -H 'Content-Type: application/json' --data '{}' http://127.0.0.1:8787/api/supporters/admin/verify)
           test "$status" = 401
-          status=$(curl -sS --max-time 20 -o /tmp/verify-admin.json -w '%{http_code}' -H 'Content-Type: application/json' -H 'Authorization: Bearer test-local-token' --data "{\\"id\\":\\"$id\\",\\"evidenceUrl\\":\\"https://example.org/verification\\",\\"note\\":\\"Locally checked organisation evidence.\\"}" http://127.0.0.1:8787/api/supporters/admin/verify)
+          jq -cn --arg id "$id" '{id:$id,evidenceUrl:"https://example.org/verification",note:"Locally checked organisation evidence."}' > /tmp/verification.json
+          status=$(curl -sS --max-time 20 -o /tmp/verify-admin.json -w '%{http_code}' -H 'Content-Type: application/json' -H 'Authorization: Bearer test-local-token' --data @/tmp/verification.json http://127.0.0.1:8787/api/supporters/admin/verify)
           echo "Verification response: $status"
           test "$status" = 200
           jq -e '.ok==true and .verification_status=="verified" and .publication_status=="pending"' /tmp/verify-admin.json
