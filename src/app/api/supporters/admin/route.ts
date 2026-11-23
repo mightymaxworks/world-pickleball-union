@@ -1,22 +1,25 @@
+import {getCloudflareContext} from "@opennextjs/cloudflare";
 import {NextResponse} from "next/server";
 import {timingSafeEqual,randomUUID} from "node:crypto";
 import {queryD1,batchD1} from "@/lib/supporters-db";
 export const runtime="nodejs";
 export const dynamic="force-dynamic";
-function authorised(req:Request){
- const secret=process.env.WPU_SUPPORTERS_ADMIN_TOKEN;
+async function authorised(req:Request){
+ let binding:string|undefined;
+ try{binding=(getCloudflareContext().env as unknown as {WPU_SUPPORTERS_ADMIN_TOKEN?:string}).WPU_SUPPORTERS_ADMIN_TOKEN;}catch{/* Non-Worker test runtime */}
+ const secret=binding||process.env.WPU_SUPPORTERS_ADMIN_TOKEN;
  const value=req.headers.get("authorization")?.replace(/^Bearer /,"");
  if(!secret||!value)return false;
  const a=Buffer.from(value),b=Buffer.from(secret);
  return a.length===b.length&&timingSafeEqual(a,b);
 }
 export async function GET(req:Request){
- if(!authorised(req))return NextResponse.json({error:"Unauthorized"},{status:401});
+ if(!await authorised(req))return NextResponse.json({error:"Unauthorized"},{status:401});
  try{return NextResponse.json({pledges:await queryD1("SELECT id,name,country,region,category,website,representative,email,status,created_at FROM supporter_pledges WHERE status='pending' ORDER BY created_at ASC LIMIT 100")});}
  catch{return NextResponse.json({error:"Database unavailable"},{status:503});}
 }
 export async function PATCH(req:Request){
- if(!authorised(req))return NextResponse.json({error:"Unauthorized"},{status:401});
+ if(!await authorised(req))return NextResponse.json({error:"Unauthorized"},{status:401});
  let body:{id?:string;decision?:string;note?:string};
  try{body=await req.json();}catch{return NextResponse.json({error:"Invalid JSON"},{status:400});}
  if(!body.id||!(/^[0-9a-f-]{36}$/i.test(body.id))||!["approved","rejected"].includes(body.decision||""))return NextResponse.json({error:"Invalid decision"},{status:400});
