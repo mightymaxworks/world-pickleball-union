@@ -11,4 +11,4 @@ Endpoint: POST /api/auth/request-code, JSON {email}.
 - Requires the v1 identity and passwordless migrations followed by database/wpu-passwordless-auth-v2.sql.
 - No verification endpoint, session issuance, profile creation or public signup UI yet. Do not advertise as live.
 - Before enabling publicly: test parallel request race/cooldown behavior, provider failure behavior, CSRF handling, abuse monitoring and controlled mail delivery.
-- In particular, the cooldown check and insert are not atomic: concurrent requests may send multiple codes; fix before public launch.
+- The email cooldown now uses a single atomic D1 UPSERT with a rolling 60-second interval. Still requires concurrent-request integration tests before public launch.
