@@ -35,7 +35,8 @@ jobs:
         run: npm run build && npx opennextjs-cloudflare build
       - name: Start local Worker
         run: |
-          WPU_SUPPORTERS_ADMIN_TOKEN=test-local-token npx wrangler dev --local --port 8787 > /tmp/wpu-local-worker.log 2>&1 &
+          printf 'WPU_SUPPORTERS_ADMIN_TOKEN=test-local-token\\n' > .dev.vars
+          npx wrangler dev --local --port 8787 > /tmp/wpu-local-worker.log 2>&1 &
           echo $! > /tmp/wpu-local-worker.pid
           for i in $(seq 1 50); do
             if curl -fsS --max-time 2 http://127.0.0.1:8787/api/supporters >/dev/null; then exit 0; fi
