@@ -23,7 +23,7 @@ CREATE INDEX IF NOT EXISTS idx_wpu_accounts_person ON wpu_accounts(person_id);
 CREATE TABLE IF NOT EXISTS wpu_player_profiles (
   person_id TEXT PRIMARY KEY REFERENCES wpu_persons(id) ON DELETE RESTRICT,
   public_player_code TEXT NOT NULL UNIQUE,
-  visibility TEXT NOT NULL DEFAULT 'public' CHECK(visibility IN ('public','private')),
+  visibility TEXT NOT NULL DEFAULT 'private' CHECK(visibility IN ('public','private')),
   created_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
