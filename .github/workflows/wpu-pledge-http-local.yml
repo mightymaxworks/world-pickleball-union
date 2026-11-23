@@ -1,6 +1,13 @@
 name: WPU isolated HTTP pledge integration
 on:
   workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'src/app/api/supporters/pledge/**'
+      - 'src/lib/supporters-db.ts'
+      - 'database/**'
+      - '.github/workflows/wpu-pledge-http-local.yml'
   pull_request:
     paths:
       - 'src/app/api/supporters/pledge/**'
