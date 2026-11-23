@@ -1,3 +1,4 @@
+import {getCloudflareContext} from "@opennextjs/cloudflare";
 import {NextResponse} from "next/server";
 import {randomUUID,timingSafeEqual} from "node:crypto";
 import {queryD1,batchD1} from "@/lib/supporters-db";
@@ -5,9 +6,10 @@ import {queryD1,batchD1} from "@/lib/supporters-db";
 export const runtime="nodejs";
 export const dynamic="force-dynamic";
 
-function authorised(request:Request):boolean{
- const context=(globalThis as unknown as Record<symbol,{env?:{WPU_SUPPORTERS_ADMIN_TOKEN?:string}}|undefined>)[Symbol.for("__cloudflare-context__")];
- const secret=context?.env?.WPU_SUPPORTERS_ADMIN_TOKEN||process.env.WPU_SUPPORTERS_ADMIN_TOKEN;
+async function authorised(request:Request):Promise<boolean>{
+ let binding:string|undefined;
+ try{binding=(getCloudflareContext().env as unknown as {WPU_SUPPORTERS_ADMIN_TOKEN?:string}).WPU_SUPPORTERS_ADMIN_TOKEN;}catch{/* Non-Worker test runtime */}
+ const secret=binding||process.env.WPU_SUPPORTERS_ADMIN_TOKEN;
  const value=request.headers.get("authorization")?.replace(/^Bearer /,"");
  if(!secret||!value)return false;
  const a=Buffer.from(value),b=Buffer.from(secret);
@@ -16,7 +18,7 @@ function authorised(request:Request):boolean{
 
 /** Human evidence review only; this endpoint never approves or publishes. */
 export async function POST(request:Request){
- if(!authorised(request))return NextResponse.json({error:"Unauthorized"},{status:401});
+ if(!await authorised(request))return NextResponse.json({error:"Unauthorized"},{status:401});
  let body:unknown;
  try{body=await request.json();}catch{return NextResponse.json({error:"Invalid JSON"},{status:400});}
  if(!body||typeof body!=="object"||Array.isArray(body))return NextResponse.json({error:"Invalid submission"},{status:400});
