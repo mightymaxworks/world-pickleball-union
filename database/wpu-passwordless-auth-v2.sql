@@ -12,3 +12,9 @@ CREATE TABLE IF NOT EXISTS wpu_auth_rate_limits (
   PRIMARY KEY(key_hash,window_start)
 );
 CREATE INDEX IF NOT EXISTS idx_wpu_auth_rate_limits_window ON wpu_auth_rate_limits(window_start);
+
+-- Atomic rolling cooldown; email keys are HMAC digests, never raw email.
+CREATE TABLE IF NOT EXISTS wpu_auth_send_cooldowns (
+  email_key_hash TEXT PRIMARY KEY,
+  next_allowed_at INTEGER NOT NULL
+);
