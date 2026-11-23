@@ -42,3 +42,25 @@ Tournament registration and ranking points are subsequent slices. Passport place
 
 ## Definition of done
 All acceptance tests passed with links to run evidence; PR merged; deployed version verified; rollback documented; feature marked ACCEPTED. Partial completion remains IMPLEMENTED or TESTED only.
+
+## Locked registration decisions (2026-11-23)
+- Authentication: passwordless email verification code or magic link. The engineering implementation must choose a secure verified flow, with single-use expiry and replay prevention. Password is not required.
+- Date of birth: deferred at account creation; required before the player's first tournament entry. Store privately and enforce age eligibility server-side.
+- Phone number: optional, collected later when relevant; not required for membership.
+- Public player profile: PRIVATE by default, with explicit opt-in to public visibility. Changing visibility must be authenticated and audited.
+- Account registration must not imply publication of a player's profile, date of birth, email or phone.
+- Account and player records may exist before DOB is provided; entry eligibility must fail closed until DOB and other division-specific requirements are satisfied.
+- For minors, implement age-appropriate privacy and guardian safeguards before enabling youth registration in applicable jurisdictions.
+- Distinguish residence country from national representation eligibility; representation is not automatically inferred from residence.
+
+## Minimum signup fields and progressive data
+At signup: email, full name or player name (legal identity verification requirements to be established), residence country, privacy/terms acknowledgement, and passwordless verification. No DOB or phone required at signup.
+After signup: immutable WPU player code, editable profile fields with access controls, optional phone, optional public visibility.
+At first event entry: DOB, applicable division eligibility and any required consent/guardian or representation evidence.
+
+## Required additional acceptance tests
+K. User can register without DOB or phone, and profile visibility defaults to private.
+L. Player cannot enter first tournament without supplying DOB and satisfying age eligibility.
+M. Public profile cannot be viewed before explicit opt-in; private email, phone and DOB are never exposed in public API responses.
+N. Expired/reused passwordless links or codes are rejected; login requests are rate limited and do not reveal whether an email is registered.
+O. Player can opt in and opt out of public profile; both transitions are authorised and audited.
