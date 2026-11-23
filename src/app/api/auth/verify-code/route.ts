@@ -37,8 +37,8 @@ export async function POST(request:Request) {
   try {
     const now=Math.floor(Date.now()/1000);
     const allowed=await Promise.all([
-      acquireRateLimit(rateLimitKey("ip-verify" as "ip",ip,env.AUTH_CODE_PEPPER),60,now),
-      acquireRateLimit(rateLimitKey("email-verify" as "email",email,env.AUTH_CODE_PEPPER),20,now),
+      acquireRateLimit(rateLimitKey("ip-verify",ip,env.AUTH_CODE_PEPPER),60,now),
+      acquireRateLimit(rateLimitKey("email-verify",email,env.AUTH_CODE_PEPPER),20,now),
     ]);
     if (allowed.some(x=>!x)) return invalid();
     const rows=await queryD1(
