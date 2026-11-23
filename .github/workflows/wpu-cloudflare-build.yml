@@ -1,0 +1,26 @@
+name: WPU Cloudflare Worker build validation
+on:
+  pull_request:
+  push:
+    branches: [main]
+permissions:
+  contents: read
+jobs:
+  worker-build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci
+      - name: Build deployable OpenNext Cloudflare Worker
+        run: npx opennextjs-cloudflare build
+      - name: Assert Cloudflare Worker entrypoint and static assets exist
+        run: |
+          test -s .open-next/worker.js
+          test -d .open-next/assets
+      - name: Validate Wrangler configuration and generated Worker
+        run: npx wrangler deploy --dry-run --outdir /tmp/wpu-worker-dry-run
