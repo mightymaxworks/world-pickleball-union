@@ -4,7 +4,8 @@ import {queryD1,batchD1} from "@/lib/supporters-db";
 export const runtime="nodejs";
 export const dynamic="force-dynamic";
 function authorised(req:Request){
- const secret=process.env.WPU_SUPPORTERS_ADMIN_TOKEN;
+ const context=(globalThis as unknown as Record<symbol,{env?:{WPU_SUPPORTERS_ADMIN_TOKEN?:string}}|undefined>)[Symbol.for("__cloudflare-context__")];
+ const secret=context?.env?.WPU_SUPPORTERS_ADMIN_TOKEN||process.env.WPU_SUPPORTERS_ADMIN_TOKEN;
  const value=req.headers.get("authorization")?.replace(/^Bearer /,"");
  if(!secret||!value)return false;
  const a=Buffer.from(value),b=Buffer.from(secret);
