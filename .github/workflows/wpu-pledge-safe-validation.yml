@@ -1,0 +1,47 @@
+name: WPU production pledge validation (no writes)
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Validate pledge API safely
+        shell: bash
+        run: |
+          set -euo pipefail
+          base='https://worldpickleball.world'
+          check() {
+            label="$1"
+            expected="$2"
+            payload="$3"
+            status=$(curl --silent --show-error --max-time 20 \
+              -o response.json -w '%{http_code}' \
+              -H 'Content-Type: application/json' \
+              -H 'Origin: https://worldpickleball.world' \
+              --data "$payload" "$base/api/supporters/pledge")
+            echo "$label: HTTP $status (expected $expected)"
+            if [ "$status" != "$expected" ]; then
+              cat response.json
+              exit 1
+            fi
+            echo "- $label: HTTP $status" >> "$GITHUB_STEP_SUMMARY"
+          }
+          echo '## WPU pledge API safe validation' >> "$GITHUB_STEP_SUMMARY"
+          check 'Invalid JSON' 400 '{'
+          check 'Missing required fields' 400 '{}'
+          status=$(curl --silent --show-error --max-time 20 -o response.json -w '%{http_code}' \
+            -H 'Content-Type: application/json' \
+            -H 'Origin: https://untrusted.example' \
+            --data '{}' "$base/api/supporters/pledge")
+          echo "Untrusted origin: HTTP $status (expected 403)"
+          test "$status" = 403
+          echo '- Untrusted origin: HTTP 403' >> "$GITHUB_STEP_SUMMARY"
+          status=$(curl --silent --show-error --max-time 20 -o response.json -w '%{http_code}' \
+            "$base/api/supporters/admin")
+          echo "Admin access without token: HTTP $status (expected 401)"
+          test "$status" = 401
+          echo '- Admin access without token: HTTP 401' >> "$GITHUB_STEP_SUMMARY"
+          echo 'No valid pledge was submitted; no database writes intended.' >> "$GITHUB_STEP_SUMMARY"
