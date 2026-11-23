@@ -14,3 +14,13 @@ SELECT CASE WHEN
  (SELECT COUNT(*) FROM wpu_role_assignments WHERE account_id='account-a' AND role='member')=1 AND
  (SELECT COUNT(*) FROM wpu_identity_audit WHERE subject_person_id='person-a')=1
 THEN 'IDENTITY_FIXTURE_PASS' ELSE 'IDENTITY_FIXTURE_FAIL' END AS result;
+
+-- Duplicate active membership and role grants must be rejected without failing fixture.
+INSERT OR IGNORE INTO wpu_memberships(id,person_id,membership_type,status)
+VALUES('membership-duplicate','person-a','individual','active');
+INSERT OR IGNORE INTO wpu_role_assignments(id,account_id,role,scope_type)
+VALUES('role-duplicate','account-a','member','global');
+SELECT CASE WHEN
+ (SELECT COUNT(*) FROM wpu_memberships WHERE person_id='person-a' AND membership_type='individual' AND status='active')=1
+ AND (SELECT COUNT(*) FROM wpu_role_assignments WHERE account_id='account-a' AND role='member' AND scope_type='global' AND revoked_at IS NULL)=1
+THEN 'IDENTITY_INVARIANTS_PASS' ELSE 'IDENTITY_INVARIANTS_FAIL' END AS result;
