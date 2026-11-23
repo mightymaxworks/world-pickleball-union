@@ -50,4 +50,10 @@ jobs:
           echo "Admin access without token: HTTP $status (expected 401)"
           test "$status" = 401
           echo '- Admin access without token: HTTP 401' >> "$GITHUB_STEP_SUMMARY"
+          status=$(curl --silent --show-error --max-time 20 -o response.json -w '%{http_code}' \
+            -H 'Content-Type: application/json' \
+            --data '{}' "$base/api/supporters/admin/verify")
+          echo "Admin verification without token: HTTP $status (expected 401)"
+          test "$status" = 401
+          echo '- Admin verification without token: HTTP 401' >> "$GITHUB_STEP_SUMMARY"
           echo 'No valid pledge was submitted; no database writes intended.' >> "$GITHUB_STEP_SUMMARY"
