@@ -24,3 +24,9 @@ SELECT CASE WHEN
  (SELECT COUNT(*) FROM wpu_memberships WHERE person_id='person-a' AND membership_type='individual' AND status='active')=1
  AND (SELECT COUNT(*) FROM wpu_role_assignments WHERE account_id='account-a' AND role='member' AND scope_type='global' AND revoked_at IS NULL)=1
 THEN 'IDENTITY_INVARIANTS_PASS' ELSE 'IDENTITY_INVARIANTS_FAIL' END AS result;
+
+-- Privacy default and deferred DOB are mandatory registration invariants.
+SELECT CASE WHEN
+ (SELECT visibility FROM wpu_player_profiles WHERE person_id='person-a')='private'
+ AND (SELECT birth_date FROM wpu_persons WHERE id='person-a') IS NULL
+THEN 'REGISTRATION_PRIVACY_PASS' ELSE 'REGISTRATION_PRIVACY_FAIL' END AS result;
