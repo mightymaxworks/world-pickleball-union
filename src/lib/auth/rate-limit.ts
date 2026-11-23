@@ -23,3 +23,16 @@ export async function acquireRateLimit(key: string, max: number, nowSeconds: num
   );
   return result.length === 1;
 }
+
+/** Single-statement rolling cooldown, safe under concurrent D1 requests. */
+export async function acquireEmailCooldown(emailKey: string, nowSeconds: number): Promise<boolean> {
+  const result = await queryD1(
+    `INSERT INTO wpu_auth_send_cooldowns(email_key_hash,next_allowed_at)
+     VALUES (?,?)
+     ON CONFLICT(email_key_hash) DO UPDATE SET next_allowed_at=excluded.next_allowed_at
+     WHERE wpu_auth_send_cooldowns.next_allowed_at <= ?
+     RETURNING next_allowed_at`,
+    [emailKey, nowSeconds + 60, nowSeconds],
+  );
+  return result.length === 1;
+}
