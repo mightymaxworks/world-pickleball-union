@@ -1,8 +1,8 @@
 import { randomUUID } from "node:crypto";
 import { NextResponse } from "next/server";
 import { queryD1 } from "@/lib/supporters-db";
-import { generateVerificationCode, digestVerificationCode, normalizeEmail, CODE_TTL_MS, RESEND_COOLDOWN_MS } from "@/lib/auth/challenge";
-import { rateLimitKey, acquireRateLimit, MAX_EMAIL_REQUESTS_PER_HOUR, MAX_IP_REQUESTS_PER_HOUR } from "@/lib/auth/rate-limit";
+import { generateVerificationCode, digestVerificationCode, normalizeEmail, CODE_TTL_MS } from "@/lib/auth/challenge";
+import { rateLimitKey, acquireRateLimit, acquireEmailCooldown, MAX_EMAIL_REQUESTS_PER_HOUR, MAX_IP_REQUESTS_PER_HOUR } from "@/lib/auth/rate-limit";
 import { authEnvironment } from "@/lib/auth/runtime";
 import { sendVerificationCode } from "@/lib/auth/resend";
 
@@ -39,11 +39,7 @@ export async function POST(request: Request) {
       acquireRateLimit(ipKey,MAX_IP_REQUESTS_PER_HOUR,Math.floor(now/1000)),
     ]);
     if (!emailAllowed || !ipAllowed) return response();
-    const recent=await queryD1(
-      "SELECT id FROM wpu_auth_challenges WHERE email_normalized=? AND created_at > datetime('now', '-60 seconds') LIMIT 1",
-      [email],
-    );
-    if (recent.length) return response();
+    if (!await acquireEmailCooldown(emailKey, Math.floor(now/1000))) return response();
     const code=generateVerificationCode();
     const id=randomUUID();
     const hash=digestVerificationCode(email,id,code,env.AUTH_CODE_PEPPER);
