@@ -30,3 +30,16 @@ SELECT CASE WHEN
  (SELECT visibility FROM wpu_player_profiles WHERE person_id='person-a')='private'
  AND (SELECT birth_date FROM wpu_persons WHERE id='person-a') IS NULL
 THEN 'REGISTRATION_PRIVACY_PASS' ELSE 'REGISTRATION_PRIVACY_FAIL' END AS result;
+
+-- Passwordless persistence fixture (synthetic hashes only).
+INSERT INTO wpu_auth_emails(account_id,email_normalized,verified_at)
+VALUES('account-a','test@example.org',datetime('now'));
+INSERT INTO wpu_auth_challenges(id,email_normalized,secret_hash,purpose,expires_at)
+VALUES('challenge-a','test@example.org','synthetic-hash-a','signin',datetime('now','+10 minutes'));
+INSERT INTO wpu_auth_sessions(id,account_id,session_hash,expires_at)
+VALUES('session-a','account-a','synthetic-session-hash-a',datetime('now','+1 day'));
+SELECT CASE WHEN
+ (SELECT COUNT(*) FROM wpu_auth_emails WHERE account_id='account-a' AND verified_at IS NOT NULL)=1
+ AND (SELECT COUNT(*) FROM wpu_auth_challenges WHERE purpose='signin' AND consumed_at IS NULL)=1
+ AND (SELECT COUNT(*) FROM wpu_auth_sessions WHERE account_id='account-a' AND revoked_at IS NULL)=1
+THEN 'PASSWORDLESS_SCHEMA_PASS' ELSE 'PASSWORDLESS_SCHEMA_FAIL' END AS result;
