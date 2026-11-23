@@ -34,6 +34,7 @@ jobs:
           cat /tmp/wpu-identity-result.txt
           grep -q IDENTITY_FIXTURE_PASS /tmp/wpu-identity-result.txt
           grep -q IDENTITY_INVARIANTS_PASS /tmp/wpu-identity-result.txt
+          grep -q REGISTRATION_PRIVACY_PASS /tmp/wpu-identity-result.txt
           npx wrangler d1 execute wpu-supporters --local --command "SELECT name FROM sqlite_master WHERE type='table' AND name='supporter_pledges'" > /tmp/wpu-supporters-result.txt
           grep -q supporter_pledges /tmp/wpu-supporters-result.txt
           echo 'Identity schema fixture and legacy supporter table: PASS' >> "$GITHUB_STEP_SUMMARY"
