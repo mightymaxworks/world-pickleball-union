@@ -1,0 +1,33 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "world-pickleball-union",
+  "main": ".open-next/worker.js",
+  "compatibility_date": "2026-11-18",
+  "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
+  "assets": {
+    "directory": ".open-next/assets",
+    "binding": "ASSETS"
+  },
+  "images": {
+    "binding": "IMAGES"
+  },
+  "r2_buckets": [
+    {
+      "binding": "NEXT_INC_CACHE_R2_BUCKET",
+      "bucket_name": "world-pickleball-union-opennext-cache"
+    }
+  ],
+  "services": [
+    {
+      "binding": "WORKER_SELF_REFERENCE",
+      "service": "world-pickleball-union"
+    }
+  ],
+  "d1_databases": [
+    {
+      "binding": "WPU_DB",
+      "database_name": "wpu-supporters",
+      "database_id": "f245a594-0932-41b9-b255-aeaa1300b639"
+    }
+  ]
+}
