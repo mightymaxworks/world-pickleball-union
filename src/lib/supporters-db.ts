@@ -2,7 +2,9 @@
 // OpenNext publishes request-scoped bindings on Symbol.for("__cloudflare-context__").
 // Keep process.env fallback for environments that expose native bindings there.
 // No REST API token or external service is used.
+type Prepared = {bind:(...params:unknown[])=>{all:()=>Promise<{results:Record<string,unknown>[]}>}};
 type D1 = {
+ batch?:(statements:unknown[])=>Promise<unknown>;
  prepare:(sql:string)=>{bind:(...params:unknown[])=>{all:()=>Promise<{results:Record<string,unknown>[]}>}}
 };
 type CloudflareContext = {env?:{WPU_DB?:D1}};
@@ -26,4 +28,16 @@ export async function queryD1(sql:string,params:unknown[]=[]):Promise<Record<str
  if(!database)throw new Error("WPU_DB_NATIVE_BINDING_MISSING");
  const result=await database.prepare(sql).bind(...params).all();
  return result.results||[];
+}
+
+/**
+ * D1 batch executes statements in a transaction; pledge and audit must succeed
+ * together so no accepted pledge is left without an audit record.
+ */
+export async function batchD1(statements:{sql:string;params:unknown[]}[]):Promise<void>{
+ const database=nativeDatabase();
+ if(!database)throw new Error("WPU_DB_NATIVE_BINDING_MISSING");
+ if(typeof database.batch!=="function")throw new Error("WPU_DB_BATCH_UNAVAILABLE");
+ const prepared=statements.map(({sql,params})=>database.prepare(sql).bind(...params));
+ await database.batch(prepared);
 }
