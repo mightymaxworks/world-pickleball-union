@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import {
   generateVerificationCode, normalizeEmail, digestVerificationCode,
   verifyVerificationCode, canAttemptCode, CODE_TTL_MS, MAX_CODE_ATTEMPTS
-} from "./challenge.ts";
+} from "../src/lib/auth/challenge.ts";
 
 const pepper = "test-only-pepper-0123456789-abcdef-0123456789";
 test("generates six numeric digits", () => {
