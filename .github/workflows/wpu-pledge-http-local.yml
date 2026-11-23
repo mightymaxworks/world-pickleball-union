@@ -1,0 +1,62 @@
+name: WPU isolated HTTP pledge integration
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - 'src/app/api/supporters/pledge/**'
+      - 'src/lib/supporters-db.ts'
+      - '.github/workflows/wpu-pledge-http-local.yml'
+permissions:
+  contents: read
+jobs:
+  http-integration:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci
+      - name: Initialize isolated local D1
+        run: |
+          npx wrangler d1 execute wpu-supporters --local --file database/supporters.sql
+          npx wrangler d1 execute wpu-supporters --local --file database/supporters-review-migration.sql
+      - name: Build local Cloudflare Worker
+        run: npm run build && npx opennextjs-cloudflare build
+      - name: Start local Worker
+        run: |
+          npx wrangler dev --local --port 8787 > /tmp/wpu-local-worker.log 2>&1 &
+          echo $! > /tmp/wpu-local-worker.pid
+          for i in $(seq 1 50); do
+            if curl -fsS --max-time 2 http://127.0.0.1:8787/api/supporters >/dev/null; then exit 0; fi
+            sleep 2
+          done
+          cat /tmp/wpu-local-worker.log
+          exit 1
+      - name: Submit one valid pledge through local HTTP API
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat > /tmp/pledge.json <<'JSON'
+          {"name":"WPU LOCAL INTEGRATION TEST ONLY","country":"Singapore","region":"Asia","category":"Clubs & Communities","website":"https://example.org","representative":"Local CI Test","email":"local-test@example.org","authority":"yes","publication":"yes"}
+          JSON
+          status=$(curl -sS --max-time 20 -o /tmp/pledge-response.json -w '%{http_code}' -H 'Content-Type: application/json' -H 'Origin: https://worldpickleball.world' --data @/tmp/pledge.json http://127.0.0.1:8787/api/supporters/pledge)
+          cat /tmp/pledge-response.json
+          test "$status" = 201
+          jq -e '.ok==true and .status=="pending" and (.id|type=="string")' /tmp/pledge-response.json
+          curl -fsS http://127.0.0.1:8787/api/supporters | jq -e '[.supporters[] | select(.name=="WPU LOCAL INTEGRATION TEST ONLY")] | length==0'
+          echo 'Local HTTP pledge accepted as pending and not publicly listed: PASS' >> "$GITHUB_STEP_SUMMARY"
+      - name: Check local D1 pledge and audit records
+        shell: bash
+        run: |
+          set -euo pipefail
+          npx wrangler d1 execute wpu-supporters --local --command "SELECT CASE WHEN (SELECT COUNT(*) FROM supporter_pledges WHERE name='WPU LOCAL INTEGRATION TEST ONLY' AND status='pending' AND verification_status='unverified')=1 AND (SELECT COUNT(*) FROM supporter_audit WHERE pledge_id IN (SELECT id FROM supporter_pledges WHERE name='WPU LOCAL INTEGRATION TEST ONLY') AND action='submitted')=1 THEN 'PASS' ELSE 'FAIL' END AS result" > /tmp/pledge-db-check.txt
+          cat /tmp/pledge-db-check.txt
+          grep -q PASS /tmp/pledge-db-check.txt
+          echo 'Local D1 pledge and audit persisted together: PASS' >> "$GITHUB_STEP_SUMMARY"
+          echo 'All test data is confined to the ephemeral GitHub runner. Production D1 is untouched.' >> "$GITHUB_STEP_SUMMARY"
+      - name: Worker diagnostics on failure
+        if: failure()
+        run: tail -150 /tmp/wpu-local-worker.log || true
