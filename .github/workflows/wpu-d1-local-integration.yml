@@ -46,3 +46,11 @@ jobs:
           grep -q 'PASS' /tmp/wpu-d1-result.txt
           echo 'Local D1 schema and pending pledge/audit fixture: PASS' >> "$GITHUB_STEP_SUMMARY"
           echo 'No production database or live API accessed.' >> "$GITHUB_STEP_SUMMARY"
+      - name: Verify review audit guards on isolated D1
+        shell: bash
+        run: |
+          set -euo pipefail
+          npx wrangler d1 execute wpu-supporters --local --file database/test-review-transaction.sql > /tmp/wpu-review-result.txt
+          cat /tmp/wpu-review-result.txt
+          grep -q 'PASS' /tmp/wpu-review-result.txt
+          echo 'Local D1 review transitions and audit guards: PASS' >> "$GITHUB_STEP_SUMMARY"
