@@ -1,4 +1,4 @@
-import {queryD1} from "@/lib/supporters-db";
+import {queryD1,batchD1} from "@/lib/supporters-db";
 import {assessPledge} from "@/lib/supporter-approval-policy";
 import {NextResponse} from "next/server";
 import {randomUUID} from "node:crypto";
@@ -23,8 +23,10 @@ export async function POST(request:Request){
  const assessment=assessPledge({name:String(body.name),category:String(body.category),website:String(body.website),email:String(body.email),duplicateCount:Number(duplicateRows[0]?.n||0),emailVerified:false,domainVerified:false,abusePassed:false});
  const id=randomUUID();const statement="INSERT INTO supporter_pledges (id,name,country,region,category,website,representative,email,status,authority_confirmed,publication_consent,created_at,verification_status,review_reason,policy_version) VALUES (?,?,?,?,?,?,?,?, 'pending',1,1,datetime('now'),'unverified',?,?)";
  try{
- await queryD1(statement,[id,...fields.map(k=>String(body[k]).trim()),assessment.reasons.join(","),assessment.policyVersion]);
- await queryD1("INSERT INTO supporter_audit (id,pledge_id,action,actor,reason,policy_version) VALUES (?,?,?,?,?,?)",[randomUUID(),id,"submitted","system",assessment.reasons.join(","),assessment.policyVersion]);
+ await batchD1([
+  {sql:statement,params:[id,...fields.map(k=>String(body[k]).trim()),assessment.reasons.join(","),assessment.policyVersion]},
+  {sql:"INSERT INTO supporter_audit (id,pledge_id,action,actor,reason,policy_version) VALUES (?,?,?,?,?,?)",params:[randomUUID(),id,"submitted","system",assessment.reasons.join(","),assessment.policyVersion]}
+ ]);
  return NextResponse.json({ok:true,id,status:"pending",review:assessment.decision},{status:201});
  }catch{return error("We could not save the pledge. Please try again later.",503);}
 }
