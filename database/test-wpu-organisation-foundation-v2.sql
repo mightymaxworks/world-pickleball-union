@@ -1,0 +1,7 @@
+INSERT INTO wpu_persons(id,display_name,country_code) VALUES('pilot-person','Synthetic Player','SG');
+INSERT INTO wpu_player_profiles(person_id,public_player_code) VALUES('pilot-person','WPU-SYNTHETIC');
+INSERT INTO wpu_organisations(id,name,organisation_type) VALUES('pilot-fed','Synthetic Federation','national_federation'),('pilot-club','Synthetic Club','club'),('pilot-union','Synthetic Union','international');
+INSERT INTO wpu_federation_status(organisation_id) VALUES('pilot-fed');
+INSERT INTO wpu_memberships(id,person_id,membership_type,status,organisation_id) VALUES('pilot-global','pilot-person','individual','active',NULL),('pilot-fm','pilot-person','organisation','active','pilot-fed'),('pilot-cm','pilot-person','organisation','active','pilot-club');
+INSERT INTO wpu_organisation_relationships(id,subject_id,object_id,relationship_type) VALUES('pilot-aff','pilot-fed','pilot-union','affiliation');
+SELECT CASE WHEN (SELECT count(*) FROM wpu_memberships WHERE person_id='pilot-person')=3 AND (SELECT public_player_code FROM wpu_player_profiles WHERE person_id='pilot-person')='WPU-SYNTHETIC' AND (SELECT visibility FROM wpu_player_profiles WHERE person_id='pilot-person')='private' AND (SELECT domestic_recognition_status FROM wpu_federation_status WHERE organisation_id='pilot-fed')='pending' AND (SELECT status FROM wpu_organisation_relationships WHERE id='pilot-aff')='pending' AND (SELECT count(*) FROM wpu_role_assignments)=0 THEN 'FEDERATION_FOUNDATION_PASS' ELSE 'FEDERATION_FOUNDATION_FAIL' END AS result;
