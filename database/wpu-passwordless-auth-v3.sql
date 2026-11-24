@@ -37,7 +37,7 @@ BEGIN
  AND julianday(expires_at)>julianday('now') AND attempt_count BETWEEN 1 AND 5
  ) THEN RAISE(ABORT,'invalid challenge') END;
  SELECT CASE WHEN NOT EXISTS(SELECT 1 FROM wpu_auth_emails WHERE email_normalized=NEW.email_normalized)
- AND (NEW.consent_version<>'wpu-registration-v1' OR length(trim(NEW.display_name)) NOT BETWEEN 1 AND 160 OR NEW.country_code NOT GLOB '[A-Z][A-Z]' OR NEW.country_code='ZZ')
+ AND (NEW.gender IS NULL OR NEW.consent_version<>'wpu-registration-v1' OR length(trim(NEW.display_name)) NOT BETWEEN 1 AND 160 OR NEW.country_code NOT GLOB '[A-Z][A-Z]' OR NEW.country_code='ZZ')
  THEN RAISE(ABORT,'registration details required') END;
  UPDATE wpu_auth_challenges SET consumed_at=datetime('now') WHERE id=NEW.challenge_id;
  INSERT INTO wpu_persons(id,display_name,country_code,given_name,family_name,residence_locality,gender)
