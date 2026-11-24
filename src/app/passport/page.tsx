@@ -8,11 +8,13 @@ type Passport={name:string;residenceCountry:string;playerCode:string;visibility:
 export default function PassportPage(){
  const [passport,setPassport]=useState<Passport|null>(null);
  const [state,setState]=useState<"loading"|"signed-out"|"error"|"ready">("loading");
+ const [editName,setEditName]=useState("");const [saved,setSaved]=useState("");
  const [busy,setBusy]=useState(false);const [error,setError]=useState("");
  useEffect(()=>{let active=true;fetch("/api/passport",{cache:"no-store"}).then(async r=>{
  if(!active)return;if(r.status===401){setState("signed-out");return;}if(!r.ok)throw Error();
- const data=await r.json();if(active){setPassport(data.passport);setState("ready");}
+ const data=await r.json();if(active){setPassport(data.passport);setEditName(data.passport.name);setState("ready");}
  }).catch(()=>{if(active)setState("error");});return()=>{active=false;};},[]);
+ async function saveName(e:React.FormEvent<HTMLFormElement>){e.preventDefault();setBusy(true);setError("");setSaved("");try{const r=await fetch("/api/passport",{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify({name:editName})});if(!r.ok)throw Error();const data=await r.json();setPassport(p=>p?{...p,name:data.name}:p);setEditName(data.name);setSaved("Your name has been updated.");}catch{setError("Unable to save your name. Please try again.");}finally{setBusy(false);}}
  async function logout(){setBusy(true);setError("");try{const r=await fetch("/api/auth/logout",{method:"POST"});if(!r.ok)throw Error();window.location.assign("/join");}catch{setError("Unable to sign out. Please try again.");setBusy(false);}}
  return <main className="membership-shell"><section className="membership-intro">
  <Image src="/brand/wpu-logo-approved.png" alt="World Pickleball Union" width={210} height={70} style={{objectFit:"contain"}}/>
@@ -25,7 +27,7 @@ export default function PassportPage(){
  {state==="ready"&&passport&&<>
  <article style={{background:"#0B2A66",color:"white",padding:24,borderRadius:12,overflowWrap:"anywhere"}}>
  <p style={{color:"#C6FF3D",fontSize:12,fontWeight:700}}>WPU PLAYER PASSPORT</p><h2>{passport.name}</h2><p>{passport.playerCode}</p><p>Residence: {passport.residenceCountry}</p><p>Global membership: {passport.membershipStatus}</p></article>
- <h3>Profile privacy</h3><p>Visibility: {passport.visibility}. Profile editing is not yet enabled.</p>
+ <h3>Personal information</h3><form onSubmit={saveName}><label>Full name<input required maxLength={160} autoComplete="name" value={editName} onChange={e=>setEditName(e.target.value)}/></label><button disabled={busy||editName.trim()===passport.name} type="submit">Save name</button>{saved&&<p role="status">{saved}</p>}</form><h3>Profile privacy</h3><p>Visibility: {passport.visibility}. Public sharing is not yet enabled.</p>
  <h3>Affiliations</h3>{passport.affiliations.length===0?<p>No organisation memberships recorded yet.</p>:<ul>{passport.affiliations.map((a,i)=><li key={a.organisationId+"-"+i}><strong>{a.name}</strong><p>{a.type.replaceAll("_"," ")} · Recorded status: {a.status}</p>{a.validUntil&&<p>Valid until: {a.validUntil}</p>}</li>)}</ul>}<p>Membership does not establish national representation eligibility or official recognition.</p>
  <h3>Competition and rankings</h3><p>Competition history and official ranking services are not yet enabled.</p>
  {error&&<p role="alert">{error}</p>}<button disabled={busy} onClick={()=>void logout()}>{busy?"Signing out…":"Sign out"}</button>
