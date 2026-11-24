@@ -39,3 +39,30 @@ export async function GET() {
     return NextResponse.json({error:"Service temporarily unavailable"},{status:503,headers});
   }
 }
+
+export async function PATCH(request: Request) {
+  const headers={"Cache-Control":"private, no-store"};
+  try {
+    if(request.headers.get("origin")!==new URL(request.url).origin)
+      return NextResponse.json({error:"Forbidden"},{status:403,headers});
+    const jar=await cookies();
+    const accountId=await accountForSession(jar.get(SESSION_COOKIE)?.value);
+    if(!accountId)return NextResponse.json({error:"Authentication required"},{status:401,headers});
+    const reader=request.body?.getReader();
+    if(!reader)return NextResponse.json({error:"Invalid request"},{status:400,headers});
+    let size=0;const decoder=new TextDecoder();let raw="";
+    while(true){const {done,value}=await reader.read();if(done)break;size+=value.byteLength;if(size>2048){await reader.cancel();return NextResponse.json({error:"Request too large"},{status:413,headers});}raw+=decoder.decode(value,{stream:true});}
+    raw+=decoder.decode();
+    let body;try{body=JSON.parse(raw);}catch{return NextResponse.json({error:"Invalid request"},{status:400,headers});}
+    if(!body||typeof body!=="object"||Array.isArray(body)||Object.keys(body).some(k=>k!=="name"))
+      return NextResponse.json({error:"Unsupported profile fields"},{status:400,headers});
+    const name=typeof body.name==="string"?body.name.trim():"";
+    if(!name||name.length>160)return NextResponse.json({error:"Enter a valid name"},{status:400,headers});
+    const updated=await queryD1(
+      `UPDATE wpu_persons SET display_name=?,updated_at=datetime('now')
+       WHERE id=(SELECT person_id FROM wpu_accounts WHERE id=? AND status='active')
+       RETURNING id`,[name,accountId]);
+    if(!updated.length)return NextResponse.json({error:"Profile unavailable"},{status:404,headers});
+    return NextResponse.json({ok:true,name},{headers});
+  }catch{return NextResponse.json({error:"Service temporarily unavailable"},{status:503,headers});}
+}
