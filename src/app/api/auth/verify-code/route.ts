@@ -22,7 +22,7 @@ export async function POST(request:Request) {
     return NextResponse.json({error:"Request too large"},{status:413});
   let email:string, code:string;
   let gender: "male"|"female"|null=null;
-  let name="", givenName="", familyName="", locality="", country="", consent=false;
+  let name="", givenName="", familyName="", locality="", country="", consent=false, adult=false;
   try {
     const body:unknown=await readAuthJson(request);
     if (!body || typeof body!=="object" || !("email" in body) || !("code" in body) ||
@@ -39,6 +39,7 @@ export async function POST(request:Request) {
     name=[givenName,familyName].filter(Boolean).join(" ");
     if ("country" in body && typeof body.country==="string") country=body.country.trim().toUpperCase();
     consent="consent" in body && body.consent===true;
+    adult="adult" in body && body.adult===true;
   } catch {return invalid();}
   const env=authEnvironment();
   if (!env.AUTH_PILOT_ENABLED) return NextResponse.json({error:"Registration pilot is not enabled"},{status:503});
@@ -73,7 +74,7 @@ export async function POST(request:Request) {
     if (!reserved.length) return invalid();
     if (!verifyVerificationCode(email,id,code,env.AUTH_CODE_PEPPER,String(row.secret_hash))) return invalid();
     const existing=await queryD1("SELECT account_id FROM wpu_auth_emails WHERE email_normalized=? AND verified_at IS NOT NULL",[email]);
-    if (!existing.length && (!gender || !givenName || givenName.length>80 || familyName.length>79 || !locality || locality.length>120 || name.length>160 || !/^[A-Z]{2}$/.test(country) || !consent))
+    if (!existing.length && (!adult || !gender || !givenName || givenName.length>80 || familyName.length>79 || !locality || locality.length>120 || name.length>160 || !/^[A-Z]{2}$/.test(country) || !consent))
       return NextResponse.json({error:"Registration details and consent required"},{status:400});
     const token=createSessionToken();
     await queryD1(
