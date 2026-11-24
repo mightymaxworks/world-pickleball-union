@@ -15,7 +15,6 @@ jobs:
       - run: npm ci
       - name: Production dependency audit
         run: npm audit --omit=dev --audit-level=high
-        continue-on-error: true
       - run: npm run build
       - run: npx --no-install opennextjs-cloudflare build
       - name: Public route smoke
