@@ -1,0 +1,32 @@
+name: WPU integrated account provisioning D1 tests
+on:
+  pull_request:
+    paths:
+      - 'database/wpu-passwordless-auth-v3.sql'
+      - 'database/test-wpu-passwordless-auth-v3.sql'
+      - 'src/app/api/auth/**'
+      - '.github/workflows/wpu-auth-v3-d1.yml'
+permissions:
+  contents: read
+jobs:
+  provisioning:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci
+      - name: Apply isolated D1 migrations
+        run: |
+          for file in wpu-identity-foundation-v1 wpu-identity-invariants-v1 wpu-passwordless-auth-v1 wpu-passwordless-auth-v2 wpu-passwordless-auth-v3 wpu-organisation-foundation-v2; do
+            npx wrangler d1 execute wpu-supporters --local --file "database/$file.sql"
+          done
+      - name: Verify new and returning identity transactions
+        run: |
+          set -euo pipefail
+          npx wrangler d1 execute wpu-supporters --local --file database/test-wpu-passwordless-auth-v3.sql > /tmp/provisioning.txt
+          cat /tmp/provisioning.txt
+          grep -q PROVISIONING_PASS /tmp/provisioning.txt
