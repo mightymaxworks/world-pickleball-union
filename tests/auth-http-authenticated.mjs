@@ -6,7 +6,7 @@ assert.ok(["localhost","127.0.0.1"].includes(new URL(base).hostname));
 const email="synthetic-auth@example.org";
 const headers={Origin:base,"Content-Type":"application/json","cf-connecting-ip":"192.0.2.1"};
 const post=(path,body,cookie)=>fetch(base+path,{method:"POST",headers:{...headers,...(cookie?{Cookie:cookie}:{})},body:JSON.stringify(body)});
-const verify=await post("/api/auth/verify-code",{email,code:"123456",name:"Synthetic Player",country:"BT",consent:true});
+const verify=await post("/api/auth/verify-code",{email,code:"123456",givenName:"Synthetic",familyName:"Player",locality:"Thimphu",country:"BT",consent:true});
 assert.equal(verify.status,200,await verify.clone().text());
 const cookie=verify.headers.get("set-cookie");
 assert.ok(cookie?.includes("__Host-wpu_session="));
