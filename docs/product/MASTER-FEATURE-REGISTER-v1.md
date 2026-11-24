@@ -54,7 +54,12 @@ The ranking research's rolling 52 weeks/best 8 is superseded by calendar-year/be
 | M1A federation foundation | Isolated D1 tests passed | Scoped access tests before federation APIs |
 | M2 functional UX | Registration and Passport implemented; registration visually confirmed; logo contrast fix 866d56e6 pending live verification | Registration, verification, Passport, editing, logout with real data |
 | M3 quality and security | Pending | E2E, accessibility, privacy, replay, concurrency, regression |
-| M4 release | Code deployed; production database migrations and activation pending | Cloudflare secrets, reviewed migrations, staging and live smoke |
+| M4 release | Cloudflare code deployed; six production D1 migrations verified successful in Run #45399219089; auth flag still disabled | Confirm beta policies and latest build; enable limited registration and complete live smoke |
 | M5 acceptance | Pending | Owner completes live journey |
 
 Update this register on every substantive delivery milestone. Keep stable feature IDs; never report a percentage without a defined denominator. Record evidence by commit and distinguish committed, tested, merged, deployed and accepted. Preserve all prior scope. Hourly monitoring reports changes, not autonomous engineering.
+
+## 2026-11-24 production database installation evidence
+- [GitHub Actions production D1 migration run #45399219089](https://github.com/mightymaxworks/world-pickleball-union/actions/runs/45399219089) finished successfully using `apply`, with six migration filenames and checksums in `wpu_schema_migrations`.
+- D1 schema check showed `given_name`, `family_name`, `residence_locality`, `gender` columns. `PRAGMA foreign_key_check` returned no rows. Original `_cf_KV`, `supporter_audit`, `supporter_pledges`, `wpu_inquiries` tables remained present.
+- Initial migration `apply` is one-time and must not be rerun. Registration and production email sign-in are not yet accepted; flag activation and live end-to-end checks remain outstanding.
