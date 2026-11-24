@@ -17,4 +17,7 @@ SELECT CASE WHEN
  (SELECT country_code FROM wpu_persons WHERE id='person-new')='BT' AND
  (SELECT count(*) FROM wpu_memberships WHERE person_id='person-new' AND organisation_id IS NULL AND status='active')=1 AND
  (SELECT count(*) FROM wpu_auth_challenges WHERE consumed_at IS NOT NULL)=2
+ AND (SELECT count(*) FROM wpu_registration_consents WHERE person_id='person-new' AND policy_version='wpu-registration-v1')=1
+ AND (SELECT count(*) FROM wpu_registration_consents)=1
+ AND (SELECT count(*) FROM wpu_verified_signup_grants)=0
  THEN 'PROVISIONING_PASS' ELSE 'PROVISIONING_FAIL' END AS result;
