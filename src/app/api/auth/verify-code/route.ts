@@ -73,7 +73,7 @@ export async function POST(request:Request) {
     if (!reserved.length) return invalid();
     if (!verifyVerificationCode(email,id,code,env.AUTH_CODE_PEPPER,String(row.secret_hash))) return invalid();
     const existing=await queryD1("SELECT account_id FROM wpu_auth_emails WHERE email_normalized=? AND verified_at IS NOT NULL",[email]);
-    if (!existing.length && (!givenName || givenName.length>80 || familyName.length>79 || !locality || locality.length>120 || name.length>160 || !/^[A-Z]{2}$/.test(country) || !consent))
+    if (!existing.length && (!gender || !givenName || givenName.length>80 || familyName.length>79 || !locality || locality.length>120 || name.length>160 || !/^[A-Z]{2}$/.test(country) || !consent))
       return NextResponse.json({error:"Registration details and consent required"},{status:400});
     const token=createSessionToken();
     await queryD1(
