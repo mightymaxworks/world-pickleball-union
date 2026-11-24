@@ -1,5 +1,5 @@
 # WPU Master Feature Register v1
-Status: ACTIVE TRACKER — 2026-11-24
+Status: ACTIVE TRACKER — 2026-11-24 (production pre-release)
 
 ## Authority and rules
 - Approved requirements come from docs/project/MASTER-HANDOVER.md, docs/project/DECISION-REGISTER.md, docs/product/RANKING-POLICY.md and project handover.
@@ -14,7 +14,7 @@ Status: ACTIVE TRACKER — 2026-11-24
 ## Delivery order and traceability
 | ID | Feature | Core acceptance criterion | Initial evidence / status | Dependencies |
 |---|---|---|---|---|
-| WPU-001 | Membership and Player Passport | Person registers, verifies account, signs in, receives unique player code, views/updates permitted profile, returns to persistent data | PRs #12/#14/#15/#16 merged; PR #17 draft: auth, sessions, provisioning and federation database tests passed at 4f6fd4fd; Passport read API committed at feb91a78, latest CI pending; functional UI and live acceptance pending | Auth, permissions, data privacy |
+| WPU-001 | Membership and Player Passport | Person registers, verifies account, signs in, receives unique player code, views/updates permitted profile, returns to persistent data | PR #17 merged at 0f074c10; nine CI checks passed on e37dd6b; Cloudflare version 3d5ad55f reported Ready; /join visually confirmed by owner; registration activation and live acceptance pending | Auth, permissions, data privacy |
 | WPU-002 | Tournament creation | Scoped organiser creates, edits and publishes an event with divisions and eligibility rules | NOT IMPLEMENTED | WPU-001 |
 | WPU-003 | Tournament registration | Eligible player registers, receives confirmation, handles full/waitlist/withdrawal and doubles partner conditions | NOT IMPLEMENTED | WPU-001, WPU-002 |
 | WPU-004 | Tournament operations | Draw, court schedule, score, confirm, finalise, correct with audit | NOT IMPLEMENTED | WPU-002, WPU-003 |
@@ -52,9 +52,9 @@ The ranking research's rolling 52 weeks/best 8 is superseded by calendar-year/be
 |---|---|---|
 | M1 integrated registration/login | Database provisioning tests passed; HTTP end-to-end pending | Controlled new/returning player HTTP tests |
 | M1A federation foundation | Isolated D1 tests passed | Scoped access tests before federation APIs |
-| M2 functional UX | Passport GET API committed; UI pending | Registration, verification, Passport, editing, logout with real data |
+| M2 functional UX | Registration and Passport implemented; registration visually confirmed; logo contrast fix 866d56e6 pending live verification | Registration, verification, Passport, editing, logout with real data |
 | M3 quality and security | Pending | E2E, accessibility, privacy, replay, concurrency, regression |
-| M4 release | Pending | Cloudflare secrets, reviewed migrations, staging and live smoke |
+| M4 release | Code deployed; production database migrations and activation pending | Cloudflare secrets, reviewed migrations, staging and live smoke |
 | M5 acceptance | Pending | Owner completes live journey |
 
 Update this register on every substantive delivery milestone. Keep stable feature IDs; never report a percentage without a defined denominator. Record evidence by commit and distinguish committed, tested, merged, deployed and accepted. Preserve all prior scope. Hourly monitoring reports changes, not autonomous engineering.
