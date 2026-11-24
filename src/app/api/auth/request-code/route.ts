@@ -24,6 +24,7 @@ export async function POST(request: Request) {
     email=normalizeEmail(body.email);
   } catch { return NextResponse.json({error:"Invalid email"},{status:400}); }
   const env=authEnvironment();
+  if (!env.AUTH_PILOT_ENABLED) return NextResponse.json({error:"Registration pilot is not enabled"},{status:503});
   if (!env.AUTH_CODE_PEPPER || env.AUTH_CODE_PEPPER.length<32 || !env.RESEND_API_KEY) {
     return NextResponse.json({error:"Service temporarily unavailable"},{status:503});
   }
