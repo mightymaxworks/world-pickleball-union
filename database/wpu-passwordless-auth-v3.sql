@@ -27,8 +27,7 @@ BEGIN
  SELECT 1 FROM wpu_auth_challenges WHERE id=NEW.challenge_id AND email_normalized=NEW.email_normalized
  AND consumed_at IS NULL AND delivered_at IS NOT NULL AND purpose='signin'
  AND julianday(expires_at)>julianday('now') AND attempt_count BETWEEN 1 AND 5
- ) THEN RAISE(ABORT,'invalid challenge')  DELETE FROM wpu_verified_signup_grants WHERE challenge_id=NEW.challenge_id;
-END;
+ ) THEN RAISE(ABORT,'invalid challenge') END;
  SELECT CASE WHEN NOT EXISTS(SELECT 1 FROM wpu_auth_emails WHERE email_normalized=NEW.email_normalized)
  AND (NEW.consent_version<>'wpu-registration-v1' OR length(trim(NEW.display_name)) NOT BETWEEN 1 AND 160 OR NEW.country_code NOT GLOB '[A-Z][A-Z]' OR NEW.country_code='ZZ')
  THEN RAISE(ABORT,'registration details required') END;
@@ -55,4 +54,5 @@ END;
  SELECT NEW.session_id,e.account_id,NEW.session_hash,NEW.session_expires_at FROM wpu_auth_emails e WHERE e.email_normalized=NEW.email_normalized;
  INSERT INTO wpu_identity_audit(id,actor_account_id,subject_person_id,action,reason)
  SELECT NEW.challenge_id,a.id,a.person_id,'auth.verified',NEW.consent_version FROM wpu_auth_emails e JOIN wpu_accounts a ON a.id=e.account_id WHERE e.email_normalized=NEW.email_normalized;
+ DELETE FROM wpu_verified_signup_grants WHERE challenge_id=NEW.challenge_id;
 END;
