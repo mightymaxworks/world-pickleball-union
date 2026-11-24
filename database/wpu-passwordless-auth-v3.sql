@@ -1,6 +1,12 @@
 -- Atomic verified identity provisioning: trigger runs in the same transaction as grant insertion.
 -- Apply after auth v2 and identity invariants v1. No production execution implied.
+ALTER TABLE wpu_persons ADD COLUMN given_name TEXT;
+ALTER TABLE wpu_persons ADD COLUMN family_name TEXT;
+ALTER TABLE wpu_persons ADD COLUMN residence_locality TEXT;
 CREATE TABLE wpu_verified_signup_grants (
+ given_name TEXT,
+ family_name TEXT,
+ residence_locality TEXT,
  challenge_id TEXT PRIMARY KEY REFERENCES wpu_auth_challenges(id),
  email_normalized TEXT NOT NULL,
  person_id TEXT NOT NULL,
@@ -32,8 +38,8 @@ BEGIN
  AND (NEW.consent_version<>'wpu-registration-v1' OR length(trim(NEW.display_name)) NOT BETWEEN 1 AND 160 OR NEW.country_code NOT GLOB '[A-Z][A-Z]' OR NEW.country_code='ZZ')
  THEN RAISE(ABORT,'registration details required') END;
  UPDATE wpu_auth_challenges SET consumed_at=datetime('now') WHERE id=NEW.challenge_id;
- INSERT INTO wpu_persons(id,display_name,country_code)
- SELECT NEW.person_id,NEW.display_name,NEW.country_code
+ INSERT INTO wpu_persons(id,display_name,country_code,given_name,family_name,residence_locality)
+ SELECT NEW.person_id,NEW.display_name,NEW.country_code,NEW.given_name,NEW.family_name,NEW.residence_locality
  WHERE NOT EXISTS(SELECT 1 FROM wpu_auth_emails WHERE email_normalized=NEW.email_normalized);
  INSERT INTO wpu_accounts(id,person_id,auth_subject)
  SELECT NEW.account_id,NEW.person_id,'wpu:'||NEW.account_id
