@@ -1,0 +1,31 @@
+name: WPU beta release verification
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm ci
+      - name: Production dependency audit
+        run: npm audit --omit=dev --audit-level=high
+        continue-on-error: true
+      - run: npm run build
+      - run: npx --no-install opennextjs-cloudflare build
+      - name: Public route smoke
+        run: |
+          set -euo pipefail
+          for route in / /join /passport /membership/terms /membership/privacy; do
+            curl --fail --silent --show-error --location --max-time 30 "https://worldpickleball.world$route" -o /dev/null
+            echo "OK $route"
+          done
+          status=$(curl --silent --show-error --max-time 30 -o /dev/null -w '%{http_code}' https://worldpickleball.world/api/passport)
+          test "$status" = 401
+      - name: List available integration workflows
+        run: ls .github/workflows
