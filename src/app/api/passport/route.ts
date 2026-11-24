@@ -54,8 +54,17 @@ export async function PATCH(request: Request) {
     while(true){const {done,value}=await reader.read();if(done)break;size+=value.byteLength;if(size>2048){await reader.cancel();return NextResponse.json({error:"Request too large"},{status:413,headers});}raw+=decoder.decode(value,{stream:true});}
     raw+=decoder.decode();
     let body;try{body=JSON.parse(raw);}catch{return NextResponse.json({error:"Invalid request"},{status:400,headers});}
-    if(!body||typeof body!=="object"||Array.isArray(body)||Object.keys(body).some(k=>k!=="name"))
+    if(!body||typeof body!=="object"||Array.isArray(body)||Object.keys(body).some(k=>k!=="name"&&k!=="visibility"))
       return NextResponse.json({error:"Unsupported profile fields"},{status:400,headers});
+    if(body.visibility!==undefined){
+      if(body.visibility!=="private"||body.name!==undefined)
+        return NextResponse.json({error:"Only private visibility is currently supported"},{status:400,headers});
+      const updated=await queryD1(`UPDATE wpu_player_profiles SET visibility='private'
+        WHERE person_id=(SELECT person_id FROM wpu_accounts WHERE id=? AND status='active')
+        RETURNING person_id`,[accountId]);
+      if(!updated.length)return NextResponse.json({error:"Profile unavailable"},{status:404,headers});
+      return NextResponse.json({ok:true,visibility:"private"},{headers});
+    }
     const name=typeof body.name==="string"?body.name.trim():"";
     if(!name||name.length>160)return NextResponse.json({error:"Enter a valid name"},{status:400,headers});
     const updated=await queryD1(
