@@ -1,0 +1,67 @@
+name: WPU production D1 migrations
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: Inspect or apply initial membership migrations
+        type: choice
+        options:
+          - inspect
+          - apply
+        default: inspect
+      confirmation:
+        description: For apply, enter WPU-PRODUCTION
+        type: string
+        required: false
+permissions:
+  contents: read
+concurrency:
+  group: wpu-production-d1
+  cancel-in-progress: false
+jobs:
+  migrate:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      MODE: ${{ inputs.mode }}
+      CONFIRMATION: ${{ inputs.confirmation }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm ci
+      - name: Inspect and migrate
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -n "$CLOUDFLARE_API_TOKEN"
+          test -n "$CLOUDFLARE_ACCOUNT_ID"
+          db=f245a594-0932-41b9-b255-aeaa1300b639
+          query() { npx --no-install wrangler d1 execute "$db" --remote --json --command "$1"; }
+          files=(wpu-identity-foundation-v1.sql wpu-identity-invariants-v1.sql wpu-passwordless-auth-v1.sql wpu-passwordless-auth-v2.sql wpu-passwordless-auth-v3.sql wpu-organisation-foundation-v2.sql)
+          for file in "${files[@]}"; do test -s "database/$file"; done
+          query "SELECT name FROM sqlite_master WHERE type='table' ORDER BY name;"
+          if [[ "$MODE" == inspect ]]; then exit 0; fi
+          test "$MODE" == apply
+          test "$CONFIRMATION" == WPU-PRODUCTION
+          # Initial installation only: refuse any existing membership schema or partial run.
+          count=$(query "SELECT count(*) AS n FROM sqlite_master WHERE type='table' AND name LIKE 'wpu_%' AND name <> 'wpu_inquiries';" | jq -er '.[0].results[0].n')
+          test "$count" = 0
+          npx --no-install wrangler d1 time-travel info "$db"
+          query "CREATE TABLE wpu_schema_migrations (filename TEXT PRIMARY KEY, sha256 TEXT NOT NULL, applied_at TEXT NOT NULL DEFAULT (datetime('now')));"
+          for file in "${files[@]}"; do
+            hash=$(sha256sum "database/$file" | cut -d' ' -f1)
+            tmp=$(mktemp)
+            cat "database/$file" > "$tmp"
+            printf "\nINSERT INTO wpu_schema_migrations(filename,sha256) VALUES('%s','%s');\n" "$file" "$hash" >> "$tmp"
+            npx --no-install wrangler d1 execute "$db" --remote --file "$tmp"
+            rm "$tmp"
+          done
+          query "SELECT filename,sha256,applied_at FROM wpu_schema_migrations ORDER BY rowid;"
+          query "PRAGMA table_info(wpu_persons);"
+          query "PRAGMA foreign_key_check;"
+          query "SELECT name FROM sqlite_master WHERE type='table' ORDER BY name;"
