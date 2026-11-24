@@ -1,3 +1,4 @@
+import { readAuthJson } from "@/lib/auth/request-body";
 import { randomUUID } from "node:crypto";
 import { NextResponse } from "next/server";
 import { queryD1 } from "@/lib/supporters-db";
@@ -19,7 +20,7 @@ export async function POST(request: Request) {
   if (Number(request.headers.get("content-length")||0)>1024) return NextResponse.json({error:"Request too large"},{status:413});
   let email:string;
   try {
-    const body:unknown = await request.json();
+    const body:unknown = await readAuthJson(request);
     if (!body || typeof body!=="object" || !("email" in body) || typeof body.email!=="string") throw Error();
     email=normalizeEmail(body.email);
   } catch { return NextResponse.json({error:"Invalid email"},{status:400}); }
