@@ -38,3 +38,6 @@ jobs:
           done
           curl -fsS "$TEST_BASE_URL/join" >/dev/null
           node tests/auth-http-authenticated.mjs
+          node tests/seed-auth-returning.mjs > /tmp/wpu-returning.sql
+          npx wrangler d1 execute wpu-supporters --local --file /tmp/wpu-returning.sql
+          EXPECTED_PLAYER_CODE="$(cat /tmp/wpu-test-player-code)" node tests/auth-http-returning.mjs
