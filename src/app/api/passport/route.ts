@@ -13,7 +13,7 @@ export async function GET() {
     const accountId = await accountForSession(jar.get(SESSION_COOKIE)?.value);
     if (!accountId) return NextResponse.json({error:"Authentication required"},{status:401,headers});
     const rows = await queryD1(
-      `SELECT p.display_name,p.country_code,pp.public_player_code,pp.visibility,
+      `SELECT p.display_name,p.country_code,p.gender,pp.public_player_code,pp.visibility,
        m.status AS membership_status
        FROM wpu_accounts a JOIN wpu_persons p ON p.id=a.person_id
        JOIN wpu_player_profiles pp ON pp.person_id=p.id
@@ -31,7 +31,7 @@ export async function GET() {
        WHERE a.id=? AND a.status='active' AND m.membership_type='organisation'
        ORDER BY o.name,m.created_at DESC`,[accountId]);
     return NextResponse.json({passport:{
-      name:row.display_name,residenceCountry:row.country_code,
+      name:row.display_name,residenceCountry:row.country_code,gender:row.gender,
       playerCode:row.public_player_code,visibility:row.visibility,
       membershipStatus:row.membership_status||"inactive",affiliations:affiliations.map(a=>({organisationId:a.id,name:a.name,type:a.organisation_type,status:a.status,validFrom:a.valid_from,validUntil:a.valid_until}))
     }},{headers});
