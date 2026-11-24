@@ -21,14 +21,17 @@ export async function POST(request:Request) {
   if (Number(request.headers.get("content-length")||0)>1024)
     return NextResponse.json({error:"Request too large"},{status:413});
   let email:string, code:string;
-  let name="", country="", consent=false;
+  let name="", givenName="", familyName="", locality="", country="", consent=false;
   try {
     const body:unknown=await readAuthJson(request);
     if (!body || typeof body!=="object" || !("email" in body) || !("code" in body) ||
         typeof body.email!=="string" || typeof body.code!=="string" || !/^\d{6}$/.test(body.code))
       return invalid();
     email=normalizeEmail(body.email); code=body.code;
-    if ("name" in body && typeof body.name==="string") name=body.name.trim();
+    if ("givenName" in body && typeof body.givenName==="string") givenName=body.givenName.trim();
+    if ("familyName" in body && typeof body.familyName==="string") familyName=body.familyName.trim();
+    if ("locality" in body && typeof body.locality==="string") locality=body.locality.trim();
+    name=[givenName,familyName].filter(Boolean).join(" ");
     if ("country" in body && typeof body.country==="string") country=body.country.trim().toUpperCase();
     consent="consent" in body && body.consent===true;
   } catch {return invalid();}
@@ -65,13 +68,13 @@ export async function POST(request:Request) {
     if (!reserved.length) return invalid();
     if (!verifyVerificationCode(email,id,code,env.AUTH_CODE_PEPPER,String(row.secret_hash))) return invalid();
     const existing=await queryD1("SELECT account_id FROM wpu_auth_emails WHERE email_normalized=? AND verified_at IS NOT NULL",[email]);
-    if (!existing.length && (!name || name.length>160 || !/^[A-Z]{2}$/.test(country) || !consent))
+    if (!existing.length && (!givenName || givenName.length>80 || familyName.length>79 || !locality || locality.length>120 || name.length>160 || !/^[A-Z]{2}$/.test(country) || !consent))
       return NextResponse.json({error:"Registration details and consent required"},{status:400});
     const token=createSessionToken();
     await queryD1(
-      `INSERT INTO wpu_verified_signup_grants(challenge_id,email_normalized,person_id,account_id,player_code,display_name,country_code,consent_version,session_id,session_hash,session_expires_at)
-       VALUES(?,?,?,?,?,?,?,?,?,?,?) RETURNING challenge_id`,
-      [id,email,randomUUID(),randomUUID(),"WPU-"+randomUUID().replaceAll("-","").toUpperCase(),name||"Returning member",country||"ZZ",existing.length?"returning-login":"wpu-registration-v1",randomUUID(),hashSessionToken(token),new Date(Date.now()+SESSION_TTL_SECONDS*1000).toISOString()],
+      `INSERT INTO wpu_verified_signup_grants(challenge_id,email_normalized,person_id,account_id,player_code,display_name,country_code,consent_version,session_id,session_hash,session_expires_at,given_name,family_name,residence_locality)
+       VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?) RETURNING challenge_id`,
+      [id,email,randomUUID(),randomUUID(),"WPU-"+randomUUID().replaceAll("-","").toUpperCase(),name||"Returning member",country||"ZZ",existing.length?"returning-login":"wpu-registration-v1",randomUUID(),hashSessionToken(token),new Date(Date.now()+SESSION_TTL_SECONDS*1000).toISOString(),givenName||null,familyName||null,locality||null],
     );
     const result=NextResponse.json({ok:true,verified:true,sessionCreated:true},{headers:{"Cache-Control":"no-store"}});
     result.cookies.set(SESSION_COOKIE,token,sessionCookieOptions());
