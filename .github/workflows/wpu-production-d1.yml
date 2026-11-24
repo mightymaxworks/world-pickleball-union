@@ -47,7 +47,10 @@ jobs:
           query "SELECT name FROM sqlite_master WHERE type='table' ORDER BY name;"
           if [[ "$MODE" == inspect ]]; then exit 0; fi
           test "$MODE" == apply
-          test "$CONFIRMATION" == WPU-PRODUCTION
+          if [[ "$CONFIRMATION" != "WPU-PRODUCTION" ]]; then
+            echo "::error::Apply requires entering WPU-PRODUCTION in the confirmation field. No migration was attempted."
+            exit 1
+          fi
           # Initial installation only: refuse any existing membership schema or partial run.
           count=$(query "SELECT count(*) AS n FROM sqlite_master WHERE type='table' AND name LIKE 'wpu_%' AND name <> 'wpu_inquiries';" | jq -er '.[0].results[0].n')
           test "$count" = 0
