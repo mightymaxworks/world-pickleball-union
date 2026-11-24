@@ -4,7 +4,7 @@ import Link from "next/link";
 import Image from "next/image";
 import "../join/membership.css";
 
-type Passport={name:string;residenceCountry:string;playerCode:string;visibility:string;membershipStatus:string};
+type Passport={name:string;residenceCountry:string;playerCode:string;visibility:string;membershipStatus:string;affiliations:{organisationId:string;name:string;type:string;status:string;validFrom:string|null;validUntil:string|null}[]};
 export default function PassportPage(){
  const [passport,setPassport]=useState<Passport|null>(null);
  const [state,setState]=useState<"loading"|"signed-out"|"error"|"ready">("loading");
@@ -26,7 +26,7 @@ export default function PassportPage(){
  <article style={{background:"#0B2A66",color:"white",padding:24,borderRadius:12,overflowWrap:"anywhere"}}>
  <p style={{color:"#C6FF3D",fontSize:12,fontWeight:700}}>WPU PLAYER PASSPORT</p><h2>{passport.name}</h2><p>{passport.playerCode}</p><p>Residence: {passport.residenceCountry}</p><p>Global membership: {passport.membershipStatus}</p></article>
  <h3>Profile privacy</h3><p>Visibility: {passport.visibility}. Profile editing is not yet enabled.</p>
- <h3>Affiliations</h3><p>Federation and club membership display is not yet available.</p>
+ <h3>Affiliations</h3>{passport.affiliations.length===0?<p>No organisation memberships recorded yet.</p>:<ul>{passport.affiliations.map((a,i)=><li key={a.organisationId+"-"+i}><strong>{a.name}</strong><p>{a.type.replaceAll("_"," ")} · Recorded status: {a.status}</p>{a.validUntil&&<p>Valid until: {a.validUntil}</p>}</li>)}</ul>}<p>Membership does not establish national representation eligibility or official recognition.</p>
  <h3>Competition and rankings</h3><p>Competition history and official ranking services are not yet enabled.</p>
  {error&&<p role="alert">{error}</p>}<button disabled={busy} onClick={()=>void logout()}>{busy?"Signing out…":"Sign out"}</button>
  </>}
