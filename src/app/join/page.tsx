@@ -1,0 +1,48 @@
+"use client";
+import { useState, type FormEvent } from "react";
+import Image from "next/image";
+import "./membership.css";
+
+const regionNames=new Intl.DisplayNames(["en"],{type:"region"});
+const countries="AD AE AF AG AI AL AM AO AQ AR AS AT AU AW AX AZ BA BB BD BE BF BG BH BI BJ BL BM BN BO BQ BR BS BT BV BW BY BZ CA CC CD CF CG CH CI CK CL CM CN CO CR CU CV CW CX CY CZ DE DJ DK DM DO DZ EC EE EG EH ER ES ET FI FJ FK FM FO FR GA GB GD GE GF GG GH GI GL GM GN GP GQ GR GS GT GU GW GY HK HM HN HR HT HU ID IE IL IM IN IO IQ IR IS IT JE JM JO JP KE KG KH KI KM KN KP KR KW KY KZ LA LB LC LI LK LR LS LT LU LV LY MA MC MD ME MF MG MH MK ML MM MN MO MP MQ MR MS MT MU MV MW MX MY MZ NA NC NE NF NG NI NL NO NP NR NU NZ OM PA PE PF PG PH PK PL PM PN PR PS PT PW PY QA RE RO RS RU RW SA SB SC SD SE SG SH SI SJ SK SL SM SN SO SR SS ST SV SX SY SZ TC TD TF TG TH TJ TK TL TM TN TO TR TT TV TW TZ UA UG UM US UY UZ VA VC VE VG VI VN VU WF WS YE YT ZA ZM ZW".split(" ").map(code=>({code,name:regionNames.of(code)||code})).sort((a,b)=>a.name.localeCompare(b.name,"en"));
+export default function MembershipPage() {
+ const [mode,setMode]=useState<"register"|"login">("register");
+ const [step,setStep]=useState<"details"|"code">("details");
+ const [email,setEmail]=useState(""); const [name,setName]=useState("");
+ const [country,setCountry]=useState(""); const [consent,setConsent]=useState(false);
+ const [code,setCode]=useState(""); const [busy,setBusy]=useState(false);
+ const [error,setError]=useState(""); const [notice,setNotice]=useState("");
+ async function requestCode() {
+  setBusy(true);setError("");setNotice("");
+  try {
+   const r=await fetch("/api/auth/request-code",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({email})});
+   if(!r.ok) throw Error("Unable to request a code. Please try again later.");
+   setStep("code");setNotice("If eligible, a code will arrive by email. Check your spam folder.");
+  } catch(e){setError(e instanceof Error?e.message:"Please try again.");} finally{setBusy(false);}
+ }
+ async function submit(e:FormEvent<HTMLFormElement>){
+  e.preventDefault();
+  if(step==="details"){await requestCode();return;}
+  setBusy(true);setError("");
+  try{
+   const r=await fetch("/api/auth/verify-code",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({email,code,...(mode==="register"?{name,country,consent}:{})})});
+   if(!r.ok)throw Error("Verification unsuccessful. Check your code or request a new one. New members must register first.");
+   window.location.assign("/passport");
+  }catch(e){setError(e instanceof Error?e.message:"Please try again.");}finally{setBusy(false);}
+ }
+ return <main className="membership-shell"><section className="membership-intro">
+ <Image src="/brand/wpu-logo-approved.png" alt="World Pickleball Union" width={210} height={70} style={{objectFit:"contain"}}/>
+ <p className="membership-kicker">ONE GLOBAL IDENTITY</p><h1>Your game. Your world.</h1><p>Your WPU Passport connects your sporting journey, memberships and future competition records.</p></section>
+ <section className="membership-panel"><h2>{step==="code"?"Check your email":mode==="register"?"Create your account":"Sign in"}</h2>
+ <form onSubmit={submit}>
+ {step==="details"?<>
+ {mode==="register"&&<><label>Full name<input required maxLength={160} autoComplete="name" value={name} onChange={e=>setName(e.target.value)}/></label><label>Country of residence<select required autoComplete="country" value={country} onChange={e=>setCountry(e.target.value)}><option value="">Select your country or territory</option>{countries.map(c=><option key={c.code} value={c.code}>{c.name}</option>)}</select></label></>}
+ <label>Email address<input type="email" required maxLength={254} autoComplete="email" value={email} onChange={e=>setEmail(e.target.value)}/></label>
+ {mode==="register"&&<label className="membership-consent"><input type="checkbox" required checked={consent} onChange={e=>setConsent(e.target.checked)}/> I acknowledge the WPU registration privacy and terms requirements (draft; public launch pending approved policy links).</label>}
+ </>:<><p>Enter the six-digit code sent to {email}.</p><label>Verification code<input required inputMode="numeric" autoComplete="one-time-code" pattern="[0-9]{6}" maxLength={6} value={code} onChange={e=>setCode(e.target.value)}/></label></>}
+ {error&&<p role="alert">{error}</p>}{notice&&<p role="status">{notice}</p>}
+ <button disabled={busy} type="submit">{busy?"Please wait…":step==="code"?"Verify and continue":"Continue"}</button>
+ </form>
+ {step==="code"?<><button className="membership-secondary" disabled={busy} onClick={()=>void requestCode()}>Request another code</button><button className="membership-secondary" disabled={busy} onClick={()=>{setStep("details");setCode("");setError("");setNotice("");}}>Change email</button></>:<button className="membership-secondary" disabled={busy} onClick={()=>{setMode(mode==="register"?"login":"register");setError("");}}>{mode==="register"?"Already a member? Sign in":"New to WPU? Register"}</button>}
+ <p className="membership-note">Pre-release interface. Public activation requires approved policies and end-to-end testing.</p></section></main>;
+}

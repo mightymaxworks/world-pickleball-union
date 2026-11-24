@@ -1,0 +1,24 @@
+import {writeFileSync} from "node:fs";
+// Run only against an isolated local Worker with synthetic seeded challenges.
+import assert from "node:assert/strict";
+const base=process.env.TEST_BASE_URL||"http://localhost:8787";
+assert.ok(["localhost","127.0.0.1"].includes(new URL(base).hostname));
+const email="synthetic-auth@example.org";
+const headers={Origin:base,"Content-Type":"application/json","cf-connecting-ip":"192.0.2.1"};
+const post=(path,body,cookie)=>fetch(base+path,{method:"POST",headers:{...headers,...(cookie?{Cookie:cookie}:{})},body:JSON.stringify(body)});
+const verify=await post("/api/auth/verify-code",{email,code:"123456",name:"Synthetic Player",country:"BT",consent:true});
+assert.equal(verify.status,200,await verify.clone().text());
+const cookie=verify.headers.get("set-cookie");
+assert.ok(cookie?.includes("__Host-wpu_session="));
+assert.match(cookie,/HttpOnly/i);assert.match(cookie,/Secure/i);assert.match(cookie,/SameSite=Lax/i);
+const session=cookie.split(";")[0];
+const get=()=>fetch(base+"/api/passport",{headers:{Cookie:session}});
+const first=await get();assert.equal(first.status,200);
+const {passport}=await first.json();assert.equal(passport.name,"Synthetic Player");assert.equal(passport.visibility,"private");assert.ok(passport.playerCode.startsWith("WPU-"));
+const edit=await fetch(base+"/api/passport",{method:"PATCH",headers:{...headers,Cookie:session},body:JSON.stringify({name:"Synthetic Updated"})});assert.equal(edit.status,200);
+const after=(await (await get()).json()).passport;assert.equal(after.name,"Synthetic Updated");assert.equal(after.playerCode,passport.playerCode);
+assert.equal((await post("/api/auth/verify-code",{email,code:"123456"})).status,400);
+assert.equal((await post("/api/auth/logout",{},session)).status,200);
+assert.equal((await get()).status,401);
+writeFileSync("/tmp/wpu-test-player-code",passport.playerCode);
+console.log("Authenticated registration, Passport, editing, replay and logout passed");
