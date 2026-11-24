@@ -1,3 +1,4 @@
+import {writeFileSync} from "node:fs";
 // Run only against an isolated local Worker with synthetic seeded challenges.
 import assert from "node:assert/strict";
 const base=process.env.TEST_BASE_URL||"http://localhost:8787";
@@ -19,4 +20,5 @@ const after=(await (await get()).json()).passport;assert.equal(after.name,"Synth
 assert.equal((await post("/api/auth/verify-code",{email,code:"123456"})).status,400);
 assert.equal((await post("/api/auth/logout",{},session)).status,200);
 assert.equal((await get()).status,401);
+writeFileSync("/tmp/wpu-test-player-code",passport.playerCode);
 console.log("Authenticated registration, Passport, editing, replay and logout passed");
