@@ -9,7 +9,7 @@ jobs:
     timeout-minutes: 15
     env:
       AUTH_PILOT_ENABLED: 'false'
-      TEST_BASE_URL: http://127.0.0.1:3000
+      TEST_BASE_URL: http://localhost:3000
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -21,12 +21,12 @@ jobs:
       - name: Test actual HTTP routes with pilot disabled
         run: |
           set -euo pipefail
-          npx next start -H 127.0.0.1 -p 3000 > /tmp/wpu-http.log 2>&1 &
+          npx next start -H localhost -p 3000 > /tmp/wpu-http.log 2>&1 &
           pid=$!
           trap 'kill "$pid" || true; cat /tmp/wpu-http.log' EXIT
           for i in $(seq 1 60); do
-            if curl -fsS http://127.0.0.1:3000/join > /dev/null; then break; fi
+            if curl -fsS http://localhost:3000/join > /dev/null; then break; fi
             sleep 1
           done
-          curl -fsS http://127.0.0.1:3000/join > /dev/null
+          curl -fsS http://localhost:3000/join > /dev/null
           node tests/auth-http-pilot-disabled.mjs
