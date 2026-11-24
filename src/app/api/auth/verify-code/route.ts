@@ -32,6 +32,7 @@ export async function POST(request:Request) {
     consent="consent" in body && body.consent===true;
   } catch {return invalid();}
   const env=authEnvironment();
+  if (!env.AUTH_PILOT_ENABLED) return NextResponse.json({error:"Registration pilot is not enabled"},{status:503});
   if (!env.AUTH_CODE_PEPPER || env.AUTH_CODE_PEPPER.length<32)
     return NextResponse.json({error:"Service unavailable"},{status:503});
   const ip=request.headers.get("cf-connecting-ip");
@@ -45,10 +46,9 @@ export async function POST(request:Request) {
     if (allowed.some(x=>!x)) return invalid();
     const rows=await queryD1(
       `SELECT id,secret_hash,attempt_count FROM wpu_auth_challenges
-       WHERE email_normalized=? AND purpose='signin' AND consumed_at IS NULL
-         AND delivered_at IS NOT NULL AND expires_at>?
-         AND attempt_count<? ORDER BY created_at DESC,id DESC LIMIT 1`,
-      [email,new Date().toISOString(),MAX_CODE_ATTEMPTS],
+       WHERE email_normalized=? AND purpose='signin' AND delivered_at IS NOT NULL
+       ORDER BY created_at DESC,id DESC LIMIT 1`,
+      [email],
     );
     if (!rows.length) return invalid();
     const row=rows[0];
