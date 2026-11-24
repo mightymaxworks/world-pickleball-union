@@ -1,0 +1,14 @@
+import assert from "node:assert/strict";
+const base=process.env.TEST_BASE_URL||"http://localhost:8787";
+assert.ok(["localhost","127.0.0.1"].includes(new URL(base).hostname));
+const headers={Origin:base,"Content-Type":"application/json","cf-connecting-ip":"192.0.2.1"};
+const response=await fetch(base+"/api/auth/verify-code",{method:"POST",headers,body:JSON.stringify({email:"synthetic-auth@example.org",code:"654321"})});
+assert.equal(response.status,200,await response.clone().text());
+const cookie=response.headers.get("set-cookie").split(";")[0];
+const result=await fetch(base+"/api/passport",{headers:{Cookie:cookie}});
+assert.equal(result.status,200);
+const {passport}=await result.json();
+assert.equal(passport.name,"Synthetic Updated");
+assert.equal(passport.visibility,"private");
+assert.equal(passport.playerCode,process.env.EXPECTED_PLAYER_CODE);
+console.log("Returning player retains original identity and edited profile");
