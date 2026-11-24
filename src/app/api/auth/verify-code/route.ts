@@ -1,3 +1,4 @@
+import { readAuthJson } from "@/lib/auth/request-body";
 import { randomUUID } from "node:crypto";
 import { createSessionToken, hashSessionToken, SESSION_COOKIE, SESSION_TTL_SECONDS, sessionCookieOptions } from "@/lib/auth/session";
 import { NextResponse } from "next/server";
@@ -22,7 +23,7 @@ export async function POST(request:Request) {
   let email:string, code:string;
   let name="", country="", consent=false;
   try {
-    const body:unknown=await request.json();
+    const body:unknown=await readAuthJson(request);
     if (!body || typeof body!=="object" || !("email" in body) || !("code" in body) ||
         typeof body.email!=="string" || typeof body.code!=="string" || !/^\d{6}$/.test(body.code))
       return invalid();
