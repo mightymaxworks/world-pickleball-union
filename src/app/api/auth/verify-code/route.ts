@@ -1,3 +1,5 @@
+import { randomUUID } from "node:crypto";
+import { createSessionToken, hashSessionToken, SESSION_COOKIE, SESSION_TTL_SECONDS, sessionCookieOptions } from "@/lib/auth/session";
 import { NextResponse } from "next/server";
 import { queryD1 } from "@/lib/supporters-db";
 import { normalizeEmail, verifyVerificationCode, MAX_CODE_ATTEMPTS } from "@/lib/auth/challenge";
@@ -7,11 +9,7 @@ import { acquireRateLimit, rateLimitKey } from "@/lib/auth/rate-limit";
 export const runtime = "nodejs";
 const invalid = () => NextResponse.json({ok:false,error:"Invalid or expired verification code"},{status:400,headers:{"Cache-Control":"no-store"}});
 
-/**
- * Verifies and consumes a challenge, but does NOT create a session.
- * This endpoint must remain behind the WPU-001 rollout gate until session issuance
- * and member provisioning are implemented and tested together.
- */
+/** Verify email and atomically provision a global account and session. Draft only. */
 export async function POST(request:Request) {
   const origin=request.headers.get("origin");
   if (!origin) return NextResponse.json({error:"Origin required"},{status:403});
@@ -22,12 +20,16 @@ export async function POST(request:Request) {
   if (Number(request.headers.get("content-length")||0)>1024)
     return NextResponse.json({error:"Request too large"},{status:413});
   let email:string, code:string;
+  let name="", country="", consent=false;
   try {
     const body:unknown=await request.json();
     if (!body || typeof body!=="object" || !("email" in body) || !("code" in body) ||
         typeof body.email!=="string" || typeof body.code!=="string" || !/^\d{6}$/.test(body.code))
       return invalid();
     email=normalizeEmail(body.email); code=body.code;
+    if ("name" in body && typeof body.name==="string") name=body.name.trim();
+    if ("country" in body && typeof body.country==="string") country=body.country.trim().toUpperCase();
+    consent="consent" in body && body.consent===true;
   } catch {return invalid();}
   const env=authEnvironment();
   if (!env.AUTH_CODE_PEPPER || env.AUTH_CODE_PEPPER.length<32)
@@ -61,15 +63,18 @@ export async function POST(request:Request) {
     );
     if (!reserved.length) return invalid();
     if (!verifyVerificationCode(email,id,code,env.AUTH_CODE_PEPPER,String(row.secret_hash))) return invalid();
-    const consumed=await queryD1(
-      `UPDATE wpu_auth_challenges SET consumed_at=datetime('now')
-       WHERE id=? AND consumed_at IS NULL AND expires_at>? AND delivered_at IS NOT NULL
-       RETURNING id`,
-      [id,new Date().toISOString()],
+    const existing=await queryD1("SELECT account_id FROM wpu_auth_emails WHERE email_normalized=? AND verified_at IS NOT NULL",[email]);
+    if (!existing.length && (!name || name.length>160 || !/^[A-Z]{2}$/.test(country) || !consent))
+      return NextResponse.json({error:"Registration details and consent required"},{status:400});
+    const token=createSessionToken();
+    await queryD1(
+      `INSERT INTO wpu_verified_signup_grants(challenge_id,email_normalized,person_id,account_id,player_code,display_name,country_code,consent_version,session_id,session_hash,session_expires_at)
+       VALUES(?,?,?,?,?,?,?,?,?,?,?) RETURNING challenge_id`,
+      [id,email,randomUUID(),randomUUID(),"WPU-"+randomUUID().replaceAll("-","").toUpperCase(),name||"Returning member",country||"ZZ",existing.length?"returning-login":"wpu-registration-v1",randomUUID(),hashSessionToken(token),new Date(Date.now()+SESSION_TTL_SECONDS*1000).toISOString()],
     );
-    if (!consumed.length) return invalid();
-    // No session or authentication cookie is issued here.
-    return NextResponse.json({ok:true,verified:true,sessionCreated:false},{headers:{"Cache-Control":"no-store"}});
+    const result=NextResponse.json({ok:true,verified:true,sessionCreated:true},{headers:{"Cache-Control":"no-store"}});
+    result.cookies.set(SESSION_COOKIE,token,sessionCookieOptions());
+    return result;
   } catch {
     return NextResponse.json({error:"Service unavailable"},{status:503});
   }
