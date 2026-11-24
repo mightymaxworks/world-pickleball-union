@@ -14,13 +14,24 @@ CREATE TABLE wpu_verified_signup_grants (
  session_expires_at TEXT NOT NULL,
  created_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
+CREATE TABLE wpu_registration_consents (
+ person_id TEXT NOT NULL REFERENCES wpu_persons(id),
+ policy_version TEXT NOT NULL,
+ accepted_at TEXT NOT NULL DEFAULT (datetime('now')),
+ challenge_id TEXT NOT NULL UNIQUE REFERENCES wpu_auth_challenges(id),
+ PRIMARY KEY(person_id,policy_version)
+);
 CREATE TRIGGER wpu_provision_verified_signup AFTER INSERT ON wpu_verified_signup_grants
 BEGIN
  SELECT CASE WHEN NOT EXISTS (
  SELECT 1 FROM wpu_auth_challenges WHERE id=NEW.challenge_id AND email_normalized=NEW.email_normalized
  AND consumed_at IS NULL AND delivered_at IS NOT NULL AND purpose='signin'
  AND julianday(expires_at)>julianday('now') AND attempt_count BETWEEN 1 AND 5
- ) THEN RAISE(ABORT,'invalid challenge') END;
+ ) THEN RAISE(ABORT,'invalid challenge')  DELETE FROM wpu_verified_signup_grants WHERE challenge_id=NEW.challenge_id;
+END;
+ SELECT CASE WHEN NOT EXISTS(SELECT 1 FROM wpu_auth_emails WHERE email_normalized=NEW.email_normalized)
+ AND (NEW.consent_version<>'wpu-registration-v1' OR length(trim(NEW.display_name)) NOT BETWEEN 1 AND 160 OR NEW.country_code NOT GLOB '[A-Z][A-Z]' OR NEW.country_code='ZZ')
+ THEN RAISE(ABORT,'registration details required') END;
  UPDATE wpu_auth_challenges SET consumed_at=datetime('now') WHERE id=NEW.challenge_id;
  INSERT INTO wpu_persons(id,display_name,country_code)
  SELECT NEW.person_id,NEW.display_name,NEW.country_code
@@ -37,6 +48,9 @@ BEGIN
  INSERT INTO wpu_auth_emails(account_id,email_normalized,verified_at)
  SELECT NEW.account_id,NEW.email_normalized,datetime('now') WHERE EXISTS(SELECT 1 FROM wpu_accounts WHERE id=NEW.account_id);
  SELECT CASE WHEN NOT EXISTS(SELECT 1 FROM wpu_auth_emails e JOIN wpu_accounts a ON a.id=e.account_id WHERE e.email_normalized=NEW.email_normalized AND e.verified_at IS NOT NULL AND a.status='active') THEN RAISE(ABORT,'inactive account') END;
+ INSERT INTO wpu_registration_consents(person_id,policy_version,challenge_id)
+ SELECT NEW.person_id,NEW.consent_version,NEW.challenge_id
+ WHERE EXISTS(SELECT 1 FROM wpu_accounts WHERE id=NEW.account_id AND person_id=NEW.person_id);
  INSERT INTO wpu_auth_sessions(id,account_id,session_hash,expires_at)
  SELECT NEW.session_id,e.account_id,NEW.session_hash,NEW.session_expires_at FROM wpu_auth_emails e WHERE e.email_normalized=NEW.email_normalized;
  INSERT INTO wpu_identity_audit(id,actor_account_id,subject_person_id,action,reason)
