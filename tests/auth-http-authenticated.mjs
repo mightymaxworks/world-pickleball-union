@@ -6,7 +6,7 @@ assert.ok(["localhost","127.0.0.1"].includes(new URL(base).hostname));
 const email="synthetic-auth@example.org";
 const headers={Origin:base,"Content-Type":"application/json","cf-connecting-ip":"192.0.2.1"};
 const post=(path,body,cookie)=>fetch(base+path,{method:"POST",headers:{...headers,...(cookie?{Cookie:cookie}:{})},body:JSON.stringify(body)});
-const verify=await post("/api/auth/verify-code",{email,code:"123456",givenName:"Synthetic",familyName:"Player",locality:"Thimphu",country:"BT",consent:true});
+const verify=await post("/api/auth/verify-code",{email,code:"123456",givenName:"Synthetic",familyName:"Player",locality:"Thimphu",country:"BT",gender:"female",adult:true,consent:true});
 assert.equal(verify.status,200,await verify.clone().text());
 const cookie=verify.headers.get("set-cookie");
 assert.ok(cookie?.includes("__Host-wpu_session="));
@@ -14,7 +14,7 @@ assert.match(cookie,/HttpOnly/i);assert.match(cookie,/Secure/i);assert.match(coo
 const session=cookie.split(";")[0];
 const get=()=>fetch(base+"/api/passport",{headers:{Cookie:session}});
 const first=await get();assert.equal(first.status,200);
-const {passport}=await first.json();assert.equal(passport.name,"Synthetic Player");assert.equal(passport.visibility,"private");assert.ok(passport.playerCode.startsWith("WPU-"));
+const {passport}=await first.json();assert.equal(passport.name,"Synthetic Player");assert.equal(passport.visibility,"private");assert.equal(passport.gender,"female");assert.ok(passport.playerCode.startsWith("WPU-"));
 const edit=await fetch(base+"/api/passport",{method:"PATCH",headers:{...headers,Cookie:session},body:JSON.stringify({name:"Synthetic Updated"})});assert.equal(edit.status,200);
 const after=(await (await get()).json()).passport;assert.equal(after.name,"Synthetic Updated");assert.equal(after.playerCode,passport.playerCode);
 assert.equal((await post("/api/auth/verify-code",{email,code:"123456"})).status,400);
