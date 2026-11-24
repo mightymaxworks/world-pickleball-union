@@ -3,6 +3,8 @@ import { useState, type FormEvent } from "react";
 import Image from "next/image";
 import "./membership.css";
 
+const regionNames=new Intl.DisplayNames(["en"],{type:"region"});
+const countries="AD AE AF AG AI AL AM AO AQ AR AS AT AU AW AX AZ BA BB BD BE BF BG BH BI BJ BL BM BN BO BQ BR BS BT BV BW BY BZ CA CC CD CF CG CH CI CK CL CM CN CO CR CU CV CW CX CY CZ DE DJ DK DM DO DZ EC EE EG EH ER ES ET FI FJ FK FM FO FR GA GB GD GE GF GG GH GI GL GM GN GP GQ GR GS GT GU GW GY HK HM HN HR HT HU ID IE IL IM IN IO IQ IR IS IT JE JM JO JP KE KG KH KI KM KN KP KR KW KY KZ LA LB LC LI LK LR LS LT LU LV LY MA MC MD ME MF MG MH MK ML MM MN MO MP MQ MR MS MT MU MV MW MX MY MZ NA NC NE NF NG NI NL NO NP NR NU NZ OM PA PE PF PG PH PK PL PM PN PR PS PT PW PY QA RE RO RS RU RW SA SB SC SD SE SG SH SI SJ SK SL SM SN SO SR SS ST SV SX SY SZ TC TD TF TG TH TJ TK TL TM TN TO TR TT TV TW TZ UA UG UM US UY UZ VA VC VE VG VI VN VU WF WS YE YT ZA ZM ZW".split(" ").map(code=>({code,name:regionNames.of(code)||code})).sort((a,b)=>a.name.localeCompare(b.name,"en"));
 export default function MembershipPage() {
  const [mode,setMode]=useState<"register"|"login">("register");
  const [step,setStep]=useState<"details"|"code">("details");
@@ -34,7 +36,7 @@ export default function MembershipPage() {
  <section className="membership-panel"><h2>{step==="code"?"Check your email":mode==="register"?"Create your account":"Sign in"}</h2>
  <form onSubmit={submit}>
  {step==="details"?<>
- {mode==="register"&&<><label>Full name<input required maxLength={160} autoComplete="name" value={name} onChange={e=>setName(e.target.value)}/></label><label>Country of residence (two-letter country code)<input required pattern="[A-Za-z]{2}" maxLength={2} autoComplete="country" placeholder="e.g. BT" value={country} onChange={e=>setCountry(e.target.value)}/></label></>}
+ {mode==="register"&&<><label>Full name<input required maxLength={160} autoComplete="name" value={name} onChange={e=>setName(e.target.value)}/></label><label>Country of residence<select required autoComplete="country" value={country} onChange={e=>setCountry(e.target.value)}><option value="">Select your country or territory</option>{countries.map(c=><option key={c.code} value={c.code}>{c.name}</option>)}</select></label></>}
  <label>Email address<input type="email" required maxLength={254} autoComplete="email" value={email} onChange={e=>setEmail(e.target.value)}/></label>
  {mode==="register"&&<label className="membership-consent"><input type="checkbox" required checked={consent} onChange={e=>setConsent(e.target.checked)}/> I acknowledge the WPU registration privacy and terms requirements (draft; public launch pending approved policy links).</label>}
  </>:<><p>Enter the six-digit code sent to {email}.</p><label>Verification code<input required inputMode="numeric" autoComplete="one-time-code" pattern="[0-9]{6}" maxLength={6} value={code} onChange={e=>setCode(e.target.value)}/></label></>}
