@@ -145,3 +145,14 @@
   .pp-grid { grid-template-columns: minmax(0, 1.56fr) minmax(0, 1fr); gap: 1.25rem; }
   .pp-stack { gap: 1.25rem; }
 }
+
+.pp-affiliation-workspace {
+  display: grid;
+  gap: .9rem;
+  border-top: 1px solid var(--pp-border);
+  margin-top: 1rem;
+  padding-top: .9rem;
+}
+.pp-affiliation-request { display: grid; gap: .5rem; justify-items: start; }
+.pp-affiliation-request label { width: 100%; }
+.pp-affiliation-workspace h4 { margin: 0; font-size: .9rem; font-weight: 700; }
