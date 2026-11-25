@@ -21,7 +21,7 @@ Status: ACTIVE TRACKER — 2026-11-25 (production beta)
 | WPU-005 | Competition formats | Round robin, single elimination, pool-to-knockout, double elimination/reset and team ties all complete test fixtures | NOT IMPLEMENTED | WPU-004 |
 | WPU-006 | Provisional ranking calculations | Versioned result ingestion, calendar year, best 10, five tiers, field factors, individual doubles, team ledger, deterministic replay | NOT IMPLEMENTED; numerical policy pending | WPU-004, approved simulation parameters |
 | WPU-007 | Official rankings publication | Approved policy, integrity review, publication snapshots, corrections, dispute traceability | BLOCKED pending approved policy | WPU-006, governance |
-| WPU-008 | WPU Control core | Staff accounts, scoped permissions, decision queue, audit, separation of duties | First affiliation slice implemented, guarded pilot activation pending. Other Control modules not implemented. | WPU-001 security foundation |
+| WPU-008 | WPU Control core | Staff accounts, scoped permissions, decision queue, audit, separation of duties | Scoped affiliation slice implemented. Bhutan player-initiated flow built for staging; guarded production activation pending. Other Control modules not implemented. | WPU-001 security foundation |
 | WPU-009 | Equipment certification | Brand submission, test workflow, certification ledger, NFC validity and public check | NOT IMPLEMENTED | WPU-008, standards policy |
 | WPU-010 | Governance, integrity and appeals | Case evidence, human decision, appeal and audit lifecycle | NOT IMPLEMENTED | WPU-008 |
 | WPU-011 | Education and development | Global initiatives, coach/official pathways and programme management | Public content exists; operational workflows NOT IMPLEMENTED | Identity/organisation |
@@ -91,3 +91,10 @@ Owner confirmed real email delivery, Passport creation, logout, returning login,
 - One verified organisation's operator proposes an affiliation using an existing Player ID. Only the player can consent or decline. A different person with an explicit reviewer role for that organisation can approve, reject or revoke with a reason.
 - Approval creates one private Passport affiliation and an audit event in the same database operation. Revocation records status and retains history. No public affiliation publishing, recognition, eligibility, federation rollout or original identity changes.
 - [Pilot runbook](../engineering/WPU-CONTROL-AFFILIATION-PILOT.md) documents the additive migration, access policy, test path and separate activation prerequisites. No production organisation, staff privileges or pilot data are installed by a code deploy.
+
+
+## Bhutan pilot workflow adjustment
+
+- Bhutan is the first intended pilot organisation. The player submits from their Passport directly to a different, organisation-scoped WPU reviewer. No separate operator is needed. Nothing publicly recognises a federation or grants eligibility.
+- The flow keeps the existing Passport and Player ID, lets the player see request status, and limits reviewer visibility to the case, display name and last eight Player ID characters. No player email handoff is needed.
+- A second migration adds an empty organisation allowlist. Staging tests use a disposable Bhutan fixture. Production stays off until the reviewed migrations, real organisation, reviewer and staff access are configured.

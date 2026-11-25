@@ -1,19 +1,20 @@
 import { randomUUID } from "node:crypto";
 import { queryD1 } from "@/lib/supporters-db";
-import type { AffiliationCase, AffiliationDecision, AffiliationInvitation, AffiliationState } from "./types";
+import type { AffiliationCase, AffiliationDecision, AffiliationInvitation, AffiliationState, PlayerAffiliationWorkspace } from "./types";
 
 export async function affiliationWorkspace(account: string) {
   const roles = await queryD1(
     `SELECT o.id,o.name,r.role FROM wpu_role_assignments r JOIN wpu_organisations o ON o.id=r.scope_id
      JOIN wpu_accounts a ON a.id=r.account_id AND a.status='active'
      WHERE r.account_id=? AND r.scope_type='organisation' AND r.revoked_at IS NULL
-       AND (r.role='wpu_reviewer' OR (r.role='organisation_admin' AND o.status='verified'))
+       AND (r.role='wpu_reviewer' OR (r.role='organisation_admin' AND o.status='verified'
+         AND NOT EXISTS (SELECT 1 FROM wpu_affiliation_self_request_orgs pilot WHERE pilot.organisation_id=o.id)))
      ORDER BY o.name,o.id`, [account]);
   if (!roles.length) return null;
 
   const records = await queryD1(
     `WITH scoped_cases AS (
-       SELECT c.id,c.state,c.updated_at,o.name,substr(pp.public_player_code,-8) AS ending,
+       SELECT c.id,c.state,c.request_source,c.updated_at,o.name,player.display_name AS player_name,substr(pp.public_player_code,-8) AS ending,
         EXISTS (SELECT 1 FROM wpu_role_assignments r
           WHERE r.account_id=a.id AND r.revoked_at IS NULL AND r.role='wpu_reviewer'
             AND r.scope_type='organisation' AND r.scope_id=o.id
@@ -21,11 +22,12 @@ export async function affiliationWorkspace(account: string) {
         o.status='verified' AS verified
        FROM wpu_affiliation_requests c JOIN wpu_organisations o ON o.id=c.organisation_id
        JOIN wpu_player_profiles pp ON pp.person_id=c.person_id
+       JOIN wpu_persons player ON player.id=c.person_id
        JOIN wpu_accounts a ON a.id=? AND a.status='active'
        JOIN wpu_accounts proposer ON proposer.id=c.proposed_by
        WHERE EXISTS (SELECT 1 FROM wpu_role_assignments r WHERE r.account_id=a.id AND r.revoked_at IS NULL
          AND r.scope_type='organisation' AND r.scope_id=o.id
-         AND (r.role='wpu_reviewer' OR (r.role='organisation_admin' AND o.status='verified')))
+         AND (r.role='wpu_reviewer' OR (r.role='organisation_admin' AND o.status='verified' AND c.request_source='operator')))
        ORDER BY CASE c.state WHEN 'awaiting_review' THEN 0 WHEN 'awaiting_player' THEN 1 ELSE 2 END,c.updated_at DESC,c.id
        LIMIT 51)
      SELECT c.*,
@@ -49,7 +51,9 @@ export async function affiliationWorkspace(account: string) {
       }
       return {
         id: String(row.id), organisation: String(row.name), playerCodeEnding: String(row.ending),
-        state, updatedAt: String(row.updated_at), actions, history: JSON.parse(String(row.history)) as AffiliationCase["history"],
+        state, source: row.request_source as AffiliationCase["source"],
+        playerName: row.can_review === 1 && row.request_source === "player" ? String(row.player_name) : null,
+        updatedAt: String(row.updated_at), actions, history: JSON.parse(String(row.history)) as AffiliationCase["history"],
       };
     }),
   };
@@ -64,6 +68,7 @@ export async function proposeAffiliation(account: string, organisation: string, 
      JOIN wpu_organisations o ON o.id=r.scope_id AND o.status='verified'
      JOIN wpu_player_profiles pp ON pp.public_player_code=? AND pp.person_id<>a.person_id
      WHERE a.id=? AND a.status='active' AND o.id=? AND r.scope_type='organisation' AND r.role='organisation_admin'
+       AND NOT EXISTS(SELECT 1 FROM wpu_affiliation_self_request_orgs pilot WHERE pilot.organisation_id=o.id)
        AND EXISTS(SELECT 1 FROM wpu_accounts player WHERE player.person_id=pp.person_id AND player.status='active')
        AND NOT EXISTS(SELECT 1 FROM wpu_memberships m WHERE m.person_id=pp.person_id AND m.organisation_id=o.id
          AND m.membership_type='organisation' AND m.status='active')
@@ -97,7 +102,7 @@ export async function decideAffiliation(account: string, id: string, decision: A
   return rows.length === 1;
 }
 
-export async function affiliationInvitations(account: string): Promise<AffiliationInvitation[]> {
+async function affiliationInvitations(account: string): Promise<AffiliationInvitation[]> {
   const rows = await queryD1(
     `SELECT c.id,o.name,c.created_at FROM wpu_affiliation_requests c
      JOIN wpu_accounts a ON a.person_id=c.person_id AND a.status='active'
@@ -115,4 +120,51 @@ export async function respondToAffiliation(account: string, id: string, accept: 
      RETURNING id`,
     [accept ? "awaiting_review" : "declined", account, accept ? "Player consented in their Passport." : "Player declined in their Passport.", id, account]);
   return rows.length === 1;
+}
+
+
+/** The signed-in account is the only possible subject of a player request. */
+export async function requestOwnAffiliation(account: string, organisation: string) {
+  const id = randomUUID();
+  const rows = await queryD1(
+    `INSERT INTO wpu_affiliation_requests(id,person_id,organisation_id,proposed_by,last_actor,last_reason,state,request_source)
+     SELECT ?,a.person_id,o.id,a.id,a.id,'Player requested affiliation from their Passport.','awaiting_review','player'
+     FROM wpu_accounts a JOIN wpu_player_profiles pp ON pp.person_id=a.person_id
+     JOIN wpu_affiliation_self_request_orgs pilot ON pilot.organisation_id=?
+     JOIN wpu_organisations o ON o.id=pilot.organisation_id AND o.status='verified'
+     WHERE a.id=? AND a.status='active'
+       AND EXISTS(SELECT 1 FROM wpu_auth_emails e WHERE e.account_id=a.id AND e.verified_at IS NOT NULL)
+       AND NOT EXISTS(SELECT 1 FROM wpu_memberships m WHERE m.person_id=a.person_id AND m.organisation_id=o.id
+         AND m.membership_type='organisation' AND m.status='active')
+     ON CONFLICT(person_id,organisation_id) WHERE state IN ('awaiting_player','awaiting_review','approved') DO NOTHING
+     RETURNING id`, [id, organisation, account]);
+  return rows.length ? id : null;
+}
+
+export async function playerAffiliationWorkspace(account: string): Promise<PlayerAffiliationWorkspace> {
+  const [invitations, options, requests] = await Promise.all([
+    affiliationInvitations(account),
+    queryD1(
+      `SELECT o.id,o.name FROM wpu_affiliation_self_request_orgs pilot
+       JOIN wpu_organisations o ON o.id=pilot.organisation_id AND o.status='verified'
+       JOIN wpu_accounts a ON a.id=? AND a.status='active'
+       JOIN wpu_player_profiles pp ON pp.person_id=a.person_id
+       WHERE EXISTS(SELECT 1 FROM wpu_auth_emails e WHERE e.account_id=a.id AND e.verified_at IS NOT NULL)
+         AND NOT EXISTS(SELECT 1 FROM wpu_affiliation_requests c WHERE c.person_id=a.person_id
+           AND c.organisation_id=o.id AND c.state IN ('awaiting_player','awaiting_review','approved'))
+         AND NOT EXISTS(SELECT 1 FROM wpu_memberships m WHERE m.person_id=a.person_id AND m.organisation_id=o.id
+           AND m.membership_type='organisation' AND m.status='active')
+       ORDER BY o.name,o.id LIMIT 50`, [account]),
+    queryD1(
+      `SELECT c.id,c.state,o.name FROM wpu_affiliation_requests c
+       JOIN wpu_accounts a ON a.person_id=c.person_id AND a.status='active'
+       JOIN wpu_organisations o ON o.id=c.organisation_id
+       WHERE a.id=? AND c.request_source='player'
+       ORDER BY CASE c.state WHEN 'awaiting_review' THEN 0 ELSE 1 END,c.updated_at DESC,c.id LIMIT 50`, [account]),
+  ]);
+  return {
+    invitations,
+    options: options.map(row => ({ id: String(row.id), name: String(row.name) })),
+    requests: requests.map(row => ({ id: String(row.id), state: row.state as AffiliationState, organisation: String(row.name) })),
+  };
 }

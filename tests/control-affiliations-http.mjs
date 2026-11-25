@@ -108,3 +108,61 @@ const { id: rejected } = await staff("operator", propose, 201);
 await staff("reviewer", decision("reject", rejected));
 await player("player", { action: "accept", id: rejected }, 409);
 console.log("WPU Control isolated Worker: Access/session binding, scoped proposal, consent, independent approval, atomic audit, race, private Passport and revocation passed");
+
+const own = { action: "request", organisationId: "bhutan-isolated" };
+const testOrganisation = { id: "bhutan-isolated", name: "Bhutan Pickleball Federation (test fixture)" };
+const details = await player("player");
+assert.deepEqual(details.options, [testOrganisation]);
+assert.deepEqual(details.requests, []);
+assert.deepEqual((await player("unverified")).options, []);
+await player("unverified", own, 409);
+await check(request(playerRoute, { body: own }), 401);
+await check(request(playerRoute, { id: "player", body: own, origin: "https://example.org" }), 403);
+await player("player", { ...own, personId: "outsider" }, 400);
+await player("player", { ...own, playerCode: identities.outsider.code }, 400);
+await player("player", { ...own, organisationId: "other-club" }, 409);
+await player("player", { ...own, organisationId: "unverified-club" }, 409);
+await getWorkspace("pilot-operator", 403);
+await staff("pilot-operator", { ...propose, organisationId: own.organisationId }, 409);
+
+const submissions = await Promise.all([
+  request(playerRoute, { id: "player", body: own }),
+  request(playerRoute, { id: "player", body: own }),
+]);
+assert.deepEqual(submissions.map(res => res.status).sort(), [201, 409]);
+const created = await submissions.find(res => res.status === 201).json();
+assert.equal(created.state, "awaiting_review");
+assert.deepEqual((await player("player")).options, []);
+assert.deepEqual((await player("player")).requests, [{ id: created.id, organisation: testOrganisation.name, state: "awaiting_review" }]);
+assert.deepEqual((await player("outsider")).requests, []);
+assert.deepEqual((await player("player")).invitations, []);
+const pendingPassport = (await check(request("/api/passport", { id: "player" }), 200)).passport;
+assert.ok(pendingPassport.affiliations.every(item => item.organisationId !== own.organisationId));
+
+const reviewerCase = (await getWorkspace("reviewer")).cases.find(item => item.id === created.id);
+assert.equal(reviewerCase.source, "player");
+assert.equal(reviewerCase.playerName, "Isolated player");
+assert.equal(reviewerCase.playerCodeEnding, identities.player.code.slice(-8));
+assert.deepEqual(reviewerCase.history.map(entry => [entry.kind, entry.state, entry.actor]), [["player", "awaiting_review", null]]);
+assert.doesNotMatch(JSON.stringify(reviewerCase), /example\.org|WPU-111/);
+assert.deepEqual((await getWorkspace("other-reviewer")).cases, []);
+assert.deepEqual((await getWorkspace("player-alias")).cases.find(item => item.id === created.id).actions, []);
+await staff("player", decision("approve", created.id), 409);
+await staff("player-alias", decision("approve", created.id), 409);
+await staff("other-reviewer", decision("approve", created.id), 409);
+await staff("reviewer", decision("approve", created.id));
+assert.equal((await player("player")).requests[0].state, "approved");
+const approvedPassport = (await check(request("/api/passport", { id: "player" }), 200)).passport;
+assert.equal(approvedPassport.playerCode, before.playerCode);
+assert.equal(approvedPassport.memberSince, before.memberSince);
+assert.equal(approvedPassport.visibility, "private");
+assert.deepEqual(approvedPassport.affiliations.filter(item => item.organisationId === own.organisationId)
+  .map(item => [item.name, item.status]), [[testOrganisation.name, "active"]]);
+await staff("reviewer", decision("revoke", created.id));
+assert.equal((await player("player")).requests[0].state, "revoked");
+const second = await player("player", own, 201);
+await staff("reviewer", decision("reject", second.id));
+assert.equal((await player("player")).requests.find(item => item.id === second.id).state, "rejected");
+assert.notEqual((await check(request("/api/passport", { id: "player" }), 200)).passport.affiliations
+  .find(item => item.organisationId === own.organisationId).status, "active");
+console.log("Self-service affiliation: submit into review, scoped decisions, reject and revoke, private Passport, same-person review blocked");

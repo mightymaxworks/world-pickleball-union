@@ -90,7 +90,12 @@ export default function ControlWorkspace() {
         <ul className="wc-cases">
           {data.cases.map(item => <li key={item.id} className="wc-case">
             <div className="wc-casehead">
-              <div><h3>{item.organisation}</h3><p>Player ID ends in {item.playerCodeEnding}</p></div>
+              <div>
+                <h3>{item.organisation}</h3>
+                {item.playerName && <p>{item.playerName}</p>}
+                <p>Player ID ends in {item.playerCodeEnding}</p>
+                {item.source === "player" && <p>Requested from the player’s Passport</p>}
+              </div>
               <span className="wc-state">{affiliationStateLabels[item.state]}</span>
             </div>
             {item.actions.length > 0 && <form className="wc-form" onSubmit={event => void submit(event, item.id)}>
