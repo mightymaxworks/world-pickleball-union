@@ -11,18 +11,27 @@ database=f245a594-0932-41b9-b255-aeaa1300b639
 target=(--remote)
 if [[ $# == 2 ]]; then
   test -n "$2"
+  database=wpu-supporters
   target=(--local --persist-to "$2")
 fi
-d1() { npx --no-install wrangler d1 execute "$database" "${target[@]}" --json "$@"; }
-scalar() { d1 --command "$1" | jq -er 'if length == 1 and .[0].success then .[0].results[0].n else error("D1 query failed") end'; }
+wrangler=node_modules/.bin/wrangler
+d1() { "$wrangler" d1 execute "$database" "${target[@]}" --json "$@"; }
+scalar() { d1 --command "$1" | jq -er 'if type == "array" and length == 1 and .[0].success then .[0].results[0].n else error("D1 query failed") end'; }
 checksum() { sha256sum "database/$1" | cut -d' ' -f1; }
-registered() { scalar "SELECT coalesce((SELECT sha256 FROM wpu_schema_migrations WHERE filename='$1'),'missing') AS n;"; }
+registry() {
+  d1 --command 'SELECT filename, sha256 FROM wpu_schema_migrations;' |
+    jq -cer 'if type == "array" and length == 1 and .[0].success then
+      (.[0].results | map({key:.filename,value:.sha256}) | from_entries)
+      else error("Could not read migration registry") end'
+}
+registered() { jq -er --arg file "$1" '.[$file] // "missing"' <<< "$registry_json"; }
 fatal() { printf 'Migration preflight stopped: %s\n' "$1" >&2; exit 1; }
 check_fks() { d1 --command 'PRAGMA foreign_key_check;' | jq -e 'length == 1 and .[0].success and (.[0].results | length == 0)' >/dev/null; }
 
 baseline=(wpu-identity-foundation-v1.sql wpu-identity-invariants-v1.sql wpu-passwordless-auth-v1.sql
           wpu-passwordless-auth-v2.sql wpu-passwordless-auth-v3.sql wpu-organisation-foundation-v2.sql)
 pilot=(wpu-control-affiliations-v1.sql wpu-control-affiliations-v2.sql)
+registry_json=$(registry)
 for file in "${baseline[@]}"; do
   [[ "$(registered "$file")" == "$(checksum "$file")" ]] || fatal "missing or mismatched baseline $file"
 done
@@ -62,7 +71,7 @@ if [[ "$pilot_mode" == inspect || ${#pending[@]} == 0 ]]; then
   exit 0
 fi
 
-if [[ "${target[0]}" == --remote ]]; then npx --no-install wrangler d1 time-travel info "$database"; fi
+if [[ "${target[0]}" == --remote ]]; then "$wrangler" d1 time-travel info "$database"; fi
 wpu_batch=$(mktemp)
 trap 'rm -f "$wpu_batch"' EXIT
 for file in "${pending[@]}"; do
@@ -71,6 +80,7 @@ for file in "${pending[@]}"; do
   printf "\nINSERT INTO wpu_schema_migrations(filename,sha256) VALUES('%s','%s');\n" "$file" "$hash" >> "$wpu_batch"
 done
 d1 --yes --file "$wpu_batch" >/dev/null
+registry_json=$(registry)
 for file in "${pilot[@]}"; do
   [[ "$(registered "$file")" == "$(checksum "$file")" ]] || fatal "post-apply checksum did not match $file"
   printf 'Applied and recorded %s\n' "$file"
