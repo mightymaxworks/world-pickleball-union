@@ -14,7 +14,7 @@ Status: ACTIVE TRACKER — 2026-11-24 (production pre-release)
 ## Delivery order and traceability
 | ID | Feature | Core acceptance criterion | Initial evidence / status | Dependencies |
 |---|---|---|---|---|
-| WPU-001 | Membership and Player Passport | Person registers, verifies account, signs in, receives unique player code, views/updates permitted profile, returns to persistent data | PR #17 merged at 0f074c10; nine CI checks passed on e37dd6b; Cloudflare version 3d5ad55f reported Ready; /join visually confirmed by owner; registration activation and live acceptance pending | Auth, permissions, data privacy |
+| WPU-001 | Membership and Player Passport | Person registers, verifies account, signs in, receives unique player code, views/updates permitted profile, returns to persistent data | PR #17 merged; production D1 migrations 6/6 verified (Run #45399219089); build, production dependency audit, all routes and isolated authenticated new/returning player journeys passed (Run #45525525765); live email and production activation pending | Auth, permissions, data privacy |
 | WPU-002 | Tournament creation | Scoped organiser creates, edits and publishes an event with divisions and eligibility rules | NOT IMPLEMENTED | WPU-001 |
 | WPU-003 | Tournament registration | Eligible player registers, receives confirmation, handles full/waitlist/withdrawal and doubles partner conditions | NOT IMPLEMENTED | WPU-001, WPU-002 |
 | WPU-004 | Tournament operations | Draw, court schedule, score, confirm, finalise, correct with audit | NOT IMPLEMENTED | WPU-002, WPU-003 |
@@ -50,11 +50,11 @@ The ranking research's rolling 52 weeks/best 8 is superseded by calendar-year/be
 ## Active delivery checkpoints (WPU-001)
 | Checkpoint | Status | Next evidence |
 |---|---|---|
-| M1 integrated registration/login | Database provisioning tests passed; HTTP end-to-end pending | Controlled new/returning player HTTP tests |
+| M1 integrated registration/login | Isolated Worker HTTP new/returning player, Passport editing, replay rejection, logout PASSED in Run #45525525765 | Actual Resend email and production registration pending |
 | M1A federation foundation | Isolated D1 tests passed | Scoped access tests before federation APIs |
 | M2 functional UX | Registration and Passport implemented; registration visually confirmed; logo contrast fix 866d56e6 pending live verification | Registration, verification, Passport, editing, logout with real data |
-| M3 quality and security | Pending | E2E, accessibility, privacy, replay, concurrency, regression |
-| M4 release | Cloudflare code deployed; six production D1 migrations verified successful in Run #45399219089; auth flag still disabled | Confirm beta policies and latest build; enable limited registration and complete live smoke |
+| M3 quality and security | Latest production dependency audit 0 vulnerabilities; build, route and authenticated Worker journey PASS Run #45525525765; full development audit still reports 10 findings | Real email, negative/edge, accessibility and privacy review outstanding |
+| M4 release | Production schema 6/6 installed; production routes passed; live auth still disabled | Approve policies, deploy confirmed app version, test Resend and activate controlled adult beta |
 | M5 acceptance | Pending | Owner completes live journey |
 
 Update this register on every substantive delivery milestone. Keep stable feature IDs; never report a percentage without a defined denominator. Record evidence by commit and distinguish committed, tested, merged, deployed and accepted. Preserve all prior scope. Hourly monitoring reports changes, not autonomous engineering.
@@ -63,3 +63,8 @@ Update this register on every substantive delivery milestone. Keep stable featur
 - [GitHub Actions production D1 migration run #45399219089](https://github.com/mightymaxworks/world-pickleball-union/actions/runs/45399219089) finished successfully using `apply`, with six migration filenames and checksums in `wpu_schema_migrations`.
 - D1 schema check showed `given_name`, `family_name`, `residence_locality`, `gender` columns. `PRAGMA foreign_key_check` returned no rows. Original `_cf_KV`, `supporter_audit`, `supporter_pledges`, `wpu_inquiries` tables remained present.
 - Initial migration `apply` is one-time and must not be rerun. Registration and production email sign-in are not yet accepted; flag activation and live end-to-end checks remain outstanding.
+
+## 2026-11-25 WPU-001 beta release validation
+- [Workflow run #45525525765](https://github.com/mightymaxworks/world-pickleball-union/actions/runs/45525525765) completed successfully: production-only npm audit 0 findings, Next.js build and OpenNext build passed; public routes `/`, `/join`, `/passport`, `/membership/terms`, `/membership/privacy` passed and signed-out `/api/passport` returned 401.
+- Isolated local D1 Worker tests passed: verified new identity and private Passport, name edit with stable player ID, replay prevention, logout, returning login retaining original ID and edited name. Synthetic challenges used: production Resend delivery, live account creation, approved policies and age/identity procedures are NOT yet validated.
+- Full dependency install still reported 10 findings (9 moderate, 1 high), despite production-only audit passing. Review dev-tooling findings separately before routine maintenance rollout.
