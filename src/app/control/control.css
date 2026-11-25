@@ -1,0 +1,26 @@
+.wc { --navy:#0e285d; --ink:#14294f; --muted:#425473; --line:#d5dfef; min-height:100vh; background:#f1f5fb; color:var(--ink); font-family:var(--font-geist-sans),system-ui,sans-serif; }
+.wc-header { background:var(--navy); color:#fff; display:flex; align-items:center; justify-content:space-between; gap:1rem; padding:.5rem max(1rem,calc((100% - 62rem)/2)); }
+.wc-header img { width:clamp(6rem,26vw,9.375rem); height:auto; }
+.wc-header a { text-decoration:underline; text-underline-offset:.18em; font-weight:700; }
+.wc-content { max-width:64rem; margin:auto; padding:2rem 1rem 3rem; overflow-wrap:anywhere; }
+.wc h1,.wc h2,.wc h3 { margin:0 0 .35em; color:var(--navy); font-weight:800; line-height:1.15; }
+.wc h1 { font-size:clamp(2rem,7vw,3.2rem); letter-spacing:-.04em; }
+.wc h2 { font-size:clamp(1.35rem,4vw,1.8rem); }
+.wc h3 { font-size:1.05rem; }
+.wc p { margin:0 0 .75rem; color:var(--muted); }
+.wc p.wc-label { text-transform:uppercase; letter-spacing:.12em; color:var(--navy); font-weight:800; font-size:.76rem; }
+.wc-box,.wc-feedback { background:white; border:1px solid var(--line); border-radius:1rem; padding:clamp(1rem,4vw,1.65rem); margin-top:1rem; }
+.wc-form { display:grid; gap:.65rem; margin:.9rem 0; }
+.wc-form label { display:grid; gap:.23rem; font-weight:700; }
+.wc input,.wc select { width:100%; min-height:44px; border:1px solid #9aaac4; border-radius:.45rem; background:white; padding:.55rem .65rem; font:inherit; color:var(--ink); }
+.wc button { justify-self:start; background:var(--navy); color:white; font-weight:700; cursor:pointer; min-height:44px; border-radius:.45rem; padding:.65rem .95rem; }
+.wc button:disabled { opacity:.55; cursor:wait; }
+.wc a:focus-visible,.wc button:focus-visible,.wc input:focus-visible,.wc select:focus-visible,.wc summary:focus-visible { outline:3px solid #19767c; outline-offset:2px; }
+.wc-cases { list-style:none; padding:0; margin:0; }
+.wc-case { border-top:1px solid var(--line); padding:1rem 0 .5rem; }
+.wc-casehead,.wc-actions { display:flex; align-items:flex-start; flex-wrap:wrap; gap:.6rem 1rem; }
+.wc-casehead { justify-content:space-between; }
+.wc-state { display:inline-block; background:#ebf2fe; color:var(--navy); border-radius:1rem; padding:.3rem .65rem; font-size:.82rem; font-weight:700; }
+.wc summary { width:max-content; max-width:100%; padding:.5rem 0; color:var(--navy); cursor:pointer; font-weight:700; }
+.wc details ol { padding-left:1.4rem; }
+.wc-feedback a { text-decoration:underline; font-weight:700; }

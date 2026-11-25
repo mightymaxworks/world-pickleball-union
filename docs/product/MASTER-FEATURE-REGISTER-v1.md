@@ -21,7 +21,7 @@ Status: ACTIVE TRACKER — 2026-11-25 (production beta)
 | WPU-005 | Competition formats | Round robin, single elimination, pool-to-knockout, double elimination/reset and team ties all complete test fixtures | NOT IMPLEMENTED | WPU-004 |
 | WPU-006 | Provisional ranking calculations | Versioned result ingestion, calendar year, best 10, five tiers, field factors, individual doubles, team ledger, deterministic replay | NOT IMPLEMENTED; numerical policy pending | WPU-004, approved simulation parameters |
 | WPU-007 | Official rankings publication | Approved policy, integrity review, publication snapshots, corrections, dispute traceability | BLOCKED pending approved policy | WPU-006, governance |
-| WPU-008 | WPU Control core | Staff accounts, scoped permissions, decision queue, audit, separation of duties | NOT IMPLEMENTED | WPU-001 security foundation |
+| WPU-008 | WPU Control core | Staff accounts, scoped permissions, decision queue, audit, separation of duties | First affiliation slice implemented, guarded pilot activation pending. Other Control modules not implemented. | WPU-001 security foundation |
 | WPU-009 | Equipment certification | Brand submission, test workflow, certification ledger, NFC validity and public check | NOT IMPLEMENTED | WPU-008, standards policy |
 | WPU-010 | Governance, integrity and appeals | Case evidence, human decision, appeal and audit lifecycle | NOT IMPLEMENTED | WPU-008 |
 | WPU-011 | Education and development | Global initiatives, coach/official pathways and programme management | Public content exists; operational workflows NOT IMPLEMENTED | Identity/organisation |
@@ -41,7 +41,7 @@ Status: ACTIVE TRACKER — 2026-11-25 (production beta)
 - Release: PR and commit, deployed version, live smoke, rollback route, owner sign-off.
 
 ## Immediate active feature
-WPU-001 is the sole active end-to-end product slice. WPU-002 design can be explored but must not displace WPU-001 implementation. Cross-cutting work is allowed only when needed for WPU-001 completion or production safety.
+The live WPU-001 core and Passport v2 passed owner acceptance. The active build is the WPU-008 scoped affiliation slice. WPU-002 and results integration remain subsequent work. Cross-cutting work is allowed only when needed for WPU-001 completion or production safety.
 
 ## Policy conflicts to reconcile, not silently resolve
 The ranking research's rolling 52 weeks/best 8 is superseded by calendar-year/best 10. Exact points mathematics remains pending. WPU Control's long-term scope remains wider than its initial security foundation. The current Player Journey preview is sample data, not a real membership service.
@@ -79,3 +79,15 @@ Owner confirmed real email delivery, Passport creation, logout, returning login,
 - Display name remains independent from given and family names. Residence data is distinct from representation. Profile updates reuse the six installed migrations and do not write identity codes, credentials, roles, or memberships.
 - Recorded affiliations are shown as recorded. Competition history and rankings use explicit unavailable states until their respective modules have real data. No ranking policy or remaining approved feature is superseded by this iteration.
 - Release evidence is tracked separately from the original 6/6 production acceptance. The v2 owner acceptance is to show the card on mobile, update permitted fields, and sign out and back in to confirm the same ID and saved details.
+
+
+## Passport v2 release and acceptance
+
+- [PR #18](https://github.com/mightymaxworks/world-pickleball-union/pull/18) merged at `d9a77092eb117769541b9993478da52e0e8174dd`. All four PR workflows and the production Workers Builds deployment passed. Live smoke confirmed the v2 route, approved branding and signed-out API denial.
+- Owner completed live v2 acceptance on 2026-11-25. Existing membership and permanent IDs remain the baseline for subsequent slices.
+
+## WPU Control affiliation slice
+
+- One verified organisation's operator proposes an affiliation using an existing Player ID. Only the player can consent or decline. A different person with an explicit reviewer role for that organisation can approve, reject or revoke with a reason.
+- Approval creates one private Passport affiliation and an audit event in the same database operation. Revocation records status and retains history. No public affiliation publishing, recognition, eligibility, federation rollout or original identity changes.
+- [Pilot runbook](../engineering/WPU-CONTROL-AFFILIATION-PILOT.md) documents the additive migration, access policy, test path and separate activation prerequisites. No production organisation, staff privileges or pilot data are installed by a code deploy.
