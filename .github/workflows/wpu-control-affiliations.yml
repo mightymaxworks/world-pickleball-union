@@ -1,0 +1,18 @@
+name: WPU Control affiliation pilot validation
+on:
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  isolated-affiliation-worker:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci
+      - run: npx opennextjs-cloudflare build
+      - run: bash tests/run-control-affiliations-http.sh

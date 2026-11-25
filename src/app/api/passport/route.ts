@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { accountForSession, SESSION_COOKIE } from "@/lib/auth/session";
 import { parsePassportPatch, type PassportProfile, type ProfileChanges } from "@/lib/passport/profile";
 import { isResidenceCountry } from "@/lib/passport/regions";
+import { controlConfig } from "@/lib/control/access";
 import { queryD1 } from "@/lib/supporters-db";
 
 export const runtime = "nodejs";
@@ -65,6 +66,7 @@ export async function GET() {
         membershipStatus: row.membership_status || "inactive",
         memberSince: optionalText(row.member_since),
         emailVerified: Number(row.email_verified) === 1,
+        ...(controlConfig() ? { affiliationRequestsEnabled: true } : {}),
         affiliations: affiliations.map(a => ({
           organisationId: a.id, name: a.name, type: a.organisation_type, status: a.status,
           validFrom: a.valid_from, validUntil: a.valid_until,

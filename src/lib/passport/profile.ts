@@ -13,6 +13,7 @@ export type Passport = PassportProfile & {
   membershipStatus: "active" | "inactive";
   memberSince: string | null;
   emailVerified: boolean;
+  affiliationRequestsEnabled?: true;
   affiliations: {
     organisationId: string;
     name: string;
