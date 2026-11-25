@@ -1,5 +1,5 @@
 # WPU Master Feature Register v1
-Status: ACTIVE TRACKER — 2026-11-24 (production pre-release)
+Status: ACTIVE TRACKER — 2026-11-25 (production beta)
 
 ## Authority and rules
 - Approved requirements come from docs/project/MASTER-HANDOVER.md, docs/project/DECISION-REGISTER.md, docs/product/RANKING-POLICY.md and project handover.
@@ -14,7 +14,7 @@ Status: ACTIVE TRACKER — 2026-11-24 (production pre-release)
 ## Delivery order and traceability
 | ID | Feature | Core acceptance criterion | Initial evidence / status | Dependencies |
 |---|---|---|---|---|
-| WPU-001 | Membership and Player Passport | Person registers, verifies account, signs in, receives unique player code, views/updates permitted profile, returns to persistent data | PR #17 merged; production D1 migrations 6/6 verified (Run #45399219089); build, production dependency audit, all routes and isolated authenticated new/returning player journeys passed (Run #45525525765); live email and production activation pending | Auth, permissions, data privacy |
+| WPU-001 | Membership and Player Passport | Person registers, verifies account, signs in, receives unique player code, views/updates permitted profile, returns to persistent data | PR #17 merged; production D1 migrations 6/6 verified (Run #45399219089); build, production dependency audit, all routes and isolated authenticated new/returning player journeys passed (Run #45525525765); core production beta passed owner acceptance (6/6); Passport v2 tracked below | Auth, permissions, data privacy |
 | WPU-002 | Tournament creation | Scoped organiser creates, edits and publishes an event with divisions and eligibility rules | NOT IMPLEMENTED | WPU-001 |
 | WPU-003 | Tournament registration | Eligible player registers, receives confirmation, handles full/waitlist/withdrawal and doubles partner conditions | NOT IMPLEMENTED | WPU-001, WPU-002 |
 | WPU-004 | Tournament operations | Draw, court schedule, score, confirm, finalise, correct with audit | NOT IMPLEMENTED | WPU-002, WPU-003 |
@@ -50,11 +50,11 @@ The ranking research's rolling 52 weeks/best 8 is superseded by calendar-year/be
 ## Active delivery checkpoints (WPU-001)
 | Checkpoint | Status | Next evidence |
 |---|---|---|
-| M1 integrated registration/login | Isolated Worker HTTP new/returning player, Passport editing, replay rejection, logout PASSED in Run #45525525765 | Actual Resend email and production registration pending |
+| M1 integrated registration/login | Isolated Worker HTTP new/returning player, Passport editing, replay rejection, logout PASSED in Run #45525525765 | Production Resend delivery and registration passed in owner acceptance |
 | M1A federation foundation | Isolated D1 tests passed | Scoped access tests before federation APIs |
-| M2 functional UX | Registration and Passport implemented; registration visually confirmed; logo contrast fix 866d56e6 pending live verification | Registration, verification, Passport, editing, logout with real data |
-| M3 quality and security | Latest production dependency audit 0 vulnerabilities; build, route and authenticated Worker journey PASS Run #45525525765; full development audit still reports 10 findings | Real email, negative/edge, accessibility and privacy review outstanding |
-| M4 release | Production schema 6/6 installed; production routes passed; live auth still disabled | Approve policies, deploy confirmed app version, test Resend and activate controlled adult beta |
+| M2 functional UX | Core registration and Passport exercised in production by owner | Passport v2 design and structured profile acceptance tracked separately |
+| M3 quality and security | Latest production dependency audit 0 vulnerabilities; build, route and authenticated Worker journey PASS Run #45525525765; full development audit still reports 10 findings | Remaining security edge cases, recovery and privacy procedures tracked separately |
+| M4 release | Production schema 6/6 installed; live auth enabled and tested by owner | Verify revision-specific Cloudflare deployment and variable persistence |
 | M5 acceptance | Core live journey accepted by owner: 6/6 checks passed | Passport v2 and remaining security/privacy edge cases tracked separately |
 
 Update this register on every substantive delivery milestone. Keep stable feature IDs; never report a percentage without a defined denominator. Record evidence by commit and distinguish committed, tested, merged, deployed and accepted. Preserve all prior scope. Hourly monitoring reports changes, not autonomous engineering.
@@ -71,3 +71,11 @@ Update this register on every substantive delivery milestone. Keep stable featur
 
 ## 2026-11-25 production user acceptance
 Owner confirmed real email delivery, Passport creation, logout, returning login, unchanged permanent player ID and persistent profile name editing. Core WPU-001 live journey accepted (6/6). Remaining edge-case security, recovery, privacy procedures and configuration persistence require verification. Proposed next slice: Passport v2, followed by scoped WPU Control and federation onboarding; sequencing subject to approval. Preserve existing identities and all 17 feature IDs.
+
+## Passport v2 — active WPU-001 iteration
+
+- Owner approved a mobile-first credential, structured profile editing and sporting dashboard foundations without changing existing accounts or Player IDs.
+- The signed-in credential displays the actual membership status, display name and permanent Player ID, with a membership start date when available. Presentation mode omits private profile and contact fields. It is not a public membership verifier or an eligibility credential.
+- Display name remains independent from given and family names. Residence data is distinct from representation. Profile updates reuse the six installed migrations and do not write identity codes, credentials, roles, or memberships.
+- Recorded affiliations are shown as recorded. Competition history and rankings use explicit unavailable states until their respective modules have real data. No ranking policy or remaining approved feature is superseded by this iteration.
+- Release evidence is tracked separately from the original 6/6 production acceptance. The v2 owner acceptance is to show the card on mobile, update permitted fields, and sign out and back in to confirm the same ID and saved details.
