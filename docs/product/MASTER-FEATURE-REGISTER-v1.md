@@ -55,7 +55,7 @@ The ranking research's rolling 52 weeks/best 8 is superseded by calendar-year/be
 | M2 functional UX | Registration and Passport implemented; registration visually confirmed; logo contrast fix 866d56e6 pending live verification | Registration, verification, Passport, editing, logout with real data |
 | M3 quality and security | Latest production dependency audit 0 vulnerabilities; build, route and authenticated Worker journey PASS Run #45525525765; full development audit still reports 10 findings | Real email, negative/edge, accessibility and privacy review outstanding |
 | M4 release | Production schema 6/6 installed; production routes passed; live auth still disabled | Approve policies, deploy confirmed app version, test Resend and activate controlled adult beta |
-| M5 acceptance | Pending | Owner completes live journey |
+| M5 acceptance | Core live journey accepted by owner: 6/6 checks passed | Passport v2 and remaining security/privacy edge cases tracked separately |
 
 Update this register on every substantive delivery milestone. Keep stable feature IDs; never report a percentage without a defined denominator. Record evidence by commit and distinguish committed, tested, merged, deployed and accepted. Preserve all prior scope. Hourly monitoring reports changes, not autonomous engineering.
 
@@ -68,3 +68,6 @@ Update this register on every substantive delivery milestone. Keep stable featur
 - [Workflow run #45525525765](https://github.com/mightymaxworks/world-pickleball-union/actions/runs/45525525765) completed successfully: production-only npm audit 0 findings, Next.js build and OpenNext build passed; public routes `/`, `/join`, `/passport`, `/membership/terms`, `/membership/privacy` passed and signed-out `/api/passport` returned 401.
 - Isolated local D1 Worker tests passed: verified new identity and private Passport, name edit with stable player ID, replay prevention, logout, returning login retaining original ID and edited name. Synthetic challenges used: production Resend delivery, live account creation, approved policies and age/identity procedures are NOT yet validated.
 - Full dependency install still reported 10 findings (9 moderate, 1 high), despite production-only audit passing. Review dev-tooling findings separately before routine maintenance rollout.
+
+## 2026-11-25 production user acceptance
+Owner confirmed real email delivery, Passport creation, logout, returning login, unchanged permanent player ID and persistent profile name editing. Core WPU-001 live journey accepted (6/6). Remaining edge-case security, recovery, privacy procedures and configuration persistence require verification. Proposed next slice: Passport v2, followed by scoped WPU Control and federation onboarding; sequencing subject to approval. Preserve existing identities and all 17 feature IDs.
