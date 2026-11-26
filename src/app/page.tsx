@@ -69,6 +69,7 @@ export default function Home() {
             <a className="button-secondary" href="/members">
               Federations &amp; clubs
             </a>
+            <a className="public-explore-link" href="#about">Explore WPU</a>
           </div>
         </div>
 
