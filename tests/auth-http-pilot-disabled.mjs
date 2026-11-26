@@ -9,4 +9,8 @@ for(const [path,body] of [["/api/auth/request-code",{email:"synthetic@example.or
 }
 assert.equal((await fetch(base+"/api/passport")).status,401);
 assert.equal((await fetch(base+"/api/passport",{method:"PATCH",headers:{Origin:base,"Content-Type":"application/json"},body:JSON.stringify({name:"Synthetic"})})).status,401);
+assert.equal((await fetch(base+"/federations/bhutan")).status,404);
+assert.equal((await fetch(base+"/api/control/federation-roster")).status,404);
+assert.equal((await post("/api/federations/v1/identity/grant",{clientId:"reference",consent:true})).status,404);
+assert.equal((await post("/api/federations/v1/identity/exchange",{clientId:"reference",code:"a".repeat(43)})).status,404);
 console.log("HTTP pilot-disabled and unauthenticated access checks passed");
