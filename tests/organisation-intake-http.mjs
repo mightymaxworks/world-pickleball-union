@@ -64,7 +64,7 @@ assert.match(await (await request("/members#register")).text(),/id="register".*I
 assert.match(await (await request("/join?mode=login")).text(),/<h2>Sign in<\/h2>/);
 assert.match(hub,/href="\/federations"[^>]*>Find your federation/);
 assert.equal((await request("/federations")).status,200);
-assert.match(await (await request("/control",reviewer)).text(),/Organisation participation requests/);
+assert.match(await (await request("/control?view=requests",reviewer)).text(),/Organisation participation requests/);
 assert.doesNotMatch(await (await request("/control",{id:"pilot-operator",staff:"pilot-operator"})).text(),/Organisation participation requests/);
 await get("",401,{});
 await get("",403,{id:"reviewer",staff:"other-reviewer"});

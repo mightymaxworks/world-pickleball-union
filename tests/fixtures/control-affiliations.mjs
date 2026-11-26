@@ -9,7 +9,7 @@ const { privateKey, publicKey } = generateKeyPairSync("rsa", { modulusLength: 20
 const key = publicKey.export({ format: "jwk" });
 const issuer = "https://isolated-wpu.cloudflareaccess.com";
 const audience = "2".repeat(64);
-const identities = Object.fromEntries(["player","operator","reviewer","outsider","other-reviewer","player-alias","pilot-operator","unverified","second-admin","second-reviewer"].map((id, index) => [id, {
+const identities = Object.fromEntries(["player","operator","reviewer","outsider","other-reviewer","player-alias","pilot-operator","unverified","second-admin","second-reviewer","intake-only"].map((id, index) => [id, {
   code: "WPU-" + (index + 1).toString(16).toUpperCase().repeat(32),
   email: id + "@example.org",
   token: randomBytes(32).toString("base64url"),

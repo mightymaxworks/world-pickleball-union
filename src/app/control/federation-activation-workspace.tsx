@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useState, type FormEvent } from "react";
 import type { ActivationCandidate } from "@/lib/federations/activation-types";
 import { regionLabel } from "@/lib/passport/regions";
@@ -70,6 +71,15 @@ export default function FederationActivationWorkspace() {
       <button type="button" className="wc-secondary" disabled={!result.hasMore} onClick={() => {setOffset(offset+25);reload();}}>Next</button>
     </div>}
   </section>;
+}
+
+export function InlineFederationActivation({item}: {item: ActivationCandidate}) {
+  const router = useRouter();
+  const [notice,setNotice] = useState("");
+  return <>
+    {notice && <p className="wc-notice" role="status">{notice}</p>}
+    <ActivationRecord key={item.id + item.revision} item={item} onSaved={message => {setNotice(message); router.refresh();}} />
+  </>;
 }
 
 function ActivationRecord({item,onSaved}: {item:ActivationCandidate;onSaved:(message:string)=>void}) {

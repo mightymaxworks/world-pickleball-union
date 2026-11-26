@@ -24,7 +24,7 @@ cat >> "$pilot_tmp/control-seed.sql" <<'SQL'
 
 CREATE TABLE wpu_schema_migrations(filename TEXT PRIMARY KEY,sha256 TEXT NOT NULL);
 INSERT INTO wpu_schema_migrations(filename,sha256) VALUES('wpu-federation-members-v1.sql','isolated-fixture');
-INSERT INTO wpu_organisation_intake_reviewers(account_id) VALUES('reviewer');
+INSERT INTO wpu_organisation_intake_reviewers(account_id) VALUES('reviewer'),('intake-only');
 INSERT INTO wpu_federation_publishers(account_id) VALUES('reviewer');
 INSERT INTO wpu_schema_migrations(filename,sha256) VALUES('wpu-federation-activation-v1.sql','isolated-fixture');
 INSERT INTO wpu_inquiries(id,form_type,organisation,country,contact_name,email,details_json,status) VALUES

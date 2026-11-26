@@ -3,14 +3,22 @@ import { queryD1 } from "@/lib/supporters-db";
 import { onlineRequestCondition } from "@/lib/federations/availability";
 import type { AffiliationCase, AffiliationDecision, AffiliationInvitation, AffiliationState, PlayerAffiliationWorkspace } from "./types";
 
-export async function affiliationWorkspace(account: string) {
-  const roles = await queryD1(
+function affiliationRoles(account: string) {
+  return queryD1(
     `SELECT o.id,o.name,r.role FROM wpu_role_assignments r JOIN wpu_organisations o ON o.id=r.scope_id
      JOIN wpu_accounts a ON a.id=r.account_id AND a.status='active'
      WHERE r.account_id=? AND r.scope_type='organisation' AND r.revoked_at IS NULL
        AND (r.role='wpu_reviewer' OR (r.role='organisation_admin' AND o.status='verified'
          AND NOT EXISTS (SELECT 1 FROM wpu_affiliation_self_request_orgs pilot WHERE pilot.organisation_id=o.id)))
      ORDER BY o.name,o.id`, [account]);
+}
+
+export async function hasAffiliationRole(account: string) {
+  return (await affiliationRoles(account)).length > 0;
+}
+
+export async function affiliationWorkspace(account: string) {
+  const roles = await affiliationRoles(account);
   if (!roles.length) return null;
 
   const records = await queryD1(
