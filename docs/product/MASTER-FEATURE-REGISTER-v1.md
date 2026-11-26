@@ -1,5 +1,5 @@
 # WPU Master Feature Register v1
-Status: ACTIVE TRACKER — 2026-11-25 (production beta)
+Status: ACTIVE TRACKER — 2026-11-26
 
 ## Authority and rules
 - Approved requirements come from docs/project/MASTER-HANDOVER.md, docs/project/DECISION-REGISTER.md, docs/product/RANKING-POLICY.md and project handover.
@@ -15,22 +15,21 @@ Status: ACTIVE TRACKER — 2026-11-25 (production beta)
 | ID | Feature | Core acceptance criterion | Initial evidence / status | Dependencies |
 |---|---|---|---|---|
 | WPU-001 | Membership and Player Passport | Person registers, verifies account, signs in, receives unique player code, views/updates permitted profile, returns to persistent data | PR #17 merged; production D1 migrations 6/6 verified (Run #45399219089); build, production dependency audit, all routes and isolated authenticated new/returning player journeys passed (Run #45525525765); core production beta passed owner acceptance (6/6); Passport v2 tracked below | Auth, permissions, data privacy |
-| WPU-002 | Tournament creation | Scoped organiser creates, edits and publishes an event with divisions and eligibility rules | NOT IMPLEMENTED | WPU-001 and Phase 1 federation self-service |
+| WPU-002 | Tournament creation | Scoped organiser creates, edits and publishes an event with divisions and eligibility rules | NEXT BUILD | WPU-001 and the shared organisation permissions model |
 | WPU-003 | Tournament registration | Eligible player registers, receives confirmation, handles full/waitlist/withdrawal and doubles partner conditions | NOT IMPLEMENTED | WPU-001, WPU-002 |
 | WPU-004 | Tournament operations | Draw, court schedule, score, confirm, finalise, correct with audit | NOT IMPLEMENTED | WPU-002, WPU-003 |
 | WPU-005 | Competition formats | Round robin, single elimination, pool-to-knockout, double elimination/reset and team ties all complete test fixtures | NOT IMPLEMENTED | WPU-004 |
 | WPU-006 | Provisional ranking calculations | Versioned result ingestion, calendar year, best 10, five tiers, field factors, individual doubles, team ledger, deterministic replay | NOT IMPLEMENTED; numerical policy pending | WPU-004, approved simulation parameters |
 | WPU-007 | Official rankings publication | Approved policy, integrity review, publication snapshots, corrections, dispute traceability | BLOCKED pending approved policy | WPU-006, governance |
-| WPU-008 | WPU Control core | Staff accounts, scoped permissions, decision queue, audit, separation of duties | Bhutan player-initiated affiliation flow accepted in production on 2026-11-26. Broader Control modules not implemented. | WPU-001 security foundation |
+| WPU-008 | WPU Control core | Staff accounts, scoped permissions, decision queue, audit, separation of duties | Bhutan affiliation accepted live. Organisation intake and review, federation roster, and activation workflow delivered. The second real federation remains a live acceptance checkpoint. Broader integrity/admin workflows are planned. | WPU-001 security foundation |
 | WPU-009 | Equipment certification | Brand submission, test workflow, certification ledger, NFC validity and public check | NOT IMPLEMENTED | WPU-008, standards policy |
 | WPU-010 | Governance, integrity and appeals | Case evidence, human decision, appeal and audit lifecycle | NOT IMPLEMENTED | WPU-008 |
 | WPU-011 | Education and development | Global initiatives, coach/official pathways and programme management | Public content exists; operational workflows NOT IMPLEMENTED | Identity/organisation |
-| WPU-012 | External integrations | Secure, idempotent, provider-neutral result exchange | NOT IMPLEMENTED; prove the contract with a reference client, with no named provider dependency | WPU-004, WPU-006 |
+| WPU-012 | External integrations | Secure, idempotent, provider-neutral result exchange | Passport identity handoff tested with the isolated WPU reference client, no external partner enabled. Results exchange not implemented. | WPU-004, WPU-006 |
 | WPU-013 | Finance and partnerships | Partner records, permissions, financial controls and reporting | NOT IMPLEMENTED | WPU-008 |
 | WPU-014 | AI Operations | Explainable recommendations, task automation, human escalation, audit | NOT IMPLEMENTED | WPU-008, governance |
-| WPU-015 | Public site and supporter continuity | Existing pages and supporter submissions continue operating after each release | Existing code; re-verify live on every release | Cloudflare/D1 |
-
-| WPU-016 | National federation OS | Independent organisation branding, recognition, affiliation, membership policies and scoped administration; BPF intended pilot subject to formal recognition and agreement | Minimum schema in WPU-001 PR #17 tested; operational federation portal NOT IMPLEMENTED | WPU-001, WPU-008, federation agreements |
+| WPU-015 | Public site and supporter continuity | Existing pages and supporter submissions continue operating after each release | Public site, support network, Join WPU, direct sign-in and organisation intake delivered. Re-verify production paths each release. | Cloudflare/D1 |
+| WPU-016 | National federation OS | Independent organisation branding, recognition, affiliation, membership policies and scoped administration; BPF intended pilot subject to formal recognition and agreement | Player directory, Bhutan portal, member records, local holds and exports delivered. Staff activation in this slice; second real federation live acceptance pending. Formal governance, dues and tournament management are separate. | WPU-001, WPU-008, federation agreements |
 | WPU-017 | Sporting eligibility and credentials | Separate representation, competition eligibility and professional credentials with evidence, dates and audit | NOT IMPLEMENTED | WPU-001, WPU-010, WPU-011, approved policies |
 
 ## Required evidence per feature
@@ -40,8 +39,15 @@ Status: ACTIVE TRACKER — 2026-11-25 (production beta)
 - QA: unit/integration/e2e test runs, regression checks and security evidence.
 - Release: PR and commit, deployed version, live smoke, rollback route, owner sign-off.
 
-## Immediate active feature
-The live WPU-001 core and Passport v2 passed owner acceptance. The Bhutan WPU-008 affiliation slice passed end to end in production: a player submitted, a scoped WPU reviewer approved, and the affiliation appeared without changing the Player ID. Next is portable Passport and federation self-service (WPU-001/WPU-008/WPU-016), before WPU-002 Tournament Creation. Prove portability using a WPU-owned reference client and isolation between federation scopes. No external provider is needed for this milestone. See the [engineering roadmap](../engineering/IMPLEMENTATION-ROADMAP.md#module-acceptance).
+## What is live, next and later
+
+- **Live and accepted.** Player registration, permanent Player ID, and the Bhutan player-to-federation approval flow.
+- **Live with remaining acceptance.** Public website and onboarding, organisation intake review, searchable federation directory, and scoped member administration. Confirm the first real intake case and normal ongoing roster usage. Federation activation has an isolated acceptance test; run it with a named second national federation before treating rollout as proven.
+- **Next build.** One shared tournament builder for authorised federations, associations, clubs and organisers. Start with one Bhutan doubles division. Then add Passport registration, partner handling, draw, scheduling, scoring, finalisation and corrections before expanding to other competition formats.
+- **Rankings and interoperability.** Approve the exact numerical rules alongside tournament work. First prove a real result and provisional ranking replay, then add result exchange and official publication under approved rules. No third-party dependency is required.
+- **Later.** Scoped staff delegation/invitations, dues and financial workflows, sporting eligibility, equipment certification, education, integrity and appeals, and AI-assisted operations with human authority for consequential decisions. Permissions, competition access and membership states are not inferred from payments.
+
+See the [engineering roadmap](../engineering/IMPLEMENTATION-ROADMAP.md) and the [federation activation runbook](../engineering/FEDERATION-ACTIVATION.md).
 
 ## Policy conflicts to reconcile, not silently resolve
 The ranking research's rolling 52 weeks/best 8 is superseded by calendar-year/best 10. Exact points mathematics remains pending. WPU Control's long-term scope remains wider than its initial security foundation. The current Player Journey preview is sample data, not a real membership service.

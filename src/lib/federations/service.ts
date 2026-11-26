@@ -1,6 +1,7 @@
 import { createHash, randomBytes } from "node:crypto";
 import { queryD1 } from "@/lib/supporters-db";
 import { isFederationSlug } from "./slug";
+import { onlineRequestCondition } from "./availability";
 
 export function federationPilotEnabled(): boolean {
   const context = (globalThis as unknown as Record<symbol, {env?: {WPU_FEDERATION_PILOT_ENABLED?: string}} | undefined>)[Symbol.for("__cloudflare-context__")];
@@ -23,10 +24,11 @@ export const scopedAdmin = `JOIN wpu_accounts a ON a.id=? AND a.status='active'
 
 /** Only public names, country codes and URLs of federations accepting online requests. */
 export async function playerFederations() {
+  const requestsOpen = await onlineRequestCondition();
   const rows = await queryD1(
     `SELECT f.slug,o.name,o.country_code ${enabledFederation}
       JOIN wpu_affiliation_self_request_orgs s ON s.organisation_id=o.id
-      WHERE f.enabled=1 ORDER BY o.name COLLATE NOCASE,f.slug`);
+      WHERE f.enabled=1 AND ${requestsOpen} ORDER BY o.name COLLATE NOCASE,f.slug`);
   return rows.flatMap(row => isFederationSlug(row.slug) ? [{
     slug: row.slug, name: String(row.name), countryCode: typeof row.country_code === "string" ? row.country_code : null,
   }] : []);
@@ -34,9 +36,10 @@ export async function playerFederations() {
 
 export async function federationPortal(slug: string, account: string | null) {
   if (!isFederationSlug(slug)) return null;
+  const requestsOpen = await onlineRequestCondition();
   const [row] = await queryD1(
     `SELECT o.id,o.name,
-      EXISTS (SELECT 1 FROM wpu_affiliation_self_request_orgs s WHERE s.organisation_id=o.id) AS accepting,
+      (EXISTS (SELECT 1 FROM wpu_affiliation_self_request_orgs s WHERE s.organisation_id=o.id) AND ${requestsOpen}) AS accepting,
       EXISTS (SELECT 1 FROM wpu_accounts a JOIN wpu_player_profiles p ON p.person_id=a.person_id
         JOIN wpu_auth_emails e ON e.account_id=a.id AND e.verified_at IS NOT NULL
         WHERE a.id=? AND a.status='active') AS eligible,

@@ -1,5 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { queryD1 } from "@/lib/supporters-db";
+import { onlineRequestCondition } from "@/lib/federations/availability";
 import type { AffiliationCase, AffiliationDecision, AffiliationInvitation, AffiliationState, PlayerAffiliationWorkspace } from "./types";
 
 export async function affiliationWorkspace(account: string) {
@@ -126,13 +127,14 @@ export async function respondToAffiliation(account: string, id: string, accept: 
 /** The signed-in account is the only possible subject of a player request. */
 export async function requestOwnAffiliation(account: string, organisation: string) {
   const id = randomUUID();
+  const requestsOpen = await onlineRequestCondition();
   const rows = await queryD1(
     `INSERT INTO wpu_affiliation_requests(id,person_id,organisation_id,proposed_by,last_actor,last_reason,state,request_source)
      SELECT ?,a.person_id,o.id,a.id,a.id,'Player requested affiliation from their Passport.','awaiting_review','player'
      FROM wpu_accounts a JOIN wpu_player_profiles pp ON pp.person_id=a.person_id
      JOIN wpu_affiliation_self_request_orgs pilot ON pilot.organisation_id=?
      JOIN wpu_organisations o ON o.id=pilot.organisation_id AND o.status='verified'
-     WHERE a.id=? AND a.status='active'
+     WHERE a.id=? AND a.status='active' AND ${requestsOpen}
        AND EXISTS(SELECT 1 FROM wpu_auth_emails e WHERE e.account_id=a.id AND e.verified_at IS NOT NULL)
        AND NOT EXISTS(SELECT 1 FROM wpu_memberships m WHERE m.person_id=a.person_id AND m.organisation_id=o.id
          AND m.membership_type='organisation' AND m.status='active')
@@ -142,6 +144,7 @@ export async function requestOwnAffiliation(account: string, organisation: strin
 }
 
 export async function playerAffiliationWorkspace(account: string): Promise<PlayerAffiliationWorkspace> {
+  const requestsOpen = await onlineRequestCondition();
   const [invitations, options, requests] = await Promise.all([
     affiliationInvitations(account),
     queryD1(
@@ -149,7 +152,7 @@ export async function playerAffiliationWorkspace(account: string): Promise<Playe
        JOIN wpu_organisations o ON o.id=pilot.organisation_id AND o.status='verified'
        JOIN wpu_accounts a ON a.id=? AND a.status='active'
        JOIN wpu_player_profiles pp ON pp.person_id=a.person_id
-       WHERE EXISTS(SELECT 1 FROM wpu_auth_emails e WHERE e.account_id=a.id AND e.verified_at IS NOT NULL)
+       WHERE ${requestsOpen} AND EXISTS(SELECT 1 FROM wpu_auth_emails e WHERE e.account_id=a.id AND e.verified_at IS NOT NULL)
          AND NOT EXISTS(SELECT 1 FROM wpu_affiliation_requests c WHERE c.person_id=a.person_id
            AND c.organisation_id=o.id AND c.state IN ('awaiting_player','awaiting_review','approved'))
          AND NOT EXISTS(SELECT 1 FROM wpu_memberships m WHERE m.person_id=a.person_id AND m.organisation_id=o.id
