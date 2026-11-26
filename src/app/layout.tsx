@@ -139,7 +139,7 @@ export default function RootLayout({
         />
         {children}
         <aside className="wpu-platform-credit" aria-label="WPU platform branding">
-          <p><strong>Waypoint × OurOwn</strong></p>
+          <p>Powered by Waypoint and OurOwn. (c) World Pickleball Union 2026. All Rights Reserved.</p>
         </aside>
       </body>
     </html>
