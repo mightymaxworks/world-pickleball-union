@@ -2,3 +2,5 @@
 /* Approved white WPU lockup requires a dark brand surface on both membership screens. */
 .membership-intro > img{display:block;background:var(--wpu-navy,#0B2A66);border-radius:10px;padding:12px 18px;box-sizing:content-box;max-width:calc(100% - 36px);margin-bottom:24px;}
 .membership-panel h2{font-size:1.4rem;font-weight:700;margin:0 0 20px;line-height:1.3;}
+
+.membership-back { color:inherit; display:inline-flex; align-items:center; min-height:44px; font-weight:700; text-decoration:underline; text-underline-offset:.23em; }

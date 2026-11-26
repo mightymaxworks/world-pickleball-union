@@ -1,3 +1,4 @@
+import SiteFooter from "@/components/SiteFooter";
 import InquiryForm from "@/components/InquiryForm";
 import Image from "next/image";
 import Link from "next/link";
@@ -641,23 +642,7 @@ export default function CompetitionsPage() {
         </div>
       </section>
 
-      <footer>
-        <div className="footer-inner">
-          <Link href="/">
-            <Image
-              src="/brand/wpu-logo-approved.png"
-              alt="World Pickleball Union"
-              width={245}
-              height={70}
-            />
-          </Link>
-
-          <div className="footer-copy">
-            <p>UNITING PICKLEBALL WORLDWIDE.</p>
-            <small>World Pickleball Union</small>
-          </div>
-        </div>
-      </footer>
+      <SiteFooter />
     </main>
   );
 }

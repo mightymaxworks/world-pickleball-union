@@ -20,6 +20,11 @@ export default function sitemap(): MetadataRoute.Sitemap {
       priority: 0.8,
     },
     {
+      url: `${base}/get-involved`,
+      changeFrequency: "monthly",
+      priority: 0.9,
+    },
+    {
       url: `${base}/members`,
       changeFrequency: "monthly",
       priority: 0.8,

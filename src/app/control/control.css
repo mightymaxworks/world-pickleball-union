@@ -36,3 +36,4 @@
 .wc-member-actions { margin-top:.8rem; }
 .wc button.wc-secondary { color:var(--navy); background:#fff; border:1px solid #9aaac4; }
 @media (min-width:38rem) { .wc-member-grid { grid-template-columns:repeat(2,minmax(0,1fr)); } }
+.wc-intake-message { white-space:pre-wrap; }

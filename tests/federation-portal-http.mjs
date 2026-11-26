@@ -53,7 +53,7 @@ assert.match(entry.headers.get("cache-control"), /no-store/);
 assert.match(await entry.text(), /Bhutan Pickleball Federation.*Sign in to WPU/);
 assert.equal((await request("/federations/no-enabled-portal")).status, 404);
 assert.match(await (await request("/join?federation=bhutan&mode=login")).text(), /New to WPU\? Register/);
-assert.doesNotMatch(await (await request("/join?federation=unknown&mode=login")).text(), /New to WPU\? Register/);
+assert.match(await (await request("/join?federation=unknown&mode=login")).text(), /<h2>Sign in<\/h2>/);
 await check(request(roster), 401);
 await check(request(roster, { id: "pilot-operator" }), 403);
 await check(request(roster, { id: "pilot-operator", staff: "reviewer" }), 403);

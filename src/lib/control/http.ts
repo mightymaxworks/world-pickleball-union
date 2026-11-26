@@ -13,7 +13,7 @@ export async function signedInAccount() {
   return accountForSession(jar.get(SESSION_COOKIE)?.value);
 }
 
-export async function controlBody(request: Request): Promise<Record<string, unknown> | null> {
+export async function controlBody(request: Request, maxBytes = 4096): Promise<Record<string, unknown> | null> {
   if (!/^application\/json(?:\s*;|$)/i.test(request.headers.get("content-type") ?? "")) return null;
   const reader = request.body?.getReader();
   if (!reader) return null;
@@ -24,7 +24,7 @@ export async function controlBody(request: Request): Promise<Record<string, unkn
       const part = await reader.read();
       if (part.done) break;
       bytes += part.value.byteLength;
-      if (bytes > 4096) { await reader.cancel(); return null; }
+      if (bytes > maxBytes) { await reader.cancel(); return null; }
       data += decoder.decode(part.value, { stream: true });
     }
     const result = JSON.parse(data + decoder.decode());

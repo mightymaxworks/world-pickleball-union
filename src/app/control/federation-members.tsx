@@ -137,7 +137,7 @@ export default function FederationMembers({ scopes }: { scopes: Scope[] }) {
           }}>Clear filters</button>
         </div>
       </form>
-      {problem && <p className="wc-feedback" role="alert">{problem} {signedOut ? <Link href="/join">Sign in</Link> :
+      {problem && <p className="wc-feedback" role="alert">{problem} {signedOut ? <Link href="/join?mode=login">Sign in</Link> :
         !page && <button type="button" onClick={requery}>Retry</button>}</p>}
       {!page && !problem && <p role="status">Loading members…</p>}
       {page && <>
@@ -236,7 +236,7 @@ function MemberDetails({ slug, playerId, close, changed }: {
   return <div className="wc-member-details">
     <button type="button" className="wc-secondary" onClick={close} disabled={busy}>Back to members</button>
     <h3 ref={title} tabIndex={-1}>{record?.displayName ?? "Member record"}</h3>
-    {error && <p role="alert">{error} {signedOut ? <Link href="/join">Sign in</Link> :
+    {error && <p role="alert">{error} {signedOut ? <Link href="/join?mode=login">Sign in</Link> :
       <button type="button" className="wc-secondary" onClick={() => {
         setRecord(null); setError(""); setRefresh(value => value + 1);
       }}>Refresh record</button>}</p>}

@@ -1,3 +1,4 @@
+import SiteFooter from "@/components/SiteFooter";
 import Image from "next/image";
 import SiteHeader from "@/components/SiteHeader";
 
@@ -52,6 +53,7 @@ export default function BrandPage() {
           <a href="/standards" style={{display:"inline-block",background:"#0B2A66",color:"white",padding:"15px 22px",marginTop:14}}>Explore standards →</a>
         </div>
       </section>
+    <SiteFooter />
     </main>
   );
 }

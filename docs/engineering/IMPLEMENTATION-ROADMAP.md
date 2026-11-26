@@ -9,8 +9,11 @@ Per-user authentication, MFA, free-member/organiser roles, player passport, scop
 ## Milestone 1A — Portable Passport and federation self-service
 Extend the existing Passport instead of replacing identity or registration. Build a federation-branded entry and a scoped roster with search, local membership details, auditable hold and restore, and filtered export. A WPU-owned test client must demonstrate that a separate system can use the documented identity handoff without direct database access or a federation administrator's session. Exit: stable Player IDs, independently tested federation boundaries, scoped export and revocation, and a successful Bhutan self-service pilot. Live Bhutan acceptance precedes Tournament Creation (WPU-002). Keep staff onboarding and federation dues on separate tracks. A payment state must not automatically change an affiliation or local roster status.
 
-## Milestone 2 — Tournament vertical slice
-Event builder, division, registration, public event page, basic matches and finalisation. Exit: registered organiser runs a real test event end to end.
+## Milestone 1B — Public onboarding
+Make Join WPU, Player Passport sign-in and organisation participation discoverable from the public site. Connect organisation intake to a staff-owned decision process without implying formal admission or granting operational permissions. Keep pledges and hosting enquiries separate.
+
+## Milestone 2 — Shared tournament vertical slice
+One event builder for authorised federations, associations, clubs and organisers. Scope permissions to their organisations and events. Start with one Bhutan event and one doubles division, then exercise registration, public event page, basic matches and finalisation. Exit: registered organiser runs a real test event end to end.
 
 ## Milestone 3 — All required formats
 Round robin, single elimination, pool-to-knockout, double elimination including reset, team ties; seeding, byes, scheduling, scoring, corrections. Exit: deterministic fixtures for each format and edge cases.
