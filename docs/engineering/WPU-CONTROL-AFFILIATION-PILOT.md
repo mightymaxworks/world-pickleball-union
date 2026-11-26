@@ -28,6 +28,8 @@ A code deployment does not enable the pilot. Without server configuration, `/con
 
 If Access records an allowed login but WPU Control still displays **Staff verification required**, open the production Worker live logs and retry the Control page once. Filter for `wpu_control_access_rejected` with `surface: "page"`. The fixed reason distinguishes a missing assertion, a signing-key or signature problem, and a rejected claim, without including tokens, headers or personal data. Do not alter Access policy or verification checks before identifying the failure.
 
+WPU accepts a verified staff assertion only until the earlier of its signed expiration and one hour after its signed issuance. A longer expiration set by Access does not extend WPU's limit. If the diagnostic says `session_too_old`, start a fresh Cloudflare Access sign-in for WPU Control.
+
 To pause the pilot set `WPU_AFFILIATION_PILOT_ENABLED=false` or remove it. This stops workflow actions without deleting records or hiding already granted affiliations. Remove pilot role grants through controlled revocation when the pilot ends.
 
 To stop new self-service requests for one organisation without deleting existing work, remove that organisation from the self-request list. Keep the main pilot flag off while provisioning.

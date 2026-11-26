@@ -43,8 +43,8 @@ const events = log.split("\n")
     assert.match(event.reason, /^[a-z_]+$/);
     return event.surface + "/" + event.reason;
   });
-for (const expected of ["page/missing_assertion", "api/missing_assertion", "api/wrong_audience",
-  "api/wrong_issuer", "api/invalid_expiry", "api/session_too_long", "api/not_yet_valid",
+for (const expected of ["page/missing_assertion", "page/session_too_old", "api/missing_assertion", "api/wrong_audience",
+  "api/wrong_issuer", "api/invalid_expiry", "api/invalid_issue_time", "api/session_too_old", "api/not_yet_valid",
   "api/wrong_token_type", "api/unexpected_algorithm", "api/invalid_signature"]) {
   assert.ok(events.includes(expected), "Missing diagnostic: " + expected);
 }
