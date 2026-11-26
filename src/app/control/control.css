@@ -27,3 +27,12 @@
 .wc-link-button { display:inline-flex; align-items:center; min-height:44px; padding:.65rem .95rem; border-radius:.45rem; background:var(--navy); color:white; font-weight:700; }
 .wc-text-link { display:inline-flex; align-items:center; min-height:44px; color:var(--navy); font-weight:700; text-decoration:underline; }
 .wc p.wc-portal-note { margin-top:1rem; font-size:.875rem; }
+.wc-member-grid { display:grid; gap:.75rem 1rem; }
+.wc-member-details { margin-top:1rem; border-top:1px solid var(--line); padding-top:1rem; }
+.wc-member-details > h3 { margin-top:1rem; font-size:clamp(1.25rem,4vw,1.65rem); }
+.wc-member-facts { margin:1rem 0 1.4rem; background:#f1f5fb; padding:1rem; border-radius:.7rem; }
+.wc-member-facts dt { font-size:.82rem; font-weight:700; }
+.wc-member-facts dd { margin:.25rem 0 0; }
+.wc-member-actions { margin-top:.8rem; }
+.wc button.wc-secondary { color:var(--navy); background:#fff; border:1px solid #9aaac4; }
+@media (min-width:38rem) { .wc-member-grid { grid-template-columns:repeat(2,minmax(0,1fr)); } }

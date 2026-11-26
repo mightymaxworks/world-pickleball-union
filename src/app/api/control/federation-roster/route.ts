@@ -1,23 +1,14 @@
-import { accessEmail, controlConfig } from "@/lib/control/access";
-import { controlBody, controlError, controlJson, isSameOrigin, signedInAccount } from "@/lib/control/http";
-import { federationAdminScopes, federationPilotEnabled, federationRoster, setRosterStatus } from "@/lib/federations/service";
+import { federationMemberWorkspaceReady } from "@/lib/federations/members";
+import { federationAdminFor } from "@/lib/federations/http";
+import { controlBody, controlError, controlJson, isSameOrigin } from "@/lib/control/http";
+import { federationAdminScopes, federationRoster, setRosterStatus } from "@/lib/federations/service";
 import { isFederationSlug } from "@/lib/federations/slug";
 
 export const dynamic = "force-dynamic";
 
-async function adminFor(request: Request) {
-  const config = federationPilotEnabled() ? controlConfig() : null;
-  if (!config) return controlError(404, "Federation pilot not available.");
-  const account = await signedInAccount();
-  if (!account) return controlError(401, "Sign in to your WPU account first.");
-  const email = accessEmail(request.headers.get("cf-access-jwt-assertion"), config, "api");
-  if (!email) return controlError(403, "Staff verification required.");
-  return { account, email };
-}
-
 export async function GET(request: Request) {
   try {
-    const admin = await adminFor(request);
+    const admin = await federationAdminFor(request);
     if (admin instanceof Response) return admin;
     const params = new URL(request.url).searchParams;
     const slug = params.get("federation");
@@ -35,7 +26,7 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   try {
     if (!isSameOrigin(request)) return controlError(403, "Forbidden.");
-    const admin = await adminFor(request);
+    const admin = await federationAdminFor(request);
     if (admin instanceof Response) return admin;
     const body = await controlBody(request);
     if (!body || Object.keys(body).length !== 3 || !isFederationSlug(body.federation) ||
@@ -45,6 +36,7 @@ export async function POST(request: Request) {
     const scopes = await federationAdminScopes(admin);
     if (!scopes.some(scope => scope.slug === body.federation))
       return controlError(403, "No roster access for this federation.");
+    if (await federationMemberWorkspaceReady()) return controlError(409, "Open the member record in Federation Members to change roster status with a reason.");
     return await setRosterStatus(admin, body.federation, body.playerId, body.rosterStatus)
       ? controlJson({ version: 1, ok: true })
       : controlError(409, "No roster change was made. Refresh and check the entry.");

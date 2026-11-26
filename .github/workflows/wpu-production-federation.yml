@@ -4,8 +4,10 @@ on:
     paths:
       - .github/workflows/wpu-production-federation.yml
       - scripts/wpu-federation-d1-release.sh
+      - scripts/wpu-federation-members-release.sh
       - tests/run-federation-preparation.sh
       - database/wpu-federation-portal-v1.sql
+      - database/wpu-federation-members-v1.sql
   push:
     branches: [main]
     paths:
@@ -68,3 +70,4 @@ jobs:
             exit 1
           fi
           bash scripts/wpu-federation-d1-release.sh "$RELEASE_MODE"
+          bash scripts/wpu-federation-members-release.sh "$RELEASE_MODE"

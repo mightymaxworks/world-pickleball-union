@@ -7,10 +7,11 @@ import { affiliationStateLabels, type AffiliationCase, type AffiliationDecision 
 type Workspace = { organisations: {id: string; name: string}[]; cases: AffiliationCase[]; hasMore: boolean };
 const decisionLabel: Record<AffiliationDecision, string> = { approve: "Approve", reject: "Reject", revoke: "Revoke" };
 
-export default function ControlWorkspace() {
+export default function ControlWorkspace({ hasFederationWorkspace = false }: { hasFederationWorkspace?: boolean }) {
   const [data, setData] = useState<Workspace | null>(null);
   const [problem, setProblem] = useState("");
   const [status, setStatus] = useState("");
+  const [noAffiliationRole, setNoAffiliationRole] = useState(false);
   const [signedOut, setSignedOut] = useState(false);
   const [busy, setBusy] = useState(false);
   const [update, setUpdate] = useState(0);
@@ -22,6 +23,7 @@ export default function ControlWorkspace() {
         const response = await fetch("/api/control/affiliations", { cache: "no-store", signal: abort.signal });
         const value = await response.json();
         if (abort.signal.aborted) return;
+        setNoAffiliationRole(response.status === 403 && value.code === "no_affiliation_role");
         if (response.ok) { setData(value); setProblem(""); setSignedOut(false); }
         else { setData(null); setProblem(value.error ?? "Unable to load cases."); setSignedOut(response.status === 401); }
       } catch {
@@ -62,6 +64,7 @@ export default function ControlWorkspace() {
     finally { setBusy(false); }
   }
 
+  if (hasFederationWorkspace && noAffiliationRole) return null;
   return <>
     {problem && <p role="alert" className="wc-feedback">{problem} {signedOut
       ? <Link href="/join">Sign in</Link>

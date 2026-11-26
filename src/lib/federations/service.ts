@@ -7,16 +7,16 @@ export function federationPilotEnabled(): boolean {
   return (context?.env?.WPU_FEDERATION_PILOT_ENABLED ?? process.env.WPU_FEDERATION_PILOT_ENABLED) === "true";
 }
 
-const enabledFederation = `FROM wpu_federation_portals f
+export const enabledFederation = `FROM wpu_federation_portals f
   JOIN wpu_organisations o ON o.id=f.organisation_id AND o.status='verified'
   AND o.organisation_type='national_federation'`;
-const approvedMembership = `JOIN wpu_memberships m ON m.organisation_id=o.id
+export const approvedMembership = `JOIN wpu_memberships m ON m.organisation_id=o.id
   AND m.membership_type='organisation' AND m.status='active'
   AND (m.valid_from IS NULL OR julianday(m.valid_from)<=julianday('now'))
   AND (m.valid_until IS NULL OR julianday(m.valid_until)>julianday('now'))
   JOIN wpu_affiliation_requests c ON c.organisation_id=o.id AND c.person_id=m.person_id
   AND c.state='approved' AND m.id='affiliation:'||c.id`;
-const scopedAdmin = `JOIN wpu_accounts a ON a.id=? AND a.status='active'
+export const scopedAdmin = `JOIN wpu_accounts a ON a.id=? AND a.status='active'
   WHERE f.enabled=1 AND EXISTS (SELECT 1 FROM wpu_role_assignments r WHERE r.account_id=a.id
     AND r.scope_type='organisation' AND r.scope_id=o.id AND r.role='organisation_admin' AND r.revoked_at IS NULL)
   AND EXISTS (SELECT 1 FROM wpu_auth_emails e WHERE e.account_id=a.id AND e.email_normalized=? AND e.verified_at IS NOT NULL)`;

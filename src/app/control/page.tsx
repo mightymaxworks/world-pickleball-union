@@ -6,6 +6,8 @@ import { notFound } from "next/navigation";
 import { accessEmail, controlConfig } from "@/lib/control/access";
 import { signedInAccount } from "@/lib/control/http";
 import { federationAdminScopes, federationPilotEnabled } from "@/lib/federations/service";
+import { federationMemberWorkspaceReady } from "@/lib/federations/members";
+import FederationMembers from "./federation-members";
 import FederationRosterPanel from "./federation-roster";
 import ControlWorkspace from "./workspace";
 import "./control.css";
@@ -20,12 +22,13 @@ export default async function ControlPage() {
   const email = accessEmail(assertion, config, "page");
   const scopes = email && federationPilotEnabled() ? await signedInAccount().then(account =>
     account ? federationAdminScopes({ account, email }) : []).catch(() => []) : [];
+  const membersReady = scopes.length > 0 && await federationMemberWorkspaceReady().catch(() => false);
   return <main className="wc">
     <header className="wc-header"><Image src="/brand/wpu-logo-approved.png" alt="World Pickleball Union" width={150} height={50} unoptimized /><Link href="/passport">Player Passport</Link></header>
     <div className="wc-content">
       <p className="wc-label">Operations pilot</p><h1>WPU Control</h1>
       <p>Propose, review and correct player affiliations within your assigned organisations.</p>
-      {email ? <>{scopes.length > 0 && <FederationRosterPanel scopes={scopes} />}<ControlWorkspace /></> : <section className="wc-box">
+      {email ? <>{scopes.length > 0 && (membersReady ? <FederationMembers scopes={scopes} /> : <FederationRosterPanel scopes={scopes} />)}<ControlWorkspace hasFederationWorkspace={scopes.length > 0} /></> : <section className="wc-box">
         <h2>Staff verification required</h2>
         <p>Open this workspace through the WPU staff access portal. A WPU member sign-in on its own does not grant staff access.</p>
       </section>}
