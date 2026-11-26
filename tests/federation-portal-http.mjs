@@ -91,7 +91,8 @@ await check(request(roster, { id: "pilot-operator", staff: "pilot-operator", bod
 assert.deepEqual((await readRoster("pilot-operator", "bhutan")).players, [{ ...row, rosterStatus: "on_hold" }]);
 const passport = (await check(request("/api/passport", { id: "player" }), 200)).passport;
 assert.equal(passport.playerCode, row.playerId);
-assert.equal(passport.affiliations.find(a => a.organisationId === "bhutan-isolated").status, "active");
+// A revoked historical affiliation can sort before the current approval when they share a timestamp.
+assert.equal(passport.affiliations.filter(a => a.organisationId === "bhutan-isolated" && a.status === "active").length, 1);
 const staffPage = await request("/control", { id: "pilot-operator", staff: "pilot-operator" });
 assert.match(await staffPage.text(), /Federation roster/);
 

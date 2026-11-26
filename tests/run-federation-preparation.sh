@@ -19,12 +19,12 @@ INSERT INTO wpu_affiliation_self_request_orgs(organisation_id) VALUES('bhutan-pi
 SQL
 } > "$pilot_dir/bootstrap.sql"
 d1 --file "$pilot_dir/bootstrap.sql" >/dev/null
-bash scripts/wpu-federation-d1-release.sh inspect "$pilot_dir/d1" | rg 'Federation schema is pending'
+[[ "$(bash scripts/wpu-federation-d1-release.sh inspect "$pilot_dir/d1")" == *"Federation schema is pending"* ]]
 bash scripts/wpu-federation-d1-release.sh prepare "$pilot_dir/d1"
 d1 --command "SELECT
  (SELECT enabled FROM wpu_federation_portals WHERE slug='bhutan') AS enabled,
  (SELECT count(*) FROM wpu_role_assignments) AS roles,
  (SELECT count(*) FROM wpu_federation_identity_clients) AS clients;" |
  jq -e '.[0].results==[{enabled:0,roles:0,clients:0}]' >/dev/null
-bash scripts/wpu-federation-d1-release.sh prepare "$pilot_dir/d1" | rg 'already prepared'
+[[ "$(bash scripts/wpu-federation-d1-release.sh prepare "$pilot_dir/d1")" == *"already prepared"* ]]
 echo 'Federation release preparation stages a disabled Bhutan portal without granting live access.'
