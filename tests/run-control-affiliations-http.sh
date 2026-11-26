@@ -15,7 +15,7 @@ export TEST_BASE_URL=http://localhost:8787
 wrangler=node_modules/.bin/wrangler
 db=wpu-supporters
 test -f .open-next/worker.js
-for file in wpu-identity-foundation-v1 wpu-identity-invariants-v1 wpu-passwordless-auth-v1 wpu-passwordless-auth-v2 wpu-passwordless-auth-v3 wpu-organisation-foundation-v2 wpu-control-affiliations-v1 wpu-control-affiliations-v2; do
+for file in wpu-identity-foundation-v1 wpu-identity-invariants-v1 wpu-passwordless-auth-v1 wpu-passwordless-auth-v2 wpu-passwordless-auth-v3 wpu-organisation-foundation-v2 wpu-control-affiliations-v1 wpu-control-affiliations-v2 wpu-federation-portal-v1; do
   "$wrangler" d1 execute "$db" --local --persist-to "$pilot_tmp/db" --file "database/$file.sql" >/dev/null
 done
 node tests/fixtures/control-affiliations.mjs "$pilot_tmp"
@@ -29,6 +29,7 @@ for i in $(seq 1 65); do
 done
 curl -fsS "$TEST_BASE_URL/join" >/dev/null
 node tests/control-affiliations-http.mjs "$pilot_tmp/control-fixtures.json"
+node tests/federation-portal-http.mjs "$pilot_tmp/control-fixtures.json"
 node --input-type=module - "$pilot_tmp/worker.log" <<'NODE'
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
