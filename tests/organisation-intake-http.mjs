@@ -38,6 +38,23 @@ const form = {form_type:"organisation",reference:randomUUID(),organisation:"Isol
 const home = await (await request("/")).text();
 assert.match(home,/href="\/get-involved"[^>]*>Join WPU/);
 assert.match(home,/href="\/join\?mode=login"[^>]*>Sign in/);
+for (const nav of ["Primary navigation", "Mobile navigation"]) {
+  const group = home.match(new RegExp('<nav[^>]*aria-label="' + nav + '"[^>]*>([\\s\\S]*?)</nav>'))?.[1];
+  assert.ok(group, nav);
+  for (const label of ["Competitions", "Federations &amp; Clubs", "Development", "About WPU"])
+    assert.ok(group.includes("<summary>" + label + "</summary>"), nav + " misses " + label);
+  for (const path of ["/governance", "/brand", "/standards", "/supporters", "/initiatives/global-marina",
+    "/members#membership-framework", "/members#register", "/competitions#competition-interest", "/federations/bhutan"])
+    assert.ok(group.includes('href="' + path + '"'), nav + " misses " + path);
+}
+const members = await (await request("/members")).text();
+for (const anchor of ["register", "national-membership", "representation", "admission-pathway", "member-responsibilities", "membership-framework"])
+  assert.ok(members.includes('id="' + anchor + '"'), anchor);
+for (const content of ["National voices. International cooperation.", "MEMBER RESPONSIBILITIES", "CONSTITUTION / STATUTES",
+  "ADMISSION CRITERIA", "MEMBER RIGHTS &amp; RESPONSIBILITIES", "Submit participation request"])
+  assert.ok(members.includes(content), content);
+for (const [path, anchor] of [["/competitions", "ecosystem"], ["/competitions", "competition-interest"], ["/development", "pathway"]])
+  assert.ok((await (await request(path)).text()).includes('id="' + anchor + '"'), path+"#"+anchor);
 const hub = await (await request("/get-involved")).text();
 assert.match(hub,/href="\/join"[^>]*>Create a Player Passport/);
 assert.match(hub,/href="\/members"[^>]*>Federations/);

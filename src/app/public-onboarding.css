@@ -51,3 +51,37 @@
   .public-header-actions a,.public-mobile-menu summary { font-size:.82rem; }
   .public-header-actions .public-join { padding-inline:.54rem; }
 }
+
+/* Disclosure submenus use the same destinations on desktop and mobile. */
+.public-desktop-menu { min-width:0; }
+.public-mobile-shell { display:none; }
+.public-nav-group { position:relative; min-width:0; }
+.public-nav-group summary { color:white; font-weight:700; font-size:.9rem; cursor:pointer; min-height:44px; display:flex; gap:.45rem; align-items:center; list-style:none; white-space:nowrap; }
+.public-nav-group summary::-webkit-details-marker { display:none; }
+.public-nav-group summary::after { content:""; display:inline-block; flex:none; width:.38rem; height:.38rem; border-right:2px solid currentColor; border-bottom:2px solid currentColor; transform:translateY(-.08rem) rotate(45deg); }
+.public-nav-group[open] summary::after { transform:translateY(.08rem) rotate(225deg); }
+.public-nav-group:not([open]) > .public-subnav { display:none; }
+.public-header :is(a, summary):focus-visible { outline:2px solid #d6ff3d; outline-offset:3px; border-radius:.2rem; }
+.public-subnav { position:absolute; z-index:110; top:100%; left:0; min-width:16rem; padding:.42rem; border:1px solid #afbdd8; border-radius:.55rem; background:#fff; box-shadow:0 10px 28px #03102d40; }
+.public-nav-group:last-child > .public-subnav { left:auto; right:0; }
+.public-subnav ul { list-style:none; margin:0; padding:0; }
+.public-header .public-subnav a { min-height:44px; display:flex; align-items:center; color:#0e285d; padding:.58rem .65rem; border-radius:.3rem; white-space:normal; text-decoration:none; }
+.public-header .public-subnav a:hover,.public-header .public-subnav a:focus-visible { background:#eaf0fc; text-decoration:underline; }
+.public-header .public-subnav a:focus-visible { outline-color:#0e285d; outline-offset:-2px; }
+.members-page [id] { scroll-margin-top:6rem; }
+.members-page .mem-contents { display:flex; gap:.6rem 1.2rem; flex-wrap:wrap; align-items:center; padding-block:1.15rem; border-bottom:1px solid #d5dfef; }
+.members-page .mem-contents a,.members-page .mem-participant-links a { color:#0e285d; font-weight:700; text-decoration:underline; text-underline-offset:.22em; }
+.members-page .mem-intake-block { padding-block:clamp(1rem,3.25vw,2.75rem); }
+.members-page .mem-intake-form { scroll-margin-top:6rem; }
+.members-page .mem-participant-links { margin:1.25rem 0 0; }
+.hero-actions .public-explore-link { display:inline-flex; min-height:44px; align-items:center; text-decoration:underline; text-underline-offset:.2em; font-weight:700; }
+@media (max-width: 950px) {
+  .public-desktop-menu { display:none; }
+  .public-mobile-shell { display:block; }
+  .public-mobile-menu > summary { list-style:none; }
+  .public-mobile-menu > summary::-webkit-details-marker { display:none; }
+  .public-mobile-menu .public-nav-group { padding:.2rem 0; }
+  .public-mobile-menu .public-nav-group + .public-nav-group { border-top:1px solid #ffffff38; }
+  .public-mobile-menu .public-nav-group summary { justify-content:space-between; white-space:normal; }
+  .public-mobile-menu .public-subnav { position:static; min-width:0; box-shadow:none; }
+}
