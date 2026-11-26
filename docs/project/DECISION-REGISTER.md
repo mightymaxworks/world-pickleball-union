@@ -12,7 +12,7 @@
 | WPU-008 | Reduced points for small fields | LOCKED; numerical factors PENDING |
 | WPU-009 | Individual doubles points stay with player when partner changes | LOCKED |
 | WPU-010 | Separate team-ranking ledger | LOCKED |
-| WPU-011 | WPU-owned platform, interoperable with Waypoint and other providers | LOCKED |
+| WPU-011 | WPU-owned modular platform with provider-neutral interfaces. Waypoint and OurOwn are brand attribution only and are not scheduled dependencies. | LOCKED; 2026-11-26 clarification |
 | WPU-012 | Simple tier-and-placement points framework, test against earlier ranking simulations | LOCKED direction; coefficients PENDING |
 | WPU-013 | Exact points, tier criteria, field bands, tie-breaks, withdrawals, season boundary | PENDING |
 | WPU-014 | Whether basic WPU membership itself is permanently free | PENDING formal approval |
