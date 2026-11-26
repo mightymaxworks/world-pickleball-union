@@ -28,3 +28,11 @@ d1 --command "SELECT
  jq -e '.[0].results==[{enabled:0,roles:0,clients:0}]' >/dev/null
 [[ "$(bash scripts/wpu-federation-d1-release.sh prepare "$pilot_dir/d1")" == *"already prepared"* ]]
 echo 'Federation release preparation stages a disabled Bhutan portal without granting live access.'
+[[ "$(bash scripts/wpu-federation-members-release.sh inspect "$pilot_dir/d1")" == *"Members schema is pending"* ]]
+d1 --command "UPDATE wpu_federation_portals SET enabled=1 WHERE slug='bhutan';" >/dev/null
+bash scripts/wpu-federation-members-release.sh prepare "$pilot_dir/d1"
+[[ "$(bash scripts/wpu-federation-members-release.sh prepare "$pilot_dir/d1")" == *"schema already applied and verified"* ]]
+d1 --command "SELECT (SELECT enabled FROM wpu_federation_portals WHERE slug='bhutan') AS enabled,
+ (SELECT count(*) FROM wpu_federation_member_details) AS details,
+ (SELECT count(*) FROM wpu_federation_roster_events) AS events;" |
+ jq -e '.[0].results==[{enabled:1,details:0,events:0}]' >/dev/null

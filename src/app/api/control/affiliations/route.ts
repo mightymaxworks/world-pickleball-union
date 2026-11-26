@@ -22,7 +22,7 @@ export async function GET(request: Request) {
     const auth = await authorize(request);
     if ("error" in auth) return auth.error;
     const result = await affiliationWorkspace(auth.account);
-    return result ? controlJson(result) : controlError(403, "No active affiliation role is assigned to this account.");
+    return result ? controlJson(result) : controlJson({ code: "no_affiliation_role", error: "No active affiliation role is assigned to this account." }, 403);
   } catch { return serviceError(); }
 }
 
