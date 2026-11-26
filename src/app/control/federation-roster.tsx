@@ -1,10 +1,10 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import type { RosterStatus } from "@/lib/federations/service";
+import { federationRosterCsv, type RosterExportPlayer } from "@/lib/federations/roster-export";
 
 type Scope = { slug: string; name: string };
-type Player = { playerId: string; displayName: string; rosterStatus: RosterStatus };
+type Player = RosterExportPlayer;
 type Roster = { players: Player[]; next: string | null };
 
 const endpoint = "/api/control/federation-roster";
@@ -49,11 +49,14 @@ export default function FederationRosterPanel({ scopes }: { scopes: Scope[] }) {
     setScope(slug); setRoster(null); setPage([""]); setNotice(""); setError("");
   }
 
-  function exportPage() {
+  function exportPage(format: "csv" | "json") {
     if (!roster) return;
-    const url = URL.createObjectURL(new Blob([JSON.stringify({ version: 1, federation: scope, players: roster.players }, null, 2)], { type: "application/json" }));
+    const content = format === "csv" ? federationRosterCsv(roster.players)
+      : JSON.stringify({ version: 1, federation: scope, players: roster.players }, null, 2);
+    const type = format === "csv" ? "text/csv;charset=utf-8" : "application/json";
+    const url = URL.createObjectURL(new Blob([content], { type }));
     const link = document.createElement("a");
-    link.href = url; link.download = scope + "-roster-page-" + page.length + ".json"; link.click();
+    link.href = url; link.download = scope + "-roster-page-" + page.length + "." + format; link.click();
     window.setTimeout(() => URL.revokeObjectURL(url), 1000);
   }
 
@@ -78,7 +81,10 @@ export default function FederationRosterPanel({ scopes }: { scopes: Scope[] }) {
       <div className="wc-actions">
         {page.length > 1 && <button type="button" disabled={busy} onClick={() => { setRoster(null); setPage(page.slice(0, -1)); }}>Previous page</button>}
         {roster.next && <button type="button" disabled={busy} onClick={() => { setRoster(null); setPage([...page, roster.next!]); }}>Next page</button>}
-        {roster.players.length > 0 && <button type="button" disabled={busy} onClick={exportPage}>Export this page (JSON)</button>}
+        {roster.players.length > 0 && <>
+          <button type="button" disabled={busy} onClick={() => exportPage("csv")}>Download CSV (this page)</button>
+          <button type="button" disabled={busy} onClick={() => exportPage("json")}>Export this page (JSON)</button>
+        </>}
       </div>
     </>}
   </section>;
