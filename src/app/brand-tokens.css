@@ -13,3 +13,24 @@
 body { font-family: var(--font-inter), Arial, sans-serif; }
 h1,h2,h3,h4,h5,h6,.desktop-nav,.nav-cta,.eyebrow { font-family: var(--font-montserrat), Arial, sans-serif; }
 :focus-visible { outline: 3px solid var(--wpu-blue); outline-offset: 3px; }
+
+.wpu-platform-credit {
+  padding: 1rem clamp(1rem, 4vw, 2rem);
+  background: var(--wpu-navy);
+  color: var(--wpu-white);
+  text-align: center;
+  border-top: 1px solid rgba(255, 255, 255, 0.24);
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+
+.wpu-platform-credit p { margin: 0; }
+.wpu-platform-credit p + p {
+  margin-top: 0.25rem;
+  color: var(--wpu-grey);
+  font-size: 0.8125rem;
+}
+
+@media print {
+  .wpu-platform-credit { display: none; }
+}

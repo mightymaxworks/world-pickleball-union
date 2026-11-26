@@ -138,6 +138,10 @@ export default function RootLayout({
           }}
         />
         {children}
+        <aside className="wpu-platform-credit" aria-label="WPU technology partners">
+          <p><strong>Powered by Waypoint and OurOwn</strong></p>
+          <p>OurOwn infrastructure integration is planned.</p>
+        </aside>
       </body>
     </html>
   );
