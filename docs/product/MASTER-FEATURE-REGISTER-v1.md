@@ -15,17 +15,17 @@ Status: ACTIVE TRACKER — 2026-11-25 (production beta)
 | ID | Feature | Core acceptance criterion | Initial evidence / status | Dependencies |
 |---|---|---|---|---|
 | WPU-001 | Membership and Player Passport | Person registers, verifies account, signs in, receives unique player code, views/updates permitted profile, returns to persistent data | PR #17 merged; production D1 migrations 6/6 verified (Run #45399219089); build, production dependency audit, all routes and isolated authenticated new/returning player journeys passed (Run #45525525765); core production beta passed owner acceptance (6/6); Passport v2 tracked below | Auth, permissions, data privacy |
-| WPU-002 | Tournament creation | Scoped organiser creates, edits and publishes an event with divisions and eligibility rules | NOT IMPLEMENTED | WPU-001 |
+| WPU-002 | Tournament creation | Scoped organiser creates, edits and publishes an event with divisions and eligibility rules | NOT IMPLEMENTED | WPU-001 and Phase 1 federation self-service |
 | WPU-003 | Tournament registration | Eligible player registers, receives confirmation, handles full/waitlist/withdrawal and doubles partner conditions | NOT IMPLEMENTED | WPU-001, WPU-002 |
 | WPU-004 | Tournament operations | Draw, court schedule, score, confirm, finalise, correct with audit | NOT IMPLEMENTED | WPU-002, WPU-003 |
 | WPU-005 | Competition formats | Round robin, single elimination, pool-to-knockout, double elimination/reset and team ties all complete test fixtures | NOT IMPLEMENTED | WPU-004 |
 | WPU-006 | Provisional ranking calculations | Versioned result ingestion, calendar year, best 10, five tiers, field factors, individual doubles, team ledger, deterministic replay | NOT IMPLEMENTED; numerical policy pending | WPU-004, approved simulation parameters |
 | WPU-007 | Official rankings publication | Approved policy, integrity review, publication snapshots, corrections, dispute traceability | BLOCKED pending approved policy | WPU-006, governance |
-| WPU-008 | WPU Control core | Staff accounts, scoped permissions, decision queue, audit, separation of duties | Scoped affiliation slice implemented. Bhutan player-initiated flow built for staging; guarded production activation pending. Other Control modules not implemented. | WPU-001 security foundation |
+| WPU-008 | WPU Control core | Staff accounts, scoped permissions, decision queue, audit, separation of duties | Bhutan player-initiated affiliation flow accepted in production on 2026-11-26. Broader Control modules not implemented. | WPU-001 security foundation |
 | WPU-009 | Equipment certification | Brand submission, test workflow, certification ledger, NFC validity and public check | NOT IMPLEMENTED | WPU-008, standards policy |
 | WPU-010 | Governance, integrity and appeals | Case evidence, human decision, appeal and audit lifecycle | NOT IMPLEMENTED | WPU-008 |
 | WPU-011 | Education and development | Global initiatives, coach/official pathways and programme management | Public content exists; operational workflows NOT IMPLEMENTED | Identity/organisation |
-| WPU-012 | External integrations | Secure, idempotent Waypoint and independent provider result exchange | NOT IMPLEMENTED | WPU-004, WPU-006 |
+| WPU-012 | External integrations | Secure, idempotent, provider-neutral result exchange | NOT IMPLEMENTED; prove the contract with a reference client, with no named provider dependency | WPU-004, WPU-006 |
 | WPU-013 | Finance and partnerships | Partner records, permissions, financial controls and reporting | NOT IMPLEMENTED | WPU-008 |
 | WPU-014 | AI Operations | Explainable recommendations, task automation, human escalation, audit | NOT IMPLEMENTED | WPU-008, governance |
 | WPU-015 | Public site and supporter continuity | Existing pages and supporter submissions continue operating after each release | Existing code; re-verify live on every release | Cloudflare/D1 |
@@ -41,7 +41,7 @@ Status: ACTIVE TRACKER — 2026-11-25 (production beta)
 - Release: PR and commit, deployed version, live smoke, rollback route, owner sign-off.
 
 ## Immediate active feature
-The live WPU-001 core and Passport v2 passed owner acceptance. The active build is the WPU-008 scoped affiliation slice. WPU-002 and results integration remain subsequent work. Cross-cutting work is allowed only when needed for WPU-001 completion or production safety.
+The live WPU-001 core and Passport v2 passed owner acceptance. The Bhutan WPU-008 affiliation slice passed end to end in production: a player submitted, a scoped WPU reviewer approved, and the affiliation appeared without changing the Player ID. Next is portable Passport and federation self-service (WPU-001/WPU-008/WPU-016), before WPU-002 Tournament Creation. Prove portability using a WPU-owned reference client and isolation between federation scopes. No external provider is needed for this milestone. See the [engineering roadmap](../engineering/IMPLEMENTATION-ROADMAP.md#module-acceptance).
 
 ## Policy conflicts to reconcile, not silently resolve
 The ranking research's rolling 52 weeks/best 8 is superseded by calendar-year/best 10. Exact points mathematics remains pending. WPU Control's long-term scope remains wider than its initial security foundation. The current Player Journey preview is sample data, not a real membership service.
@@ -97,4 +97,4 @@ Owner confirmed real email delivery, Passport creation, logout, returning login,
 
 - Bhutan is the first intended pilot organisation. The player submits from their Passport directly to a different, organisation-scoped WPU reviewer. No separate operator is needed. Nothing publicly recognises a federation or grants eligibility.
 - The flow keeps the existing Passport and Player ID, lets the player see request status, and limits reviewer visibility to the case, display name and last eight Player ID characters. No player email handoff is needed.
-- A second migration adds an empty organisation allowlist. Staging tests use a disposable Bhutan fixture. Production stays off until the reviewed migrations, real organisation, reviewer and staff access are configured.
+- A second migration added an empty organisation allowlist. Staging tests use a disposable Bhutan fixture. Production was activated for the scoped Bhutan pilot after the reviewed migrations, real organisation, reviewer and staff access were configured.

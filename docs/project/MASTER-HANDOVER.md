@@ -7,13 +7,13 @@ Build WPU as an AI-native global pickleball organisation and free competition ne
 1. WPU Public: website, discovery, player passport, tournament pages, published rankings.
 2. WPU Competition Network: free tournament operations and authoritative ranking engine.
 3. WPU Control: authenticated administrative work queues, decisions, policy and audit.
-4. Integrations: Waypoint is an initial operational provider, never a mandatory dependency; approved third-party providers exchange data through contracts.
+4. Integrations: WPU builds and operates its own modules. Approved third-party systems may connect later through documented, provider-neutral contracts. Waypoint and OurOwn are brand attribution only, with no scheduled integration or hosting dependency.
 
 ## Authoritative sources
 [Decision register](DECISION-REGISTER.md) controls locked product choices. [Ranking policy](../product/RANKING-POLICY.md) documents mathematical gaps. [Implementation status](IMPLEMENTATION-STATUS.md) describes verified repository baseline. Existing brand assets and standards are not to be recreated.
 
 ## Immediate delivery
-Read repository and test workflows; resolve ranking research provenance; implement identity/member/organiser permissions; then a real tournament-registration-match-results-to-provisional-points vertical slice, behind feature flags. Preserve existing supporter functionality.
+Extend the live Passport with portable identity and federation self-service before WPU-002 Tournament Creation. Prove the integration boundary using a WPU-owned reference client. Then build the tournament-registration-match-results-to-provisional-points vertical slice. Resolve ranking research provenance in parallel. Preserve existing supporter functionality.
 
 ## Constraints
 Free core tournament/ranking use for registered members; membership fee policy not yet formally locked. Every tournament eligible for points subject to integrity, no paid sanctioning gate. Five formats including double elimination and team ties. Calendar-year best 10 results per discipline. WPU owns authoritative records. No official points before policy approval.

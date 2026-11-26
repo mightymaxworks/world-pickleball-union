@@ -138,9 +138,9 @@ export default function RootLayout({
           }}
         />
         {children}
-        <aside className="wpu-platform-credit" aria-label="WPU technology partners">
+        <aside className="wpu-platform-credit" aria-label="WPU platform branding">
           <p><strong>Powered by Waypoint and OurOwn</strong></p>
-          <p>OurOwn infrastructure integration is planned.</p>
+          <p>Brand attribution only. WPU operates its software independently.</p>
         </aside>
       </body>
     </html>
