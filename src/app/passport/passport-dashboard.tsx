@@ -6,6 +6,7 @@ import { useEffect, useRef, useState, type FormEvent } from "react";
 import type { Passport, PassportProfile } from "@/lib/passport/profile";
 import { regionLabel, residenceCountries } from "@/lib/passport/regions";
 
+import { federationDirectory } from "@/lib/public-paths";
 import AffiliationInvitations from "./affiliation-invitations";
 
 const fields = ["name", "givenName", "familyName", "residenceCountry", "locality", "gender"] as const;
@@ -288,7 +289,10 @@ export default function PassportDashboard() {
                   </li>)}</ul>
                 )}
                 <p className="pp-help">Affiliation does not establish national representation or competition eligibility.</p>
-                {passport.affiliationRequestsEnabled && <AffiliationInvitations />}
+                {passport.affiliationRequestsEnabled && <>
+                  <Link className="pp-link" href={federationDirectory}>Find your federation <Icon name="arrow" /></Link>
+                  <AffiliationInvitations />
+                </>}
               </section>
 
               <section className="pp-panel" aria-labelledby="pp-privacy-title">

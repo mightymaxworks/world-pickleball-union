@@ -47,6 +47,18 @@ const readRoster = (staff, federation, status = 200) =>
 const issue = (id, clientId, status = 201, consent = true) => check(request(grant, { id, body: { clientId, consent } }), status);
 const redeem = (client, clientId, code, status = 200) => check(request(exchange, { client, body: { clientId, code } }), status);
 
+const directory = await request("/federations");
+assert.equal(directory.status, 200);
+const listings = await directory.text();
+assert.match(listings, /Find your federation/);
+assert.match(listings, /href="\/federations\/bhutan"/);
+assert.match(listings, /href="\/federations\/rollout-test"/);
+assert.doesNotMatch(listings, /href="\/federations\/(second|disabled-test)"|@example\.org|WPU-[A-F0-9]{32}/);
+const search = await (await request("/federations?q=Singapore")).text();
+assert.match(search, /href="\/federations\/rollout-test"/);
+assert.doesNotMatch(search, /href="\/federations\/bhutan"/);
+assert.match(await (await request("/federations?q=unknown%20region")).text(), /No available federation matches your search/);
+assert.equal((await request("/federations/disabled-test")).status, 404);
 const entry = await request("/federations/bhutan");
 assert.equal(entry.status, 200);
 assert.match(entry.headers.get("cache-control"), /no-store/);
@@ -73,6 +85,16 @@ assert.match(await (await request("/federations/bhutan", { id: "player" })).text
 assert.deepEqual((await readRoster("pilot-operator", "bhutan")).players, []);
 await decide(first.id, "approve", "reviewer");
 assert.match(await (await request("/federations/bhutan", { id: "player" })).text(), /WPU approved your affiliation/);
+assert.match(await (await request("/federations/rollout-test", { id: "player" })).text(), /Request affiliation/);
+const rollout = await playerAffiliation("player", { action: "request", organisationId: "rollout-federation" }, 201);
+await check(request(control, { id: "reviewer", staff: "reviewer", body: {
+  id: rollout.id, action: "approve", reason: "Outside assigned federation.",
+} }), 409);
+await decide(rollout.id, "approve", "second-reviewer");
+const multiAffiliation = (await check(request("/api/passport", { id: "player" }), 200)).passport;
+assert.equal(multiAffiliation.playerCode, identities.player.code);
+for (const organisationId of ["bhutan-isolated", "rollout-federation"])
+  assert.ok(multiAffiliation.affiliations.some(item => item.organisationId === organisationId && item.status === "active"));
 const second = await check(request(control, { id: "second-admin", staff: "second-admin", body: {
   action: "propose", organisationId: "second-federation", playerCode: identities.outsider.code, reason: "Isolated federation test.",
 } }), 201);

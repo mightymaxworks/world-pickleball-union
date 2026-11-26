@@ -128,8 +128,9 @@ console.log("WPU Control isolated Worker: Access/session binding, scoped proposa
 
 const own = { action: "request", organisationId: "bhutan-isolated" };
 const testOrganisation = { id: "bhutan-isolated", name: "Bhutan Pickleball Federation (test fixture)" };
+const rollout = { id: "rollout-federation", name: "Rollout Federation (test fixture)" };
 const details = await player("player");
-assert.deepEqual(details.options, [testOrganisation]);
+assert.deepEqual(details.options, [testOrganisation, rollout]);
 assert.deepEqual(details.requests, []);
 assert.deepEqual((await player("unverified")).options, []);
 await player("unverified", own, 409);
@@ -149,7 +150,7 @@ const submissions = await Promise.all([
 assert.deepEqual(submissions.map(res => res.status).sort(), [201, 409]);
 const created = await submissions.find(res => res.status === 201).json();
 assert.equal(created.state, "awaiting_review");
-assert.deepEqual((await player("player")).options, []);
+assert.deepEqual((await player("player")).options, [rollout]);
 assert.deepEqual((await player("player")).requests, [{ id: created.id, organisation: testOrganisation.name, state: "awaiting_review" }]);
 assert.deepEqual((await player("outsider")).requests, []);
 assert.deepEqual((await player("player")).invitations, []);

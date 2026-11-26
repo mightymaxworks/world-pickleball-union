@@ -21,6 +21,17 @@ export const scopedAdmin = `JOIN wpu_accounts a ON a.id=? AND a.status='active'
     AND r.scope_type='organisation' AND r.scope_id=o.id AND r.role='organisation_admin' AND r.revoked_at IS NULL)
   AND EXISTS (SELECT 1 FROM wpu_auth_emails e WHERE e.account_id=a.id AND e.email_normalized=? AND e.verified_at IS NOT NULL)`;
 
+/** Only public names, country codes and URLs of federations accepting online requests. */
+export async function playerFederations() {
+  const rows = await queryD1(
+    `SELECT f.slug,o.name,o.country_code ${enabledFederation}
+      JOIN wpu_affiliation_self_request_orgs s ON s.organisation_id=o.id
+      WHERE f.enabled=1 ORDER BY o.name COLLATE NOCASE,f.slug`);
+  return rows.flatMap(row => isFederationSlug(row.slug) ? [{
+    slug: row.slug, name: String(row.name), countryCode: typeof row.country_code === "string" ? row.country_code : null,
+  }] : []);
+}
+
 export async function federationPortal(slug: string, account: string | null) {
   if (!isFederationSlug(slug)) return null;
   const [row] = await queryD1(
