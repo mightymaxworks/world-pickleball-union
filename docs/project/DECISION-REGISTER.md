@@ -20,4 +20,8 @@
 | WPU-016 | Automatic approval of sensitive organisation applications | NOT AUTHORISED; human review required |
 | WPU-017 | WPU institutional governing authority | UNDETERMINED; do not imply recognition |
 
+## Delivery decision — federation activation, 26 November 2026
+
+One shared Player Passport and one public federation directory. WPU operations publish or pause each eligible national federation in Control. Approval for operational tools, formal admission, domestic recognition, representation and tournament eligibility are distinct. A pause stops new self-requests without cancelling existing or in-flight affiliations. This implements the existing oversight direction without changing a locked policy or authorising automatic admission.
+
 **Change control:** record decision ID, date, rationale, approving authority and superseded ID before altering locked policy. Proposed engineering mechanisms are not policy approvals.
