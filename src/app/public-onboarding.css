@@ -85,3 +85,6 @@
   .public-mobile-menu .public-nav-group summary { justify-content:space-between; white-space:normal; }
   .public-mobile-menu .public-subnav { position:static; min-width:0; box-shadow:none; }
 }
+.public-directory-search { max-width:35rem; }
+.public-directory-search > div { display:flex; flex-wrap:wrap; align-items:center; gap:1rem; }
+.public-directory-search a { color:#0e285d; font-weight:700; text-decoration:underline; }

@@ -1,6 +1,7 @@
 export const joinWpu = "/get-involved";
 export const playerRegistration = "/join";
 export const playerSignIn = "/join?mode=login";
+export const federationDirectory = "/federations";
 export const organisationJoin = "/members";
 export const organisationIntake = "/members#register";
 
@@ -21,7 +22,6 @@ export const publicNavigation = [
       ["Introduce your organisation", organisationIntake],
       ["National membership & representation", "/members#national-membership"],
       ["Membership framework", "/members#membership-framework"],
-      ["Bhutan Player Passport pilot", "/federations/bhutan"],
     ],
   },
   {

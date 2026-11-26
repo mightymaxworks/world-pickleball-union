@@ -4,7 +4,6 @@ import Link from "next/link";
 import SiteHeader from "@/components/SiteHeader";
 import SiteFooter from "@/components/SiteFooter";
 import OrganisationIntakeForm from "./organisation-intake";
-import { playerRegistration } from "@/lib/public-paths";
 
 export const metadata: Metadata = { title: "Federations, Associations & Clubs", alternates: { canonical: "/members" },
   description: "Introduce your federation, association or club and request to participate in the WPU organisation pilot." };
@@ -114,7 +113,6 @@ export default function OrganisationsPage() {
           <p>You’ll get a reference after submitting. A WPU reviewer will review the request and may contact you about the next step. This is not a formal membership application, recognition or approval to access member data.</p>
           <OrganisationIntakeForm />
         </section>
-        <p className="mem-participant-links">Looking to affiliate as a player? Use the <Link href="/federations/bhutan">Bhutan Player Passport pilot</Link> or <Link href={playerRegistration}>create a Player Passport</Link>.</p>
       </section>
 
       <section className="mem-section mem-who" id="national-membership">

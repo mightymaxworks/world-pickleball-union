@@ -41,13 +41,15 @@ assert.match(home,/href="\/join\?mode=login"[^>]*>Sign in/);
 for (const nav of ["Primary navigation", "Mobile navigation"]) {
   const group = home.match(new RegExp('<nav[^>]*aria-label="' + nav + '"[^>]*>([\\s\\S]*?)</nav>'))?.[1];
   assert.ok(group, nav);
+  assert.ok(!group.includes("/federations/bhutan"), "Country-specific affiliation is not an organisation navigation item");
   for (const label of ["Competitions", "Federations &amp; Clubs", "Development", "About WPU"])
     assert.ok(group.includes("<summary>" + label + "</summary>"), nav + " misses " + label);
   for (const path of ["/governance", "/brand", "/standards", "/supporters", "/initiatives/global-marina",
-    "/members#membership-framework", "/members#register", "/competitions#competition-interest", "/federations/bhutan"])
+    "/members#membership-framework", "/members#register", "/competitions#competition-interest"])
     assert.ok(group.includes('href="' + path + '"'), nav + " misses " + path);
 }
 const members = await (await request("/members")).text();
+assert.doesNotMatch(members, /href="\/federations\/bhutan"/);
 for (const anchor of ["register", "national-membership", "representation", "admission-pathway", "member-responsibilities", "membership-framework"])
   assert.ok(members.includes('id="' + anchor + '"'), anchor);
 for (const content of ["National voices. International cooperation.", "MEMBER RESPONSIBILITIES", "CONSTITUTION / STATUTES",
@@ -60,7 +62,8 @@ assert.match(hub,/href="\/join"[^>]*>Create a Player Passport/);
 assert.match(hub,/href="\/members"[^>]*>Federations/);
 assert.match(await (await request("/members#register")).text(),/id="register".*Introduce your organisation/s);
 assert.match(await (await request("/join?mode=login")).text(),/<h2>Sign in<\/h2>/);
-assert.equal((await request("/federations")).headers.get("location"),"/members");
+assert.match(hub,/href="\/federations"[^>]*>Find your federation/);
+assert.equal((await request("/federations")).status,200);
 assert.match(await (await request("/control",reviewer)).text(),/Organisation participation requests/);
 assert.doesNotMatch(await (await request("/control",{id:"pilot-operator",staff:"pilot-operator"})).text(),/Organisation participation requests/);
 await get("",401,{});

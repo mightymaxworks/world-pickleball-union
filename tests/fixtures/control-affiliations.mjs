@@ -30,14 +30,19 @@ sql.push(`INSERT INTO wpu_organisations(id,name,status,organisation_type) VALUES
  ('isolated-club','Isolated Pilot Club','verified','club'),('other-club','Other Isolated Club','verified','club'),
  ('unverified-club','Unverified Isolated Club','pending','club'),
  ('bhutan-isolated','Bhutan Pickleball Federation (test fixture)','verified','national_federation'),
- ('second-federation','Other Federation (test fixture)','verified','national_federation');
+ ('second-federation','Other Federation (test fixture)','verified','national_federation'),
+ ('rollout-federation','Rollout Federation (test fixture)','verified','national_federation'),
+ ('disabled-federation','Disabled Federation (test fixture)','verified','national_federation');
+UPDATE wpu_organisations SET country_code='BT' WHERE id='bhutan-isolated';
+UPDATE wpu_organisations SET country_code='SG' WHERE id='rollout-federation';
 INSERT INTO wpu_federation_portals(slug,organisation_id,enabled) VALUES
- ('bhutan','bhutan-isolated',1),('second','second-federation',1);
+ ('bhutan','bhutan-isolated',1),('second','second-federation',1),
+ ('rollout-test','rollout-federation',1),('disabled-test','disabled-federation',0);
 INSERT INTO wpu_federation_identity_clients(id,organisation_id,label,key_hash,enabled) VALUES
  ('bhutan-reference','bhutan-isolated','WPU Bhutan reference client','${createHash("sha256").update(clients["bhutan-reference"]).digest("hex")}',1),
  ('other-reference','second-federation','WPU second reference client','${createHash("sha256").update(clients["other-reference"]).digest("hex")}',1),
  ('disabled-reference','bhutan-isolated','WPU disabled reference client','${createHash("sha256").update(clients["disabled-reference"]).digest("hex")}',0);
-INSERT INTO wpu_affiliation_self_request_orgs(organisation_id) VALUES('bhutan-isolated'),('unverified-club');
+INSERT INTO wpu_affiliation_self_request_orgs(organisation_id) VALUES('bhutan-isolated'),('unverified-club'),('rollout-federation');
 INSERT INTO wpu_role_assignments(id,account_id,role,scope_type,scope_id) VALUES
  ('operator-grant','operator','organisation_admin','organisation','isolated-club'),
  ('operator-review','operator','wpu_reviewer','organisation','isolated-club'),
@@ -49,7 +54,8 @@ INSERT INTO wpu_role_assignments(id,account_id,role,scope_type,scope_id) VALUES
  ('pilot-alias-reviewer','player-alias','wpu_reviewer','organisation','bhutan-isolated'),
  ('pilot-operator-grant','pilot-operator','organisation_admin','organisation','bhutan-isolated'),
  ('second-admin-grant','second-admin','organisation_admin','organisation','second-federation'),
- ('second-review-grant','second-reviewer','wpu_reviewer','organisation','second-federation');
+ ('second-review-grant','second-reviewer','wpu_reviewer','organisation','second-federation'),
+ ('rollout-review','second-reviewer','wpu_reviewer','organisation','rollout-federation');
 INSERT INTO wpu_memberships(id,person_id,membership_type,status,valid_from)
  VALUES('original-membership','player','individual','active','2026-01-01T00:00:00.000Z');`);
 writeFileSync(join(folder, "control-seed.sql"), sql.join("\n"), { mode: 0o600 });

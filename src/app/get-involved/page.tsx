@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import SiteHeader from "@/components/SiteHeader";
 import SiteFooter from "@/components/SiteFooter";
-import { organisationJoin, playerRegistration, playerSignIn } from "@/lib/public-paths";
+import { federationDirectory, organisationJoin, playerRegistration, playerSignIn } from "@/lib/public-paths";
 
 export const metadata: Metadata = { title: "Join WPU", alternates: { canonical: "/get-involved" },
   description: "Create a WPU Player Passport or introduce your pickleball federation, association or club." };
@@ -20,6 +20,7 @@ export default function GetInvolved() {
           <p>Create a free account and get a permanent WPU Player ID. Use the same Passport to request federation affiliation where available.</p>
           <Link className="public-primary" href={playerRegistration}>Create a Player Passport</Link>
           <p className="public-path-link">Already have a Passport? <Link href={playerSignIn}>Sign in</Link></p>
+          <p className="public-path-link"><Link href={federationDirectory}>Find your federation</Link> to request an affiliation.</p>
         </article>
         <article>
           <p className="public-eyebrow">For organisations</p><h2>Join as an organisation</h2>

@@ -10,7 +10,7 @@ import AffiliationRequest from "./request";
 import "../../control/control.css";
 
 export const dynamic = "force-dynamic";
-export const metadata: Metadata = { title: "Federation Passport entry", robots: { index: false, follow: false } };
+export const metadata: Metadata = { title: "Federation affiliation", robots: { index: false, follow: false } };
 
 export default async function FederationPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
@@ -22,9 +22,9 @@ export default async function FederationPage({ params }: { params: Promise<{ slu
   return <main className="wc">
     <header className="wc-header"><Image src="/brand/wpu-logo-approved.png" alt="World Pickleball Union" width={150} height={50} unoptimized /><Link href="/passport">Player Passport</Link></header>
     <div className="wc-content">
-      <p className="wc-label">Federation Passport entry</p>
+      <p className="wc-label">Federation affiliation</p>
       <h1>{federation.name}</h1>
-      <p>Use your existing WPU Player Passport or create one to request an affiliation.</p>
+      <p>{federation.accepting ? "Use your existing WPU Player Passport or create one to request an affiliation." : "Use your WPU Player Passport to check an existing affiliation or invitation."}</p>
       <section className="wc-box">
         {!account ? <>
           <h2>One Passport, one Player ID</h2>
@@ -41,6 +41,7 @@ export default async function FederationPage({ params }: { params: Promise<{ slu
         </>}
         <p className="wc-portal-note">Affiliation does not establish national representation or competition eligibility.</p>
       </section>
+      <Link className="wc-text-link" href="/federations">← Find your federation</Link>
     </div>
   </main>;
 }

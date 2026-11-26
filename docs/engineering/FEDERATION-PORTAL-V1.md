@@ -57,3 +57,10 @@ The federation preparation workflow applies and verifies the additive member sch
 4. Check a WPU reviewer without a federation-admin grant can still review cases and cannot read or export the federation’s member list. A roster-only Bhutan admin should not see a reviewer role warning.
 
 The next functional milestone is federation-scoped tournament setup. Federation-defined dues and renewal status can later build on the local member record, without linking a payment status to an automatic roster hold.
+
+## Rollout of federation affiliations
+
+- Players find the feature in Join WPU or in Passport → Affiliations. The searchable /federations directory lists verified national federations whose Passport page is enabled and whose online requests are switched on. It publishes only names, countries and links. Existing country links continue to work, including Bhutan.
+- Use the same registration, review and Passport flow for every federation. Keeping one Player ID across multiple approvals and keeping reviewers scoped to their federation are release tests. Test disabled directory entries, invitation-only entries, rejection and withdrawal alongside the successful path.
+- Before publishing another federation, verify its existing organisation record, nominate its operator and WPU reviewer, and run one real request from sign-in through approval and Passport display. Keep admissions, nationality, competition eligibility and third-party identity integrations separate.
+- The player-facing feature is available wherever a federation is enabled for online requests. Broader rollout means onboarding more federations to that same feature. The next operational step is a scoped WPU Control activation workflow for publishing and pausing federation affiliation, instead of one-off setup for each federation.
