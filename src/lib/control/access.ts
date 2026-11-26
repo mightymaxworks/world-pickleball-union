@@ -40,23 +40,34 @@ export function controlConfig(): AccessConfig | null {
   return result;
 }
 
-export function accessEmail(assertion: string | null, config: AccessConfig): string | null {
-  if (!assertion || assertion.length > 8192 || !/^[a-zA-Z0-9_-]+\.[a-zA-Z0-9_-]+\.[a-zA-Z0-9_-]+$/.test(assertion)) return null;
+export function accessEmail(assertion: string | null, config: AccessConfig, surface: "page" | "api"): string | null {
+  function reject(reason: string): null {
+    // Fixed labels only. Never log the assertion, its claims, headers or account data.
+    console.warn(JSON.stringify({ event: "wpu_control_access_rejected", surface, reason }));
+    return null;
+  }
+
+  if (!assertion) return reject("missing_assertion");
+  if (assertion.length > 8192 || !/^[a-zA-Z0-9_-]+\.[a-zA-Z0-9_-]+\.[a-zA-Z0-9_-]+$/.test(assertion)) return reject("malformed_assertion");
   try {
     const [head, body, signature] = assertion.split(".");
     const header = JSON.parse(Buffer.from(head, "base64url").toString("utf8"));
+    if (header.alg !== "RS256") return reject("unexpected_algorithm");
     const key = config.keys.get(header.kid);
-    if (header.alg !== "RS256" || !key ||
-      !verify("RSA-SHA256", Buffer.from(head + "." + body), key, Buffer.from(signature, "base64url"))) return null;
+    if (!key) return reject("unknown_signing_key");
+    if (!verify("RSA-SHA256", Buffer.from(head + "." + body), key, Buffer.from(signature, "base64url"))) return reject("invalid_signature");
     const claims = JSON.parse(Buffer.from(body, "base64url").toString("utf8"));
     const now = Math.floor(Date.now() / 1000);
-    if (claims.iss !== config.issuer || !Array.isArray(claims.aud) || !claims.aud.includes(config.audience) ||
-      claims.type !== "app" || !Number.isSafeInteger(claims.exp) || claims.exp <= now ||
-      !Number.isSafeInteger(claims.iat) || claims.iat > now + 30 || claims.exp - claims.iat > 3600 ||
-      (claims.nbf !== undefined && (!Number.isSafeInteger(claims.nbf) || claims.nbf > now)) ||
-      typeof claims.email !== "string" || !/^[^\s@]+@[^\s@]+$/.test(claims.email) || claims.email.length > 254) return null;
+    if (claims.iss !== config.issuer) return reject("wrong_issuer");
+    if (!Array.isArray(claims.aud) || !claims.aud.includes(config.audience)) return reject("wrong_audience");
+    if (claims.type !== "app") return reject("wrong_token_type");
+    if (!Number.isSafeInteger(claims.exp) || claims.exp <= now) return reject("invalid_expiry");
+    if (!Number.isSafeInteger(claims.iat) || claims.iat > now + 30) return reject("invalid_issue_time");
+    if (claims.exp - claims.iat > 3600) return reject("session_too_long");
+    if (claims.nbf !== undefined && (!Number.isSafeInteger(claims.nbf) || claims.nbf > now)) return reject("not_yet_valid");
+    if (typeof claims.email !== "string" || !/^[^\s@]+@[^\s@]+$/.test(claims.email) || claims.email.length > 254) return reject("invalid_email_claim");
     return claims.email.toLowerCase();
-  } catch { return null; }
+  } catch { return reject("unreadable_assertion"); }
 }
 
 export async function identityMatchesAccess(accountId: string, email: string): Promise<boolean> {

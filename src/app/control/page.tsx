@@ -19,7 +19,7 @@ export default async function ControlPage() {
     <div className="wc-content">
       <p className="wc-label">Operations pilot</p><h1>WPU Control</h1>
       <p>Propose, review and correct player affiliations within your assigned organisations.</p>
-      {accessEmail(assertion, config) ? <ControlWorkspace /> : <section className="wc-box">
+      {accessEmail(assertion, config, "page") ? <ControlWorkspace /> : <section className="wc-box">
         <h2>Staff verification required</h2>
         <p>Open this workspace through the WPU staff access portal. A WPU member sign-in on its own does not grant staff access.</p>
       </section>}

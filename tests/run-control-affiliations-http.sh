@@ -29,3 +29,24 @@ for i in $(seq 1 65); do
 done
 curl -fsS "$TEST_BASE_URL/join" >/dev/null
 node tests/control-affiliations-http.mjs "$pilot_tmp/control-fixtures.json"
+node --input-type=module - "$pilot_tmp/worker.log" <<'NODE'
+import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
+const log = readFileSync(process.argv[2], "utf8");
+const events = log.split("\n")
+  .filter(line => line.includes("wpu_control_access_rejected"))
+  .map(line => {
+    const event = JSON.parse(line.slice(line.indexOf("{"), line.lastIndexOf("}") + 1));
+    assert.deepEqual(Object.keys(event), ["event", "surface", "reason"]);
+    assert.equal(event.event, "wpu_control_access_rejected");
+    assert.ok(["page", "api"].includes(event.surface));
+    assert.match(event.reason, /^[a-z_]+$/);
+    return event.surface + "/" + event.reason;
+  });
+for (const expected of ["page/missing_assertion", "api/missing_assertion", "api/wrong_audience",
+  "api/wrong_issuer", "api/invalid_expiry", "api/session_too_long", "api/not_yet_valid",
+  "api/wrong_token_type", "api/unexpected_algorithm", "api/invalid_signature"]) {
+  assert.ok(events.includes(expected), "Missing diagnostic: " + expected);
+}
+console.log("WPU Control staff access rejection diagnostics contain only fixed labels");
+NODE
