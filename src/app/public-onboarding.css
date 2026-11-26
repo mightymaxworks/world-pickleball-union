@@ -1,0 +1,53 @@
+/* Shared public front door */
+.public-header { position: relative; z-index: 100; }
+.public-header-inner { width: min(calc(100% - 2rem), 1260px); margin: auto; min-height: 76px; display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
+.public-logo { flex-shrink: 0; }
+.public-logo img { width: clamp(120px, 15vw, 195px); height: auto; display: block; }
+.public-main-nav,.public-header-actions { display:flex; align-items:center; gap:clamp(.65rem,1.65vw,1.45rem); }
+.public-main-nav a,.public-header-actions a,.public-mobile-menu summary { color:white; font-weight:700; font-size:.9rem; white-space:nowrap; }
+.public-main-nav a:hover,.public-signin:hover { text-decoration:underline; text-underline-offset:.25em; }
+.public-header-actions .public-join { background:#d6ff3d; color:#0e285d; padding:.64rem .85rem; border-radius:.38rem; }
+.public-header-actions > a,.public-mobile-menu summary { display:inline-flex; align-items:center; min-height:44px; }
+.public-mobile-menu { display:none; }
+.public-site-footer { background:#0e285d; color:white; padding:2.3rem 1rem; }
+.public-site-footer > div { max-width:1152px; margin:auto; display:grid; gap:1.1rem; }
+.public-site-footer nav { display:flex; align-items:center; flex-wrap:wrap; gap:.7rem 1.25rem; }
+.public-site-footer a { color:white; text-decoration:underline; text-underline-offset:.25em; }
+.public-footer-brand { font-weight:800; }
+.public-onboarding { max-width:1090px; margin:auto; padding:clamp(2.1rem,6vw,5rem) 1rem; color:#14294f; }
+.public-onboarding h1,.public-onboarding h2 { color:#0e285d; font-weight:800; margin:0 0 .7rem; line-height:1.12; }
+.public-onboarding h1 { font-size:clamp(2.25rem,6vw,4.5rem); letter-spacing:-.045em; }
+.public-onboarding h2 { font-size:clamp(1.35rem,3vw,2rem); }
+.public-onboarding p { line-height:1.65; }
+.public-eyebrow { font-size:.78rem; font-weight:800; letter-spacing:.12em; text-transform:uppercase; margin:0 0 .9rem; }
+.public-intro { font-size:clamp(1.05rem,2.2vw,1.28rem); max-width:60ch; }
+.public-path-grid { display:grid; gap:1rem; margin:1.65rem 0; grid-template-columns:repeat(2,minmax(0,1fr)); }
+.public-path-grid article,.public-intake-card { border:1px solid #d5dfef; background:#f6f8fd; border-radius:1rem; padding:clamp(1.1rem,4vw,2rem); }
+.public-primary { background:#0e285d; color:white; border-radius:.45rem; padding:.7rem 1rem; min-height:44px; display:inline-flex; align-items:center; font-weight:750; cursor:pointer; text-align:left; }
+.public-other-path { border-top:1px solid #d5dfef; margin-top:2rem; padding-top:1.5rem; }
+.public-other-path a,.public-path-link a,.public-intake-card a { color:#0e285d; text-decoration:underline; font-weight:700; }
+.public-path-link { margin:.7rem 0 0; }
+.public-intake-card { scroll-margin-top:1rem; }
+.public-intake-form { display:grid; gap:1rem; margin-top:1.1rem; }
+.public-intake-fields { display:grid; gap:.85rem 1rem; grid-template-columns:repeat(2,minmax(0,1fr)); }
+.public-intake-form label { display:grid; gap:.28rem; font-weight:700; }
+.public-intake-form input:not([type=checkbox]),.public-intake-form select,.public-intake-form textarea { color:#14294f; border:1px solid #9cacc6; border-radius:.45rem; padding:.65rem; min-height:44px; width:100%; background:white; font:inherit; }
+.public-intake-form .public-intake-consent { display:flex; gap:.6rem; align-items:flex-start; }
+.public-intake-form .public-primary { justify-self:start; }
+.public-intake-feedback { background:#e9f0fb; padding:1rem; border-radius:.5rem; overflow-wrap:anywhere; }
+.public-intake-feedback code { font-weight:700; }
+@media (max-width: 950px) {
+  .public-main-nav { display:none; }
+  .public-mobile-menu { display:block; }
+  .public-mobile-menu summary { cursor:pointer; padding-inline:.25rem; }
+  .public-mobile-menu nav { position:absolute; right:1rem; left:1rem; top:calc(100% - 1px); background:#0e285d; max-height:70vh; overflow:auto; padding:.75rem 1rem; border-radius:0 0 .55rem .55rem; display:grid; }
+  .public-mobile-menu:not([open]) nav { display:none; }
+}
+@media (max-width: 575px) {
+  .public-path-grid,.public-intake-fields { grid-template-columns:minmax(0,1fr); }
+  .public-header-inner { width:calc(100% - 1rem); gap:.4rem; min-height:62px; }
+  .public-logo img { width:clamp(83px,26vw,135px); }
+  .public-header-actions { gap:.42rem; }
+  .public-header-actions a,.public-mobile-menu summary { font-size:.82rem; }
+  .public-header-actions .public-join { padding-inline:.54rem; }
+}

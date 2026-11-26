@@ -1,3 +1,4 @@
+import SiteFooter from "@/components/SiteFooter";
 import SiteHeader from "@/components/SiteHeader";
 import type { Metadata } from "next";
 import Image from "next/image";
@@ -467,23 +468,7 @@ export default function DevelopmentPage() {
         </div>
       </section>
 
-      <footer className="site-footer">
-        <div className="footer-inner">
-          <Link className="footer-brand" href="/">
-            <Image
-              src="/brand/wpu-logo-approved.png"
-              alt="World Pickleball Union"
-              width={640}
-              height={210}
-            />
-          </Link>
-
-          <div className="footer-copy">
-            <strong>UNITING PICKLEBALL WORLDWIDE.</strong>
-            <span>WORLD PICKLEBALL UNION</span>
-          </div>
-        </div>
-      </footer>
+      <SiteFooter />
     </main>
   );
 }

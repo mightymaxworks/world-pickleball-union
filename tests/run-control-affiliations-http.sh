@@ -15,7 +15,7 @@ export TEST_BASE_URL=http://localhost:8787
 wrangler=node_modules/.bin/wrangler
 db=wpu-supporters
 test -f .open-next/worker.js
-for file in wpu-identity-foundation-v1 wpu-identity-invariants-v1 wpu-passwordless-auth-v1 wpu-passwordless-auth-v2 wpu-passwordless-auth-v3 wpu-organisation-foundation-v2 wpu-control-affiliations-v1 wpu-control-affiliations-v2 wpu-federation-portal-v1 wpu-federation-members-v1; do
+for file in wpu-identity-foundation-v1 wpu-identity-invariants-v1 wpu-passwordless-auth-v1 wpu-passwordless-auth-v2 wpu-passwordless-auth-v3 wpu-organisation-foundation-v2 wpu-control-affiliations-v1 wpu-control-affiliations-v2 wpu-federation-portal-v1 wpu-federation-members-v1 inquiries wpu-organisation-intake-v1; do
   cat "database/$file.sql"
   printf "\n"
 done > "$pilot_tmp/control-schema.sql"
@@ -24,6 +24,9 @@ cat >> "$pilot_tmp/control-seed.sql" <<'SQL'
 
 CREATE TABLE wpu_schema_migrations(filename TEXT PRIMARY KEY,sha256 TEXT NOT NULL);
 INSERT INTO wpu_schema_migrations(filename,sha256) VALUES('wpu-federation-members-v1.sql','isolated-fixture');
+INSERT INTO wpu_organisation_intake_reviewers(account_id) VALUES('reviewer');
+INSERT INTO wpu_inquiries(id,form_type,organisation,country,contact_name,email,details_json,status) VALUES
+('c779a9b9-207b-4c64-8f76-71e81a8598d1','membership','Isolated legacy organisation','Bhutan','Legacy reviewer contact','legacy@example.org','{}','pending');
 SQL
 cat "$pilot_tmp/control-seed.sql" >> "$pilot_tmp/control-schema.sql"
 "$wrangler" d1 execute "$db" --local --persist-to "$pilot_tmp/db" --file "$pilot_tmp/control-schema.sql" >/dev/null
@@ -37,6 +40,7 @@ done
 curl -fsS "$TEST_BASE_URL/join" >/dev/null
 node tests/control-affiliations-http.mjs "$pilot_tmp/control-fixtures.json"
 node tests/federation-portal-http.mjs "$pilot_tmp/control-fixtures.json"
+node tests/organisation-intake-http.mjs "$pilot_tmp/control-fixtures.json"
 node --input-type=module - "$pilot_tmp/worker.log" <<'NODE'
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";

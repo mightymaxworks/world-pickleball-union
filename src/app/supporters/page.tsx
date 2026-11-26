@@ -1,5 +1,5 @@
+import SiteFooter from "@/components/SiteFooter";
 import type { Metadata } from "next";
-import Link from "next/link";
 import SiteHeader from "@/components/SiteHeader";
 import SupporterDirectory from "./SupporterDirectory";
 import PledgeForm from "./PledgeForm";
@@ -41,7 +41,7 @@ export default function SupportersPage() {
           </div>
         </div>
       </section>
-      <footer><div className="footer-inner"><Link href="/" aria-label="World Pickleball Union home"><img src="/brand/wpu-logo-approved.png" alt="World Pickleball Union" width="220" height="75" style={{objectFit:"contain"}} /></Link><div className="footer-copy"><p>UNITING PICKLEBALL WORLDWIDE.</p><small>© {new Date().getFullYear()} World Pickleball Union. All rights reserved.</small><p><Link href="/members">Membership</Link> · <Link href="/supporters">Global Support Network</Link></p></div></div></footer>
+      <SiteFooter />
     </main>
   );
 }

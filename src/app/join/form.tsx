@@ -1,6 +1,7 @@
 "use client";
 import { useState, type FormEvent } from "react";
 import Image from "next/image";
+import Link from "next/link";
 import { residenceCountries as countries } from "@/lib/passport/regions";
 import "./membership.css";
 
@@ -33,7 +34,7 @@ export default function MembershipForm({ federation, initialMode }: { federation
  }
  return <main className="membership-shell"><section className="membership-intro">
  <Image src="/brand/wpu-logo-approved.png" alt="World Pickleball Union" width={210} height={70} style={{objectFit:"contain"}}/>
- <p className="membership-kicker">ONE GLOBAL IDENTITY</p><h1>Your game. Your world.</h1><p>Your WPU Passport connects your sporting journey, memberships and future competition records.</p></section>
+ <p className="membership-kicker">ONE GLOBAL IDENTITY</p><h1>Your game. Your world.</h1><p>Your WPU Passport connects your sporting journey, memberships and future competition records.</p><Link className="membership-back" href={federation ? "/federations/" + federation : "/get-involved"}>← {federation ? "Back to your federation" : "Join WPU options"}</Link></section>
  <section className="membership-panel"><h2>{step==="code"?"Check your email":mode==="register"?"Create your account":"Sign in"}</h2>
  <form onSubmit={submit}>
  {step==="details"?<>

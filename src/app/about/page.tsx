@@ -1,4 +1,4 @@
-import Image from "next/image";
+import SiteFooter from "@/components/SiteFooter";
 import Link from "next/link";
 import SiteHeader from "@/components/SiteHeader";
 
@@ -531,23 +531,8 @@ export default function AboutPage() {
         </div>
       </section>
 
-      <footer>
-        <div className="footer-inner">
-          <Link href="/" aria-label="World Pickleball Union home">
-            <Image
-              src="/brand/wpu-logo-approved.png"
-              alt="World Pickleball Union"
-              width={245}
-              height={70}
-            />
-          </Link>
-
-          <div className="footer-copy">
-            <p>UNITING PICKLEBALL WORLDWIDE.</p>
-            <small>World Pickleball Union</small>
-          </div>
-        </div>
-      </footer>
+      <section className="section-shell public-other-path" aria-label="About WPU related pages"><p><Link href="/governance">Governance and leadership</Link> · <Link href="/standards">WPU standards</Link></p></section>
+      <SiteFooter />
     </main>
   );
 }

@@ -1,3 +1,4 @@
+import SiteFooter from "@/components/SiteFooter";
 import Image from "next/image";
 import SiteHeader from "@/components/SiteHeader";
 
@@ -62,11 +63,11 @@ export default function Home() {
           </p>
 
           <div className="hero-actions">
-            <a className="button-primary" href="#about">
-              Explore WPU <span>→</span>
+            <a className="button-primary" href="/get-involved">
+              Join WPU <span>→</span>
             </a>
-            <a className="button-secondary" href="#members">
-              Membership
+            <a className="button-secondary" href="/members">
+              Federations &amp; clubs
             </a>
           </div>
         </div>
@@ -308,8 +309,8 @@ export default function Home() {
               organisations that share a commitment to cooperation,
               accessibility and responsible growth.
             </p>
-            <a className="button-lime" href="mailto:membership@worldpickleball.world">
-              Membership enquiries →
+            <a className="button-lime" href="/members#register">
+              Introduce your organisation →
             </a>
           </div>
         </div>
@@ -367,28 +368,11 @@ export default function Home() {
             <br />
             <em>One future.</em>
           </h2>
-          <a href="mailto:info@worldpickleball.world">Connect with WPU →</a>
+          <a href="/get-involved">Join WPU →</a>
         </div>
       </section>
 
-      <footer>
-        <div className="footer-inner">
-          <Image
-            src="/brand/wpu-logo-approved.png"
-            alt="World Pickleball Union"
-            width={220}
-            height={75}
-          />
-
-          <div className="footer-copy">
-            <p>UNITING PICKLEBALL WORLDWIDE.</p>
-            <small>
-              © {new Date().getFullYear()} World Pickleball Union. All rights
-              reserved.
-            </small>
-          </div>
-        </div>
-      </footer>
+      <SiteFooter />
     </main>
   );
 }

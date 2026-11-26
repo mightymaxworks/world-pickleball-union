@@ -1,3 +1,4 @@
+import SiteFooter from "@/components/SiteFooter";
 import Image from "next/image";
 import Link from "next/link";
 import SiteHeader from "@/components/SiteHeader";
@@ -270,18 +271,13 @@ export default function GovernancePage() {
           <p>WORLD PICKLEBALL UNION</p>
           <h2>Clear governance.<br />Stronger sport.</h2>
           <div className="about-final-action">
-            <Link href="/#members">BUILD WITH WPU →</Link>
+            <Link href="/members#register">BUILD WITH WPU →</Link>
             <p>NATIONAL ORGANISATIONS · PARTNERS · CONTRIBUTORS</p>
           </div>
         </div>
       </section>
 
-      <footer>
-        <div className="footer-inner">
-          <Link href="/"><Image src="/brand/wpu-logo-approved.png" alt="World Pickleball Union" width={245} height={70} /></Link>
-          <div className="footer-copy"><p>UNITING PICKLEBALL WORLDWIDE.</p><small>World Pickleball Union</small></div>
-        </div>
-      </footer>
+      <SiteFooter />
     </main>
   );
 }

@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Montserrat, Inter } from "next/font/google";
 import "./globals.css";
 import "./brand-tokens.css";
+import "./public-onboarding.css";
 
 const montserrat = Montserrat({
   variable: "--font-montserrat",

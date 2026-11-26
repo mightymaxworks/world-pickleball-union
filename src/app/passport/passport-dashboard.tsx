@@ -206,7 +206,7 @@ export default function PassportDashboard() {
         </div>
         {fieldNotice("logout")}
         {state.kind === "loading" && <div className="pp-panel"><p role="status">Loading your Passport…</p></div>}
-        {state.kind === "signed-out" && <section className="pp-panel pp-entry"><Icon name="lock" /><h2>Your Passport is private</h2><p>Sign in with your WPU account to view your membership and manage your profile.</p><Link className="pp-button pp-primary" href="/join">Go to registration and sign-in <Icon name="arrow" /></Link></section>}
+        {state.kind === "signed-out" && <section className="pp-panel pp-entry"><Icon name="lock" /><h2>Your Passport is private</h2><p>Sign in with your WPU account to view your membership and manage your profile.</p><Link className="pp-button pp-primary" href="/join?mode=login">Sign in to your Passport <Icon name="arrow" /></Link></section>}
         {state.kind === "error" && <section className="pp-panel pp-entry"><p role="alert">Your Passport is temporarily unavailable.</p><button className="pp-button pp-primary" onClick={() => { setState({ kind: "loading" }); setRetry(count => count + 1); }}>Try again</button></section>}
         {state.kind === "unavailable" && <section className="pp-panel pp-entry"><h2>No Passport found</h2><p>You’re signed in, but we couldn’t find a Passport for this account.</p><a className="pp-link" href="mailto:support@worldpickleball.world">Contact WPU support</a></section>}
         {passport && <>

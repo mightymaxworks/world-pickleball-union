@@ -1,4 +1,4 @@
-import Image from "next/image";
+import SiteFooter from "@/components/SiteFooter";
 import Link from "next/link";
 import SiteHeader from "@/components/SiteHeader";
 
@@ -899,7 +899,7 @@ export default function StandardsPage() {
                 are developed.
               </p>
 
-              <Link href="/#members" className="std-build-action">
+              <Link href="mailto:info@worldpickleball.world?subject=WPU%20standards%20enquiry" className="std-build-action">
                 EXPRESS INTEREST →
               </Link>
             </div>
@@ -943,7 +943,7 @@ export default function StandardsPage() {
               to create confidence, consistency and opportunity across the sport.
             </p>
 
-            <Link href="/#members">
+            <Link href="mailto:info@worldpickleball.world?subject=WPU%20standards%20enquiry">
               HELP BUILD THE STANDARD →
             </Link>
           </div>
@@ -951,23 +951,7 @@ export default function StandardsPage() {
         </div>
       </section>
 
-      <footer>
-        <div className="footer-inner">
-          <Link href="/">
-            <Image
-              src="/brand/wpu-logo-approved.png"
-              alt="World Pickleball Union"
-              width={245}
-              height={70}
-            />
-          </Link>
-
-          <div className="footer-copy">
-            <p>UNITING PICKLEBALL WORLDWIDE.</p>
-            <small>World Pickleball Union</small>
-          </div>
-        </div>
-      </footer>
+      <SiteFooter />
     </main>
   );
 }

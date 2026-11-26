@@ -9,5 +9,5 @@ export default async function MembershipPage({ searchParams }: { searchParams: P
   const { federation, mode } = await searchParams;
   const returnToFederation = isFederationSlug(federation) && federationPilotEnabled() && controlConfig()
     && await federationPortal(federation, null).catch(() => null) ? federation : null;
-  return <MembershipForm federation={returnToFederation} initialMode={returnToFederation && mode === "login" ? "login" : "register"} />;
+  return <MembershipForm federation={returnToFederation} initialMode={mode === "login" ? "login" : "register"} />;
 }

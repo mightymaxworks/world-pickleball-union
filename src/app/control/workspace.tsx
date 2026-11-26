@@ -67,7 +67,7 @@ export default function ControlWorkspace({ hasFederationWorkspace = false }: { h
   if (hasFederationWorkspace && noAffiliationRole) return null;
   return <>
     {problem && <p role="alert" className="wc-feedback">{problem} {signedOut
-      ? <Link href="/join">Sign in</Link>
+      ? <Link href="/join?mode=login">Sign in</Link>
       : !data && <button type="button" onClick={() => { setProblem(""); setUpdate(value => value + 1); }}>Retry</button>}</p>}
     {status && <p role="status" className="wc-feedback">{status}</p>}
     {!data && !problem && <p role="status">Loading affiliation cases…</p>}
