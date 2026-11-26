@@ -9,6 +9,7 @@ type AccessEnv = {
 };
 type AccessConfig = { issuer: string; audience: string; keys: Map<string, KeyObject> };
 let cached: { source: string; result: AccessConfig | null } | undefined;
+const MAX_STAFF_ASSERTION_AGE_SECONDS = 60 * 60;
 
 export function controlConfig(): AccessConfig | null {
   const context = (globalThis as unknown as Record<symbol, {env?: AccessEnv} | undefined>)[Symbol.for("__cloudflare-context__")];
@@ -63,7 +64,9 @@ export function accessEmail(assertion: string | null, config: AccessConfig, surf
     if (claims.type !== "app") return reject("wrong_token_type");
     if (!Number.isSafeInteger(claims.exp) || claims.exp <= now) return reject("invalid_expiry");
     if (!Number.isSafeInteger(claims.iat) || claims.iat > now + 30) return reject("invalid_issue_time");
-    if (claims.exp - claims.iat > 3600) return reject("session_too_long");
+    if (claims.exp <= claims.iat) return reject("invalid_expiry");
+    // WPU access ends at the earlier of the signed expiry and one hour from issuance.
+    if (now - claims.iat >= MAX_STAFF_ASSERTION_AGE_SECONDS) return reject("session_too_old");
     if (claims.nbf !== undefined && (!Number.isSafeInteger(claims.nbf) || claims.nbf > now)) return reject("not_yet_valid");
     if (typeof claims.email !== "string" || !/^[^\s@]+@[^\s@]+$/.test(claims.email) || claims.email.length > 254) return reject("invalid_email_claim");
     return claims.email.toLowerCase();

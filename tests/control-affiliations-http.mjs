@@ -44,9 +44,18 @@ const decision = (action, id) => ({ action, id, reason: "Isolated reviewer check
 const blockedPage = await request("/control");
 assert.equal(blockedPage.status, 200);
 assert.match(await blockedPage.text(), /Staff verification required/);
-const verifiedPage = await request("/control", { proof: token("reviewer") });
+const now = Math.floor(Date.now() / 1000);
+const freshLongProof = token("reviewer", { exp: now + 7200 });
+const oldLongProof = token("reviewer", { iat: now - 3600, nbf: now - 3600, exp: now + 3600 });
+const verifiedPage = await request("/control", { proof: freshLongProof });
 assert.equal(verifiedPage.status, 200);
 assert.doesNotMatch(await verifiedPage.text(), /Staff verification required/);
+const oldPage = await request("/control", { proof: oldLongProof });
+assert.equal(oldPage.status, 200);
+assert.match(await oldPage.text(), /Staff verification required/);
+await check(request(control, { id: "reviewer", proof: freshLongProof }), 200);
+await check(request(control, { id: "operator", proof: freshLongProof }), 403);
+await check(request(control, { id: "reviewer", proof: oldLongProof }), 403);
 
 await check(request(control), 401);
 await check(request(playerRoute), 401);
@@ -55,7 +64,7 @@ await check(request(control, { id: "operator", proof: token("reviewer") }), 403)
 await check(request(control, { id: "operator", proof: token("operator", { aud: ["invalid-audience"] }) }), 403);
 await check(request(control, { id: "operator", proof: token("operator", { iss: "https://wrong.cloudflareaccess.com" }) }), 403);
 await check(request(control, { id: "operator", proof: token("operator", { exp: 1 }) }), 403);
-await check(request(control, { id: "operator", proof: token("operator", { exp: Math.floor(Date.now() / 1000) + 7200 }) }), 403);
+await check(request(control, { id: "operator", proof: token("operator", { iat: Math.floor(Date.now() / 1000) + 120 }) }), 403);
 await check(request(control, { id: "operator", proof: token("operator", { nbf: Math.floor(Date.now() / 1000) + 120 }) }), 403);
 await check(request(control, { id: "operator", proof: token("operator", { type: "org" }) }), 403);
 await check(request(control, { id: "operator", proof: token("operator", {}, "none") }), 403);
