@@ -16,15 +16,17 @@ wrangler=node_modules/.bin/wrangler
 db=wpu-supporters
 test -f .open-next/worker.js
 for file in wpu-identity-foundation-v1 wpu-identity-invariants-v1 wpu-passwordless-auth-v1 wpu-passwordless-auth-v2 wpu-passwordless-auth-v3 wpu-organisation-foundation-v2 wpu-control-affiliations-v1 wpu-control-affiliations-v2 wpu-federation-portal-v1 wpu-federation-members-v1; do
-  "$wrangler" d1 execute "$db" --local --persist-to "$pilot_tmp/db" --file "database/$file.sql" >/dev/null
-done
+  cat "database/$file.sql"
+  printf "\n"
+done > "$pilot_tmp/control-schema.sql"
 node tests/fixtures/control-affiliations.mjs "$pilot_tmp"
 cat >> "$pilot_tmp/control-seed.sql" <<'SQL'
 
 CREATE TABLE wpu_schema_migrations(filename TEXT PRIMARY KEY,sha256 TEXT NOT NULL);
 INSERT INTO wpu_schema_migrations(filename,sha256) VALUES('wpu-federation-members-v1.sql','isolated-fixture');
 SQL
-"$wrangler" d1 execute "$db" --local --persist-to "$pilot_tmp/db" --file "$pilot_tmp/control-seed.sql" >/dev/null
+cat "$pilot_tmp/control-seed.sql" >> "$pilot_tmp/control-schema.sql"
+"$wrangler" d1 execute "$db" --local --persist-to "$pilot_tmp/db" --file "$pilot_tmp/control-schema.sql" >/dev/null
 "$wrangler" dev --local --persist-to "$pilot_tmp/db" --env-file "$pilot_tmp/pilot.env" --ip localhost --port 8787 > "$pilot_tmp/worker.log" 2>&1 &
 pilot_worker=$!
 for i in $(seq 1 65); do

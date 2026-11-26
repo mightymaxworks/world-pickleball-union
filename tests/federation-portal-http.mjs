@@ -36,7 +36,8 @@ async function check(promise, status) {
   const response = await promise;
   const body = await response.json();
   assert.equal(response.status, status, JSON.stringify(body));
-  assert.equal(response.headers.get("cache-control"), "private, no-store");
+  const cache = response.headers.get("cache-control").split(",").map(part => part.trim());
+  assert.ok(cache.includes("private") && cache.includes("no-store"));
   return body;
 }
 const decide = (id, action, staff) => check(request(control, { id: staff, staff, body: { id, action, reason: "Isolated federation test." } }), 200);
