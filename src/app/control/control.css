@@ -42,6 +42,7 @@
 
 /* Staff navigation and operational queues. Existing Passport and public styles are unchanged. */
 .wc-operations { max-width:78rem; }
+.wc .wc-operations h2 { font-size:clamp(1.45rem,5.5vw,1.8rem); }
 .wc-tabs, .wc-filters { display:flex; flex-wrap:wrap; gap:.35rem; }
 .wc-tabs { margin:1.25rem 0 1.65rem; padding:.3rem; background:#e8effb; border:1px solid var(--line); border-radius:.8rem; }
 .wc-tabs a, .wc-filters a { display:inline-flex; align-items:center; justify-content:center; min-height:44px; padding:.5rem .8rem; border-radius:.5rem; color:var(--navy); font-weight:700; }
@@ -89,5 +90,5 @@ a.wc-row-title:hover, .wc-request-list a:hover .wc-row-title { text-decoration:u
   .wc-request-grid { grid-template-columns:minmax(0,1fr) minmax(0,1.2fr); }
 }
 @media (max-width:55.99rem) {
-  .wc-request-grid.has-selection .wc-request-queue, .wc-request-grid:not(.has-selection) .wc-request-detail { display:none; }
+  .wc-queue-intro-with-selection, .wc-request-grid.has-selection .wc-request-queue, .wc-request-grid:not(.has-selection) .wc-request-detail { display:none; }
 }

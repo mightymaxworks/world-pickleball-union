@@ -228,7 +228,7 @@ export async function OrganisationRequests({query,staff}: {query: ControlQuery; 
   const item = detail?.cases[0];
   const queueHref = controlHref("requests",{...filters,offset});
   return <>
-    <section className="wc-ops-intro">
+    <section className={selected ? "wc-ops-intro wc-queue-intro wc-queue-intro-with-selection" : "wc-ops-intro wc-queue-intro"}>
       <h2>Organisation participation requests</h2>
       <p>Review new and existing applications. Approval does not open a portal or confer formal membership.</p>
     </section>

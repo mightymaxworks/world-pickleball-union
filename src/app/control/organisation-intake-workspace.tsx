@@ -14,6 +14,12 @@ async function fetchJson(url: string, init: RequestInit = {}) {
   return data;
 }
 const problemText = (err: unknown) => err instanceof Error ? err.message : "Please retry.";
+const decisionHistory: Record<IntakeDecision,string> = {
+  follow_up:"Follow-up requested",
+  approve_new:"Approved · new organisation created",
+  approve_existing:"Approved · existing organisation linked",
+  close:"Closed without approval",
+};
 
 export default function RequestDetails({item}: {item:IntakeCase}) {
   const router = useRouter();
@@ -60,14 +66,16 @@ export default function RequestDetails({item}: {item:IntakeCase}) {
     {item.website && <p>{item.website}</p>}
     {item.message && <blockquote className="wc-intake-message">{item.message}</blockquote>}
     {item.review && <div className="wc-feedback">
-      <h3>{intakeDecisions[item.review.decision]}</h3>
+      <h3>{decisionHistory[item.review.decision]}</h3>
       <p>Recorded by {item.review.name} · {item.review.createdAt} UTC</p>
       <p>{item.review.reason}</p>
       {orgHref && <>
         <p>{item.review.decision==="approve_new" ? "An organisation record was created." : "The application was linked to an existing organisation."}
           {" "}This decision did not change public access or send an email to the applicant.</p>
         <Link prefetch={false} className="wc-link-button" href={orgHref}>Open organisation record →</Link>
-        {item.type==="national_federation" && <p className="wc-portal-note">Check its portal status and continue federation setup from the record.</p>}
+        {item.type==="national_federation" && <p className="wc-portal-note">{item.review.decision==="approve_new"
+          ? "The federation portal is not open. Continue setup from the organisation record."
+          : "Check the existing portal status on the organisation record."}</p>}
       </>}
     </div>}
     {item.closed && !item.review && <p>This legacy enquiry was already marked reviewed or closed.</p>}
