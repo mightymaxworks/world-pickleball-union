@@ -34,16 +34,23 @@ function toCase(row: Record<string, unknown>): IntakeCase {
   };
 }
 
-export async function organisationIntakeQueue(reviewer: Reviewer, reference: string | null, filter: "open" | "completed", offset: number) {
-  const selected = reference ? "i.id=?" : filter === "open" ? open :
-    "(i.status<>'pending' OR v.decision IN ('approve_existing','approve_new','close'))";
+export type IntakeQueueFilter = "open" | "new" | "follow_up" | "approved" | "completed";
+
+export async function organisationIntakeQueue(reviewer: Reviewer, reference: string | null, filter: IntakeQueueFilter, offset: number, q = "", type = "", country = "") {
+  const selected = reference ? "i.id=?" : {
+    open, new: `${open} AND v.sequence IS NULL`, follow_up: `${open} AND v.decision='follow_up'`,
+    approved: "v.decision IN ('approve_existing','approve_new')",
+    completed: "(i.status<>'pending' OR v.decision IN ('approve_existing','approve_new','close'))",
+  }[filter];
+  const listFilters = reference ? "" : `AND (?='' OR instr(lower(i.organisation),lower(?))>0 OR lower(i.id)=lower(?))
+    AND (?='' OR ${detailsType}=?) AND (?='' OR upper(i.country)=upper(?))`;
   const rows = await queryD1(
     `SELECT i.*,v.sequence,v.decision,v.reason,v.organisation_id,v.created_at AS reviewed_at,n.display_name AS reviewer
      FROM wpu_inquiries i ${lastEvent}
      LEFT JOIN wpu_accounts a ON a.id=v.reviewer_account_id LEFT JOIN wpu_persons n ON n.id=a.person_id
-     WHERE i.form_type='membership' AND ${reviewerCondition} AND (${selected})
+     WHERE i.form_type='membership' AND ${reviewerCondition} AND (${selected}) ${listFilters}
      ORDER BY i.created_at DESC,i.id LIMIT ? OFFSET ?`,
-    [reviewer.account, reviewer.email, ...(reference ? [reference] : []), reference ? 1 : 26, reference ? 0 : offset]);
+    [reviewer.account, reviewer.email, ...(reference ? [reference] : [q,q,q,type,type,country,country]), reference ? 1 : 26, reference ? 0 : offset]);
   return { cases: rows.slice(0, 25).map(toCase), hasMore: rows.length > 25 };
 }
 

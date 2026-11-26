@@ -8,13 +8,13 @@ const publisher = `EXISTS (SELECT 1 FROM wpu_accounts a JOIN wpu_auth_emails e O
    EXISTS (SELECT 1 FROM wpu_role_assignments g WHERE g.account_id=a.id AND g.role='wpu_admin'
      AND g.scope_type='global' AND g.revoked_at IS NULL)
    OR EXISTS (SELECT 1 FROM wpu_federation_publishers g WHERE g.account_id=a.id AND g.revoked_at IS NULL)))`;
-const candidate = `o.organisation_type='national_federation' AND (o.status='verified' OR
+export const activationCandidateCondition = `o.organisation_type='national_federation' AND (o.status='verified' OR
   (o.status='pending' AND EXISTS (SELECT 1 FROM wpu_organisation_intake_events i
     WHERE i.organisation_id=o.id AND i.decision IN ('approve_new','approve_existing'))))`;
-const eventJoin = `LEFT JOIN wpu_federation_activation_events v ON v.sequence=(
+export const activationEventJoin = `LEFT JOIN wpu_federation_activation_events v ON v.sequence=(
   SELECT max(sequence) FROM wpu_federation_activation_events WHERE organisation_id=o.id)`;
-const portalJoin = `LEFT JOIN wpu_federation_portals f ON f.organisation_id=o.id`;
-const state = `CASE WHEN v.state='paused' THEN 'paused'
+export const activationPortalJoin = `LEFT JOIN wpu_federation_portals f ON f.organisation_id=o.id`;
+export const activationState = `CASE WHEN v.state='paused' THEN 'paused'
   WHEN f.enabled=1 AND EXISTS (SELECT 1 FROM wpu_affiliation_self_request_orgs s WHERE s.organisation_id=o.id)
   THEN 'open' ELSE 'unpublished' END`;
 const hasStaff = (role: "organisation_admin" | "wpu_reviewer") =>
@@ -30,17 +30,17 @@ export async function canPublishFederation(staff: FederationAdmin) {
   return row?.allowed === 1;
 }
 
-export async function federationActivationCandidates(staff: FederationAdmin, q: string, offset: number) {
+export async function federationActivationCandidates(staff: FederationAdmin, q: string, offset: number, organisationId = "") {
   const rows = await queryD1(
-    `SELECT o.id,o.name,o.country_code,o.status,f.slug,${state} AS availability,
+    `SELECT o.id,o.name,o.country_code,o.status,f.slug,${activationState} AS availability,
             ${operator} AS operator,${reviewer} AS reviewer,
             coalesce(v.sequence,0) AS revision, v.created_at,v.reason,p.display_name AS actor
-     FROM wpu_organisations o ${portalJoin} ${eventJoin}
+     FROM wpu_organisations o ${activationPortalJoin} ${activationEventJoin}
      LEFT JOIN wpu_accounts a ON a.id=v.actor_account_id LEFT JOIN wpu_persons p ON p.id=a.person_id
-     WHERE ${candidate} AND ${publisher}
-      AND (?='' OR instr(lower(o.name),lower(?))>0 OR lower(o.country_code)=lower(?) OR f.slug=?)
+     WHERE ${activationCandidateCondition} AND ${publisher}
+      AND (?='' OR o.id=?) AND (?='' OR instr(lower(o.name),lower(?))>0 OR lower(o.country_code)=lower(?) OR f.slug=?)
      ORDER BY o.name COLLATE NOCASE,o.id LIMIT 26 OFFSET ?`,
-     [staff.account,staff.email,q,q,q,q,offset]);
+     [staff.account,staff.email,organisationId,organisationId,q,q,q,q,offset]);
   return { hasMore: rows.length > 25, items: rows.slice(0,25).map((row): ActivationCandidate => ({
     id: String(row.id), name: String(row.name), countryCode: typeof row.country_code === "string" ? row.country_code : null,
     slug: typeof row.slug === "string" ? row.slug : null, state: row.availability as PublicationState,
@@ -55,12 +55,12 @@ export async function changeFederationActivation(staff: FederationAdmin, data: {
 }) {
   const rows = await queryD1(
     `WITH target AS (
-       SELECT o.id,f.slug AS existing_slug, coalesce(v.sequence,0) AS revision,${state} AS state,
+       SELECT o.id,f.slug AS existing_slug, coalesce(v.sequence,0) AS revision,${activationState} AS state,
          ${operator} AS has_operator,${reviewer} AS has_reviewer,
          (SELECT a.id FROM wpu_auth_emails e JOIN wpu_accounts a ON a.id=e.account_id AND a.status='active'
            WHERE e.email_normalized=? AND e.verified_at IS NOT NULL) AS nominee
-       FROM wpu_organisations o ${portalJoin} ${eventJoin}
-       WHERE o.id=? AND ${candidate} AND ${publisher}
+       FROM wpu_organisations o ${activationPortalJoin} ${activationEventJoin}
+       WHERE o.id=? AND ${activationCandidateCondition} AND ${publisher}
      )
      INSERT INTO wpu_federation_activation_events(organisation_id,slug,state,actor_account_id,added_operator_account_id,added_reviewer_account_id,reason)
      SELECT id,coalesce(existing_slug,?),?,?,CASE WHEN ?='open' THEN nominee ELSE NULL END,
