@@ -12,7 +12,7 @@ async function authorize(request: Request) {
   if (!config) return { error: controlError(404, "Pilot not available.") };
   const account = await signedInAccount();
   if (!account) return { error: controlError(401, "Sign in to your WPU account first.") };
-  const email = accessEmail(request.headers.get("cf-access-jwt-assertion"), config);
+  const email = accessEmail(request.headers.get("cf-access-jwt-assertion"), config, "api");
   if (!email || !await identityMatchesAccess(account, email)) return { error: controlError(403, "Staff verification does not match this account.") };
   return { account };
 }
