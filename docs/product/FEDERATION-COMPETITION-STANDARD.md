@@ -27,6 +27,7 @@ The decision applies to the submitted division, date, time zone, venue and entry
 - Use WPU ranking points for ranking-based eligibility, never WPU Skill Rating, DUPR or another provider’s skill rating. A skill rating estimates ability and is guidance only. Qualifying conditions such as age or roster scope are separate from skill.
 - Open-entry divisions can have no points minimum. Offer published on-court qualifying routes at designated events when places are available.
 - For ranked entry, identify the relevant WPU leaderboard, the minimum and the cutoff before opening entries. Apply the same snapshot and rule to everyone in the division. Plainly distinguish eligibility, selection in a capped draw, and seeding. Ranking determines seeding only when the published rules use it. A later ranking update must not silently change an accepted entry.
+- Men’s Doubles, Women’s Doubles and Mixed Doubles are distinct competition categories. Set the category in Event Studio and use its matching WPU leaderboard if a points cutoff applies. Keep Open Doubles separate when there is no specified gender category.
 - In doubles and mixed doubles, the entry is a pair but the ranking is individual. Both partners must independently meet the minimum on the relevant leaderboard. Do not pool or average points. Use the separate team ledger for team ranking rules.
 
 ## Results and awards

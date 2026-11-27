@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { displayDate } from "@/lib/events/model";
-import { divisionKinds, drawFormats, rankingTracks, type DivisionKind, type DrawFormat, type RankingTrack } from "@/lib/events/competition";
+import { divisionKinds, drawFormats, isDoublesKind, rankingTracks, type DivisionKind, type DrawFormat, type RankingTrack } from "@/lib/events/competition";
 import { tierLabel, type StaffDecision } from "@/lib/events/sanction";
 import type { SanctionQueueItem } from "@/lib/events/sanction-service";
 
@@ -74,7 +74,7 @@ export default function CompetitionSanctionWorkspace() {
           <div><dt>Division</dt><dd>{divisionKinds[item.kind as DivisionKind].label} · {drawFormats[item.format as DrawFormat]} · {item.capacity} {divisionKinds[item.kind as DivisionKind].units}</dd></div>
           <div><dt>Entry rule</dt><dd>{item.mode==="open"?"Open entry, no WPU ranking requirement":item.minimum+" WPU "+
             rankingTracks[item.track as RankingTrack]+" points on "+displayDate(item.cutoff??"")+
-            (item.kind==="mixed"||item.kind==="doubles"?" for each partner independently":"")}</dd></div>
+            (isDoublesKind(item.kind)?" for each partner independently":"")}</dd></div>
           <div><dt>Expected field</dt><dd>{item.evidence.field}</dd></div>
           <div><dt>Officiating plan</dt><dd>{item.evidence.officiating}</dd></div>
           <div><dt>Results verification</dt><dd>{item.evidence.verification}</dd></div>
