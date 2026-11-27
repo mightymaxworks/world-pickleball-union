@@ -19,7 +19,7 @@ Player, organiser, team captain, club operator, referee/scorekeeper, event direc
 ## Event Studio first delivery
 - **Programme** holds scheduled activities. **Competition** holds the entry divisions. Existing events, schedules and published links remain unchanged until their organiser intentionally publishes an update.
 - A signed-in, first-time organiser should be able to enter the name, date and venue, add a division using editable open-entry defaults, and reach the same player-facing preview in under five minutes without coaching, on phone and desktop.
-- The first Competition release supports open entry or a declared individual/team WPU points minimum on a named leaderboard at a stated cutoff. Publishing a previewable event page does not grant WPU sanction, open registrations, assess eligibility or calculate points.
+- The first Competition release supports open entry or a declared individual/team WPU points minimum on a named leaderboard at a stated cutoff. Publishing applies T5 to eligible Local Open divisions. A higher tier requires approval for the submitted division. Publishing does not open registrations, assess eligibility or calculate points.
 - Follow with one end-to-end sanctioned rehearsal across singles, mixed doubles and teams, then prove that an individual can use points earned with one partner to enter with another, with both qualifying independently.
 
 ## Tournament state machine

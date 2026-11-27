@@ -1,9 +1,10 @@
 import { displayDate, kinds, publicProgramme, type PublicEvent } from "@/lib/events/model";
 
+import { tierLabel } from "@/lib/events/sanction";
 import { describeEntry, divisionKinds, drawFormats } from "@/lib/events/competition";
 
-export default function PublicProgramme({event, spectator=false}: {event:PublicEvent; spectator?:boolean}) {
-  const {programme,organiser}=event;
+export default function PublicProgramme({event, spectator=false, preview=false}: {event:PublicEvent; spectator?:boolean;preview?:boolean}) {
+  const {programme,organiser,tiers}=event;
   const scheduled=publicProgramme(programme);
   return <article className="es-public-view">
     <div className="es-poster">
@@ -34,9 +35,11 @@ export default function PublicProgramme({event, spectator=false}: {event:PublicE
         <p className="es-kicker">{divisionKinds[division.kind].label}</p>
         <h3>{division.name || "Unnamed division"}</h3>
         <p className="es-public-entry">{describeEntry(division,displayDate)}</p>
+        <p className="es-division-sanction">{tiers?.[division.id] ?
+          (preview?"On publish · ":"WPU-sanctioned · ")+tierLabel(tiers[division.id]) : "Not WPU-sanctioned"}</p>
         <p>{drawFormats[division.format]}{division.capacity===null?"":" · "+division.capacity+" "+divisionKinds[division.kind].units}</p>
       </section>)}</div>
-      <p className="es-disclaimer">These divisions are not WPU-sanctioned. The entry rules describe the planned competition. This page does not accept entries.</p>
+      <p className="es-disclaimer">{preview?"This is a preview. Publishing does not open registration.":"Only the tiers shown as sanctioned are confirmed. This page does not accept entries."}</p>
     </div>}
     <div className="es-lineup-preview"><div className="es-preview-heading"><div><p className="es-kicker">{spectator ? "Plan your visit" : "One event · Different ways to join"}</p><h2>The lineup</h2></div><span>Local time · {programme.timezone}</span></div>
       {!scheduled.activities.length && <p>{scheduled.divisions.length?"The schedule has not been announced.":"Scheduled activities will appear here."}</p>}
@@ -45,7 +48,7 @@ export default function PublicProgramme({event, spectator=false}: {event:PublicE
         <h3>{activity.title}</h3>{activity.location && <p>{activity.location}</p>}{activity.description && <p>{activity.description}</p>}
         {spectator && activity.kind==="tournament" && <p>Check with the organiser for viewing details.</p>}
       </section>)}</div>
-      <p className="es-disclaimer">Programme information only. Registration and bookings are not available on this page. Publication does not indicate WPU sanctioning.</p>
+      <p className="es-disclaimer">Programme information only. Registration and bookings are not available on this page.{!scheduled.divisions.length?" This programme does not indicate WPU sanctioning.":""}</p>
     </div>
   </article>;
 }

@@ -2,13 +2,9 @@ import { randomUUID } from "node:crypto";
 import { queryD1 } from "../supporters-db.ts";
 import { eventSlug, isEventSlug, parseDraft, publicProgramme, publishIssues, type EventDraft, type EventRecord, type Organisation, type PublicEvent } from "./model.ts";
 
-const eligible = (organisation: string) => `EXISTS (
- SELECT 1 FROM wpu_role_assignments r
- JOIN wpu_accounts a ON a.id=r.account_id AND a.status='active'
- JOIN wpu_organisations scope_org ON scope_org.id=r.scope_id AND scope_org.status='verified'
- WHERE a.id=? AND r.scope_type='organisation' AND r.scope_id=${organisation}
- AND r.role='organiser' AND r.revoked_at IS NULL
- AND EXISTS (SELECT 1 FROM wpu_auth_emails e WHERE e.account_id=a.id AND e.verified_at IS NOT NULL))`;
+import { organiserPredicate as eligible } from "./organiser-scope.ts";
+import { LOCAL_SANCTION_POLICY } from "./sanction.ts";
+import { publishedSanctions } from "./sanction-service.ts";
 
 export async function eventStudioReady() {
   const [row] = await queryD1("SELECT count(*) AS n FROM sqlite_master WHERE type='table' AND name IN ('wpu_studio_events','wpu_studio_event_audit')");
@@ -66,7 +62,7 @@ export async function changeEvent(account: string, id: string, revision: number,
     : action==="publish" ? "published_json=?, published_revision=revision, published_at=strftime('%Y-%m-%dT%H:%M:%fZ','now')"
     : "published_json=NULL, published_revision=NULL, published_at=NULL";
   const params=action==="save" ? [JSON.stringify(draft)] : action==="publish"
-    ? [JSON.stringify({organiser:current.organisation.name,programme:publicProgramme(current.draft)} satisfies PublicEvent)] : [];
+    ? [JSON.stringify({organiser:current.organisation.name,programme:publicProgramme(current.draft),sanctionPolicy:LOCAL_SANCTION_POLICY})] : [];
   // Revision protects concurrent edits, and the public version comparison protects
   // publish/unpublish races. Scope is checked in the write statement itself.
   const result=await queryD1(`UPDATE wpu_studio_events SET ${mutation}, actor_account_id=?, updated_at=strftime('%Y-%m-%dT%H:%M:%fZ','now')
@@ -79,11 +75,13 @@ export async function changeEvent(account: string, id: string, revision: number,
 
 export async function getPublicEvent(slug: string): Promise<PublicEvent | null> {
   if (!isEventSlug(slug)) return null;
-  const [row]=await queryD1(`SELECT e.published_json FROM wpu_studio_events e
+  const [row]=await queryD1(`SELECT e.id,e.published_json FROM wpu_studio_events e
     JOIN wpu_organisations o ON o.id=e.organisation_id AND o.status='verified'
     WHERE e.slug=? AND e.published_json IS NOT NULL`,[slug]);
   if (!row) return null;
   const snapshot=JSON.parse(String(row.published_json));
   const programme=parseDraft(snapshot?.programme);
-  return programme && typeof snapshot.organiser==="string" ? { organiser:snapshot.organiser,programme:publicProgramme(programme) } : null;
+  if (!programme || typeof snapshot.organiser!=="string") return null;
+  const tiers=programme.divisions.length ? await publishedSanctions(String(row.id),programme,snapshot.sanctionPolicy) : {};
+  return { organiser:snapshot.organiser,programme:publicProgramme(programme),tiers };
 }

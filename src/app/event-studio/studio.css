@@ -162,3 +162,12 @@
   .es-comp-preset{min-height:3.35rem}
 }
 @media(max-width:350px){.es-comp-mark{display:none}.es-comp-edit-row{grid-template-columns:1fr}}
+.es-division-sanction{font-weight:750;color:#385742!important}
+.es-higher-tier summary{cursor:pointer;padding:.18rem 0;color:#294638}
+.es-higher-tier summary span{display:block;margin:.28rem 0 0 1rem;color:var(--es-soft);font-size:.875rem}
+.es-higher-tier[open]>:not(summary){margin-top:.7rem}
+.es-tier-form fieldset{min-width:0;margin:0;padding:0;border:0}
+.es-tier-form>button{justify-self:start}
+.es-tier-options legend{padding:0;font-weight:750;margin-bottom:.45rem}
+.es-tier-options label{display:flex;align-items:center;gap:.65rem;min-height:2.75rem;padding:.28rem .45rem;border:1px solid var(--es-border);border-radius:.45rem;margin-bottom:.3rem}
+.es-tier-options input[type=checkbox]{width:1.15rem;height:1.15rem;min-height:0;accent-color:#37503e}

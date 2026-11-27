@@ -16,6 +16,8 @@ import FederationRosterPanel from "./federation-roster";
 import {
   controlHref, OperationsActivity, OperationsOverview, OrganisationRequests, Organisations, WorkspaceUnavailable, type ControlQuery,
 } from "./operations-workspace";
+import { canReviewSanctions } from "@/lib/events/sanction-service";
+import CompetitionSanctionWorkspace from "./competition-sanction-workspace";
 import ControlWorkspace from "./workspace";
 import "./control.css";
 
@@ -27,6 +29,7 @@ const navigation = [
   ["requests","Organisation requests"],
   ["organisations","Organisations"],
   ["activity","Activity"],
+  ["competition","Competition sanctions"],
   ["activation","Federation setup"],
   ["affiliations","Affiliation requests"],
   ["members","Federation members"],
@@ -40,15 +43,16 @@ export default async function ControlPage({searchParams}: {searchParams: Promise
   const staff = account && email && await identityMatchesAccess(account,email).catch(() => false) ? {account,email} : null;
   const query = await searchParams;
   const federationEnabled = federationPilotEnabled();
-  const [scopes, intake, activation, affiliations]: [Awaited<ReturnType<typeof federationAdminScopes>>,boolean,boolean,boolean] = staff ? await Promise.all([
+  const [scopes, intake, activation, affiliations, competition]: [Awaited<ReturnType<typeof federationAdminScopes>>,boolean,boolean,boolean,boolean] = staff ? await Promise.all([
     federationEnabled ? federationAdminScopes(staff).catch(() => []) : [],
     canReviewOrganisationIntake(staff).catch(() => false),
     federationEnabled ? canPublishFederation(staff).catch(() => false) : false,
     hasAffiliationRole(staff.account).catch(() => false),
-  ]) : [[],false,false,false] as const;
+    canReviewSanctions(staff).catch(() => false),
+  ]) : [[],false,false,false,false] as const;
   const network = intake && activation;
   const allowed = {
-    overview:network, requests:intake, organisations:network, activity:network,
+    overview:network, requests:intake, organisations:network, activity:network, competition,
     activation:activation && !network, affiliations, members:scopes.length>0,
   };
   const nav = navigation.filter(([key]) => allowed[key]);
@@ -79,6 +83,7 @@ export default async function ControlPage({searchParams}: {searchParams: Promise
               case "requests": return await OrganisationRequests({query,staff});
               case "organisations": return await Organisations({query,staff,networkAccess:network});
               case "activity": return await OperationsActivity({query});
+              case "competition": return <CompetitionSanctionWorkspace />;
               case "activation": return <FederationActivationWorkspace />;
               case "affiliations": return <ControlWorkspace />;
               case "members": return await federationMemberWorkspaceReady().catch(() => false)
