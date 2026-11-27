@@ -1,7 +1,9 @@
 export const divisionKinds = {
   singles: { label:"Singles", description:"One player per entry", capacity:16, units:"players", preset:"Open singles" },
   doubles: { label:"Doubles", description:"Two players per entry", capacity:16, units:"pairs", preset:"Open doubles" },
-  mixed: { label:"Mixed doubles", description:"Mixed pairs", capacity:16, units:"pairs", preset:"Open mixed doubles" },
+  "mens-doubles": { label:"Men’s Doubles", description:"Men’s pairs", capacity:16, units:"pairs", preset:"Men’s Doubles" },
+  "womens-doubles": { label:"Women’s Doubles", description:"Women’s pairs", capacity:16, units:"pairs", preset:"Women’s Doubles" },
+  mixed: { label:"Mixed Doubles", description:"Mixed-gender pairs", capacity:16, units:"pairs", preset:"Open mixed doubles" },
   team: { label:"Team event", description:"A roster per entry", capacity:8, units:"teams", preset:"Open teams" },
 } as const;
 
@@ -21,6 +23,11 @@ export const rankingTracks = {
 } as const;
 
 export type DivisionKind = keyof typeof divisionKinds;
+export const doublesKinds=["mens-doubles","womens-doubles","mixed","doubles"] as const;
+export type DoublesKind=(typeof doublesKinds)[number];
+export const isDoublesKind=(value:unknown):value is DoublesKind=>doublesKinds.some(kind=>kind===value);
+export const doublesCategoryLabel=(kind:DoublesKind)=>kind==="doubles"?"Open Doubles":divisionKinds[kind].label;
+
 export type DrawFormat = keyof typeof drawFormats;
 export type RankingTrack = keyof typeof rankingTracks;
 export type EntryRule = { mode:"open" } |
@@ -42,6 +49,8 @@ export const MAX_DIVISION_CAPACITY=4096;
 export const tracksFor:Record<DivisionKind, readonly RankingTrack[]> = {
   singles:["mens-singles","womens-singles"],
   doubles:["mens-doubles","womens-doubles"],
+  "mens-doubles":["mens-doubles"],
+  "womens-doubles":["womens-doubles"],
   mixed:["mixed-doubles"],
   team:["team"],
 };
@@ -60,6 +69,20 @@ export function nextDivisionName(base:string,existing:readonly Division[]) {
     const name=stem.slice(0,MAX_DIVISION_NAME-suffix.length).trimEnd()+suffix;
     if (!taken.has(name.toLowerCase())) return name;
   }
+}
+
+// Do not silently recategorise stored drafts. This runs only after an organiser
+// explicitly changes the category. Keep a cutoff only if its leaderboard still matches.
+export function changeDoublesCategory(division:Division,kind:DoublesKind,existing:readonly Division[]):Division {
+  if (!isDoublesKind(division.kind) || division.kind===kind) return division;
+  const original=divisionKinds[division.kind].preset;
+  const defaultName=division.name===original ||
+    (division.name.startsWith(original+" ") && /^\d+$/.test(division.name.slice(original.length+1)));
+  const name=defaultName?nextDivisionName(divisionKinds[kind].preset,existing.filter(d=>d.id!==division.id)):division.name;
+  const allowed=tracksFor[kind];
+  const entry=division.entry;
+  return {...division,kind,name,entry:entry.mode==="ranking" && (!entry.track || !allowed.includes(entry.track)) ?
+    {...entry,track:allowed.length===1?allowed[0]:null,minimum:null} : entry};
 }
 
 const object=(x:unknown):x is Record<string,unknown>=>!!x && typeof x==="object" && !Array.isArray(x);

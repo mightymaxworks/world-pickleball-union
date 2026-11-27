@@ -126,7 +126,7 @@
 .es-comp-section{display:grid;gap:.7rem}
 .es-comp-section-head h2 span{font-size:.78rem;padding:.2rem .55rem;border-radius:2rem;background:#e8eedf;color:#425f4b;vertical-align:middle;margin-left:.2rem}
 .es-comp-section-head p,.es-comp-next p{margin-top:.25rem}
-.es-comp-presets{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:.65rem}
+.es-comp-presets{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:.65rem}
 .es-comp-preset{display:flex;gap:.55rem;align-items:center;text-align:left;min-width:0;min-height:3.75rem;padding:.55rem;background:#f1f6e8;border:1px solid #c7d5bb;border-radius:.55rem;color:var(--es-ink)}
 .es-comp-preset:hover{background:#e8f2db;border-color:#95ad89}
 .es-comp-preset strong,.es-comp-preset small{display:block;overflow-wrap:anywhere}

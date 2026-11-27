@@ -5,7 +5,7 @@ import { test } from "node:test";
 import { emptyDraft, parseDraft, publishIssues, publicProgramme, displayDate, eventSlug } from "../src/lib/events/model.ts";
 import { canReviewSanctions, decideSanction, organiserSanctions, sanctionQueue, sanctionReviewReady, submitSanctions } from "../src/lib/events/sanction-service.ts";
 import { readEvidence } from "../src/lib/events/sanction.ts";
-import { describeEntry, newDivision, nextDivisionName, MAX_DIVISIONS } from "../src/lib/events/competition.ts";
+import { changeDoublesCategory, describeEntry, newDivision, nextDivisionName, MAX_DIVISIONS } from "../src/lib/events/competition.ts";
 import { changeEvent, createEvent, eventStudioReady, getEvent, getPublicEvent, listEvents, listOrganisations } from "../src/lib/events/service.ts";
 
 const schema=filename=>readFileSync(new URL("../database/"+filename,import.meta.url),"utf8");
@@ -236,4 +236,53 @@ test("edits don’t alter live tiers, and a higher tier never carries to differe
  assert.equal((await changeEvent("one",event.id,3,"publish")).status,"ok");
  assert.deepEqual((await getPublicEvent(event.slug)).tiers,{[open.id]:"T5"});
  assert.equal(await submitSanctions("one",current.event,[ranked.id],"T3",evidence),"ok");
+});
+
+test("men’s, women’s and mixed doubles use distinct tracks while older doubles still load",()=>{
+ const cutoff={mode:"ranking",minimum:800,cutoffDate:"2027-04-10"};
+ const plan={...rally(),activities:[]};
+ const men=newDivision("mens-doubles",crypto.randomUUID(),[]);
+ const women=newDivision("womens-doubles",crypto.randomUUID(),[]);
+ const mixed=newDivision("mixed",crypto.randomUUID(),[]);
+ const legacy=newDivision("doubles",crypto.randomUUID(),[]);
+ assert.equal(men.name,"Men’s Doubles");
+ assert.equal(women.name,"Women’s Doubles");
+ assert.equal(mixed.entry.mode,"open");
+ for(const [division,track] of [[men,"mens-doubles"],[women,"womens-doubles"],[mixed,"mixed-doubles"]]){
+  const ranked={...division,entry:{...cutoff,track}};
+  assert.equal(parseDraft({...plan,divisions:[ranked]}).divisions[0].kind,division.kind);
+  assert.match(describeEntry(ranked,displayDate),/^Both partners independently need 800 WPU/);
+  for(const other of ["mens-doubles","womens-doubles","mixed-doubles"].filter(t=>t!==track)){
+   assert.equal(parseDraft({...plan,divisions:[{...ranked,entry:{...cutoff,track:other}}]}),null);
+  }
+ }
+ const legacyRanked={...legacy,entry:{...cutoff,track:"mens-doubles"}};
+ assert.deepEqual(parseDraft({...plan,divisions:[legacyRanked]}).divisions[0],legacyRanked);
+ const womenEdited=changeDoublesCategory(legacyRanked,"womens-doubles",[legacyRanked]);
+ assert.equal(womenEdited.id,legacy.id);
+ assert.equal(womenEdited.name,"Women’s Doubles");
+ assert.deepEqual(womenEdited.entry,{...cutoff,track:"womens-doubles",minimum:null});
+ const sameTrack=changeDoublesCategory({...legacyRanked,name:"National Pairs"},"mens-doubles",[]);
+ assert.equal(sameTrack.name,"National Pairs");
+ assert.deepEqual(sameTrack.entry,legacyRanked.entry);
+});
+
+test("changing the doubles category is explicit and does not rewrite an existing public division or its approval",async t=>{
+ sanctionFixture(t);
+ const legacy=newDivision("doubles",crypto.randomUUID(),[]);
+ const plan={...rally(),activities:[],divisions:[legacy]};
+ const event=await createEvent("one","a",plan);
+ assert.equal(await submitSanctions("one",event,[legacy.id],"T3",evidence),"ok");
+ const request=(await sanctionQueue(central,false,0)).items[0];
+ assert.equal(await decideSanction(central,request.id,"approved",""),true);
+ assert.equal((await changeEvent("one",event.id,1,"publish")).status,"ok");
+ const women=changeDoublesCategory(legacy,"womens-doubles",[legacy]);
+ assert.equal((await changeEvent("one",event.id,1,"save",{...plan,divisions:[women]})).status,"ok");
+ let live=await getPublicEvent(event.slug);
+ assert.equal(live.programme.divisions[0].kind,"doubles");
+ assert.equal(live.tiers[legacy.id],"T3");
+ assert.equal((await changeEvent("one",event.id,2,"publish")).status,"ok");
+ live=await getPublicEvent(event.slug);
+ assert.equal(live.programme.divisions[0].kind,"womens-doubles");
+ assert.equal(live.tiers[women.id],"T5");
 });

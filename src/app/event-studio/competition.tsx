@@ -1,6 +1,7 @@
 import { useState } from "react";
 import {
-  describeEntry, divisionKinds, drawFormats, MAX_DIVISION_CAPACITY, MAX_DIVISION_NAME, MAX_DIVISIONS,
+  changeDoublesCategory, describeEntry, divisionKinds, doublesCategoryLabel, doublesKinds, drawFormats, isDoublesKind,
+  MAX_DIVISION_CAPACITY, MAX_DIVISION_NAME, MAX_DIVISIONS,
   newDivision, nextDivisionName, rankingTracks, tracksFor,
   type Division, type DivisionKind, type DrawFormat, type RankingTrack,
 } from "@/lib/events/competition";
@@ -9,8 +10,7 @@ import { tierLabel, type SanctionWorkspace } from "@/lib/events/sanction";
 import Sanctions from "./sanctions";
 
 type Update = <K extends keyof EventDraft>(key:K,value:EventDraft[K])=>void;
-const kinds=Object.keys(divisionKinds) as DivisionKind[];
-const marks:Record<DivisionKind,string>={singles:"1",doubles:"2",mixed:"2",team:"+"};
+const kinds:readonly DivisionKind[]=["singles",...doublesKinds,"team"];
 
 export function CompetitionStatus({isPublic,liveCount=0,hasLocal=false}:{isPublic:boolean;liveCount?:number;hasLocal?:boolean}) {
   return <dl className="es-comp-status" aria-label="Competition status">
@@ -75,7 +75,8 @@ export default function Competition({
       <div className="es-comp-section-head"><div><h2 id="es-add-division">Add a division</h2><p>Start with an open-entry preset. Change the rules only if you need to.</p></div></div>
       <div className="es-comp-presets">
         {kinds.map(kind=><button key={kind} className="es-comp-preset" disabled={atLimit} onClick={()=>add(kind)}>
-          <span className="es-comp-mark" aria-hidden="true">{marks[kind]}</span><span><strong>{divisionKinds[kind].label}</strong><small>{divisionKinds[kind].description}</small></span>
+          <span className="es-comp-mark" aria-hidden="true">{isDoublesKind(kind)?"2":kind==="singles"?"1":"+"}</span><span><strong>{isDoublesKind(kind)?doublesCategoryLabel(kind):divisionKinds[kind].label}</strong>
+          <small>{kind==="doubles"?"No gender category":divisionKinds[kind].description}</small></span>
         </button>)}
       </div>
       {atLimit && <p>This event has reached the limit of {MAX_DIVISIONS} divisions.</p>}
@@ -106,6 +107,11 @@ export default function Competition({
             <button className="es-secondary" aria-expanded={isEditing} aria-label={(isEditing?"Close ":"Edit ")+title} onClick={()=>setEditing(isEditing?null:d.id)}>{isEditing?"Done":"Edit"}</button>
           </div>
           {isEditing && <div className="es-fields es-comp-division-edit">
+            {isDoublesKind(d.kind) && <label>Doubles category<select value={d.kind} onChange={e=>{
+              if (isDoublesKind(e.target.value)) update(d,changeDoublesCategory(d,e.target.value,draft.divisions));
+            }}>
+              {doublesKinds.map(kind=><option key={kind} value={kind}>{doublesCategoryLabel(kind)}</option>)}
+            </select></label>}
             <label>Division name<input maxLength={MAX_DIVISION_NAME} value={d.name} onChange={e=>update(d,{name:e.target.value})}/></label>
             <div className="es-comp-edit-row">
               <label>Format<select value={d.format} onChange={e=>update(d,{format:e.target.value as DrawFormat})}>
@@ -123,7 +129,7 @@ export default function Competition({
                 <label>Minimum WPU points<input type="number" inputMode="numeric" min={1} step={1} value={entry.minimum??""} onChange={e=>{const n=e.target.valueAsNumber;update(d,{entry:{...entry,minimum:Number.isSafeInteger(n)&&n>=0?n:null}});}}/></label>
                 <label>Ranking cutoff date<input type="date" max={draft.date||undefined} value={entry.cutoffDate} onChange={e=>update(d,{entry:{...entry,cutoffDate:e.target.value}})}/></label>
               </div>
-              <p className="es-comp-help">{d.kind==="doubles"||d.kind==="mixed"?"Both partners must meet the minimum on their own. ":""}This shows the entry rule only. Eligibility checks begin with registration.</p>
+              <p className="es-comp-help">{isDoublesKind(d.kind)?"Both partners must meet the minimum on their own. ":""}This shows the entry rule only. Eligibility checks begin with registration.</p>
             </>}
             <div className="es-comp-edit-actions">
               <button className="es-secondary" disabled={atLimit} onClick={()=>duplicate(d)}>Duplicate division</button>
