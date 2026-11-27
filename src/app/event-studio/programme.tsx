@@ -1,5 +1,7 @@
 import { displayDate, kinds, publicProgramme, type PublicEvent } from "@/lib/events/model";
 
+import { describeEntry, divisionKinds, drawFormats } from "@/lib/events/competition";
+
 export default function PublicProgramme({event, spectator=false}: {event:PublicEvent; spectator?:boolean}) {
   const {programme,organiser}=event;
   const scheduled=publicProgramme(programme);
@@ -26,8 +28,18 @@ export default function PublicProgramme({event, spectator=false}: {event:PublicE
         </svg>
       </div>
     </div>
+    {!!scheduled.divisions.length && <div className="es-lineup-preview es-public-divisions">
+      <div className="es-preview-heading"><div><p className="es-kicker">Competition</p><h2>Divisions</h2></div><span>Registration not open</span></div>
+      <div className="es-public-cards">{scheduled.divisions.map(division=><section key={division.id} className="es-kind-tournament">
+        <p className="es-kicker">{divisionKinds[division.kind].label}</p>
+        <h3>{division.name || "Unnamed division"}</h3>
+        <p className="es-public-entry">{describeEntry(division,displayDate)}</p>
+        <p>{drawFormats[division.format]}{division.capacity===null?"":" · "+division.capacity+" "+divisionKinds[division.kind].units}</p>
+      </section>)}</div>
+      <p className="es-disclaimer">These divisions are not WPU-sanctioned. The entry rules describe the planned competition. This page does not accept entries.</p>
+    </div>}
     <div className="es-lineup-preview"><div className="es-preview-heading"><div><p className="es-kicker">{spectator ? "Plan your visit" : "One event · Different ways to join"}</p><h2>The lineup</h2></div><span>Local time · {programme.timezone}</span></div>
-      {!scheduled.activities.length && <p>Scheduled activities will appear here.</p>}
+      {!scheduled.activities.length && <p>{scheduled.divisions.length?"The schedule has not been announced.":"Scheduled activities will appear here."}</p>}
       <div className="es-public-cards">{scheduled.activities.map(activity=><section key={activity.id} className={"es-kind-"+activity.kind}>
         <p className="es-kicker">{activity.time} · {kinds[activity.kind].label}</p>
         <h3>{activity.title}</h3>{activity.location && <p>{activity.location}</p>}{activity.description && <p>{activity.description}</p>}

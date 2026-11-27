@@ -1,3 +1,5 @@
+import { divisionIssues, isCalendarDate, parseDivisions, publicDivisions, type Division } from "./competition.ts";
+
 export const kinds = {
   tournament: { label: "Tournament", example: "Club doubles", detail: "Competition and match play" },
   clinic: { label: "Clinic", example: "Beginner clinic", detail: "Coaching and skills" },
@@ -7,7 +9,7 @@ export const kinds = {
 
 export type ActivityKind = keyof typeof kinds;
 export type Activity = { id: string; kind: ActivityKind; title: string; time: string; location: string; description: string };
-export type EventDraft = { title: string; date: string; timezone: string; venue: string; description: string; activities: Activity[] };
+export type EventDraft = { title: string; date: string; timezone: string; venue: string; description: string; activities: Activity[]; divisions: Division[] };
 export type Organisation = { id: string; name: string };
 export type EventRecord = {
   id: string; organisation: Organisation; slug: string; revision: number; publishedRevision: number | null;
@@ -17,7 +19,7 @@ export type PublicEvent = { organiser: string; programme: EventDraft };
 export const MAX_ACTIVITIES = 16;
 
 export function emptyDraft(): EventDraft {
-  return { title: "", date: "", timezone: "UTC", venue: "", description: "", activities: [] };
+  return { title: "", date: "", timezone: "UTC", venue: "", description: "", activities: [], divisions: [] };
 }
 const object = (x: unknown): x is Record<string, unknown> => !!x && typeof x === "object" && !Array.isArray(x);
 const asText = (x: unknown, max: number) => typeof x === "string" && x.length <= max ? x.trim() : null;
@@ -33,7 +35,7 @@ export function parseDraft(input: unknown): EventDraft | null {
   const venue=asText(input.venue,160), description=asText(input.description,700);
   if ([title,date,venue,description].includes(null) || !timezone || !/^[a-zA-Z][a-zA-Z0-9_+/-]*$/.test(timezone)) return null;
   try { new Intl.DateTimeFormat("en", { timeZone: timezone }); } catch { return null; }
-  if (date && (!/^\d{4}-\d{2}-\d{2}$/.test(date) || !actualDate(date))) return null;
+  if (date && !isCalendarDate(date)) return null;
   if (!Array.isArray(input.activities) || input.activities.length > MAX_ACTIVITIES) return null;
   const activities: Activity[] = [], ids = new Set<string>();
   for (const item of input.activities) {
@@ -43,22 +45,18 @@ export function parseDraft(input: unknown): EventDraft | null {
     ids.add(item.id);
     activities.push({ id:item.id, kind:item.kind, title, time, location, description });
   }
-  return { title:title!, date:date!, timezone, venue:venue!, description:description!, activities };
-}
-
-function actualDate(value: string) {
-  const date = new Date(value + "T00:00:00Z");
-  return !Number.isNaN(date.valueOf()) && date.toISOString().slice(0,10) === value;
+  const divisions=parseDivisions(input.divisions,isEventId);
+  return divisions ? {title:title!,date:date!,timezone,venue:venue!,description:description!,activities,divisions} : null;
 }
 
 export function publishIssues(draft: EventDraft) {
   const issues: string[] = [];
-  if (!draft.title) issues.push("Add an event name.");
+  if (!draft.title.trim()) issues.push("Add an event name.");
   if (!draft.date) issues.push("Set the event date.");
-  if (!draft.venue) issues.push("Add a venue.");
-  if (!draft.activities.some(activity => activity.time && activity.title)) issues.push("Schedule at least one named activity.");
+  if (!draft.venue.trim()) issues.push("Add a venue.");
+  if (!draft.divisions.length && !draft.activities.some(activity => activity.time && activity.title)) issues.push("Add a division or schedule at least one named activity.");
   if (draft.activities.some(activity => activity.time && !activity.title)) issues.push("Name each scheduled activity.");
-  return issues;
+  return [...issues,...divisionIssues(draft.divisions,draft.date)];
 }
 
 export function publicProgramme(draft: EventDraft): EventDraft {
@@ -66,7 +64,7 @@ export function publicProgramme(draft: EventDraft): EventDraft {
   return { title:draft.title, date:draft.date, timezone:draft.timezone, venue:draft.venue,
     description:draft.description, activities:draft.activities.filter(a=>a.title && a.time)
       .map(a=>({id:a.id,kind:a.kind,title:a.title,time:a.time,location:a.location,description:a.description}))
-      .sort((a,b)=>a.time.localeCompare(b.time)) };
+      .sort((a,b)=>a.time.localeCompare(b.time)), divisions:publicDivisions(draft.divisions) };
 }
 
 export function eventSlug(title: string, id: string) {
@@ -76,5 +74,5 @@ export function eventSlug(title: string, id: string) {
 }
 
 export function displayDate(date: string) {
-  return date && /^\d{4}-\d{2}-\d{2}$/.test(date) && actualDate(date) ? new Intl.DateTimeFormat("en-GB",{dateStyle:"full",timeZone:"UTC"}).format(new Date(date+"T00:00:00Z")) : "Date to be added";
+  return isCalendarDate(date) ? new Intl.DateTimeFormat("en-GB",{dateStyle:"full",timeZone:"UTC"}).format(new Date(date+"T00:00:00Z")) : "Date to be added";
 }

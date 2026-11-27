@@ -4,9 +4,10 @@ import { useRef, useState } from "react";
 import Link from "next/link";
 import { displayDate, emptyDraft, kinds, MAX_ACTIVITIES, publishIssues, type Activity, type ActivityKind, type EventDraft, type EventRecord, type Organisation } from "@/lib/events/model";
 import PublicProgramme from "./programme";
+import Competition, { CompetitionStatus, EventDetails } from "./competition";
 
-const templates: {title:string;description:string;kinds:ActivityKind[]}[]=[
-  {title:"Tournament",description:"Divisions, courts and match play",kinds:["tournament"]},
+const templates: {title:string;description:string;kinds:ActivityKind[];competition?:boolean}[]=[
+  {title:"Create a tournament",description:"Set up divisions and entry rules",kinds:[],competition:true},
   {title:"Clinic",description:"Coaching and skills sessions",kinds:["clinic"]},
   {title:"Community event",description:"Meetups, open days and socials",kinds:["social"]},
   {title:"Festival",description:"Put different activities on one programme",kinds:["tournament","clinic","social","information"]},
@@ -22,6 +23,7 @@ export default function Studio({organisations,initialEvents}:{organisations:Orga
   const [current,setCurrent]=useState<EventRecord|null>(null);
   const [draft,setDraft]=useState<EventDraft>(emptyDraft);
   const [view,setView]=useState<"list"|"edit"|"preview">("list");
+  const [section,setSection]=useState<"programme"|"competition">("programme");
   const [audience,setAudience]=useState<"player"|"spectator">("player");
   const [openActivity,setOpenActivity]=useState<string|null>(null);
   const [busy,setBusy]=useState(false);
@@ -35,12 +37,14 @@ export default function Studio({organisations,initialEvents}:{organisations:Orga
   const status=!current ? "Unsaved draft" : current.publishedRevision===null ? dirty ? "Unsaved changes" : "Saved draft" :
     current.publishedRevision!==current.revision || dirty ? "Public · unpublished edits" : "Published";
   const initialZone=()=>Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC";
-  function start(kinds:ActivityKind[]) {
+  function start(kinds:ActivityKind[],competition=false) {
     setCurrent(null);setDraft({...emptyDraft(),timezone:initialZone(),activities:kinds.map(activity)});
+    setSection(competition?"competition":"programme");
     setView("edit");setMessage("");setError("");setOpenActivity(null);setConfirmation(null);
   }
   function open(event:EventRecord) {
     setCurrent(event);setDraft(event.draft);setOrganisation(event.organisation.id);
+    setSection(event.draft.divisions.length?"competition":"programme");
     setView("edit");setMessage("");setError("");setConfirmation(null);setOpenActivity(null);
   }
   function change<K extends keyof EventDraft>(key:K,value:EventDraft[K]) {
@@ -71,6 +75,10 @@ export default function Studio({organisations,initialEvents}:{organisations:Orga
     } catch { setError("We couldn’t confirm the change. Check your connection and reload before trying again."); }
     finally { mutation.current=false;setBusy(false); }
   }
+  function preview() {
+    setAudience("player");setView("preview");setConfirmation(null);
+    window.scrollTo({top:0});
+  }
   function back() {
     if (view==="preview") {setView("edit");return;}
     if ((!current || dirty) && !window.confirm("Leave without saving your changes?")) return;
@@ -87,7 +95,7 @@ export default function Studio({organisations,initialEvents}:{organisations:Orga
     </> : <div className="es-org-current"><span>Hosting organisation</span><strong>{organiser.name}</strong></div>}
       <p>This name appears on the public page.</p></div></section>
     <div className="es-section-heading"><h2>Start with a template</h2><button className="es-secondary" onClick={()=>start([])}>Start from scratch</button></div>
-    <div className="es-templates">{templates.map((t,i)=><button className={"es-template es-kind-"+t.kinds[0]} key={t.title} onClick={()=>start(t.kinds)}>
+    <div className="es-templates">{templates.map((t,i)=><button className={"es-template es-kind-"+(t.kinds[0]??"tournament")} key={t.title} onClick={()=>start(t.kinds,t.competition)}>
       <span className="es-template-mark" aria-hidden="true">{["▤","✦","○","▦"][i]}</span><strong>{t.title}</strong><span>{t.description}</span></button>)}</div>
     <section className="es-saved"><h2>Events for {organiser.name}</h2>{!events.some(e=>e.organisation.id===organisation) && <p>No events yet. Start with a template above.</p>}
       {events.filter(e=>e.organisation.id===organisation).map(e=><button className="es-existing" key={e.id} onClick={()=>open(e)}>
@@ -99,12 +107,20 @@ export default function Studio({organisations,initialEvents}:{organisations:Orga
   return <div className="es-studio">
     <div className="es-toolbar"><button className="es-back" disabled={busy} onClick={back}>{view==="preview"?"Back to studio":"All events"}</button><span className="es-pill">{status}</span>
       <div className="es-actions">
-        {view==="edit" ? <button className="es-secondary" disabled={busy} onClick={()=>{setAudience("player");setView("preview");}}>Preview</button> :
+        {view==="edit" ? <button className="es-secondary" disabled={busy} onClick={preview}>Preview</button> :
           <div className="es-switch" aria-label="Preview audience"><button aria-pressed={audience==="player"} onClick={()=>setAudience("player")}>Player</button><button aria-pressed={audience==="spectator"} onClick={()=>setAudience("spectator")}>Spectator</button></div>}
         <button className="es-primary" disabled={busy || !!current&&!dirty} onClick={()=>void save(current?"save":"create")}>{busy?"Working…":"Save draft"}</button>
       </div></div>
     {message && <p className="es-message" role="status">{message}</p>}{error && <p className="es-error" role="alert">{error}</p>}
-    {view==="preview" ? <PublicProgramme event={{organiser:organiser.name,programme:draft}} spectator={audience==="spectator"}/> :
+    {view==="preview" ? <>
+      {draft.divisions.length>0 && <aside className="es-comp-preview-status" aria-label="Preview only"><div><strong>{audience==="player"?"Player preview":"Spectator preview"}</strong><p>Nothing changes on your public page until you publish.</p></div><CompetitionStatus isPublic={current?.publishedRevision!=null}/></aside>}
+      <PublicProgramme event={{organiser:organiser.name,programme:draft}} spectator={audience==="spectator"}/>
+    </> : <>
+      <nav className="es-studio-sections" aria-label="Event workspace">
+        <button className="es-section-tab" disabled={busy} aria-pressed={section==="programme"} onClick={()=>setSection("programme")}>Programme</button>
+        <button className="es-section-tab" disabled={busy} aria-pressed={section==="competition"} onClick={()=>setSection("competition")}>Competition</button>
+      </nav>
+      {section==="competition" ? <fieldset className="es-comp-shell" disabled={busy}><Competition draft={draft} change={change} isPublic={current?.publishedRevision!=null} preview={preview}/></fieldset> :
       <fieldset className="es-grid" disabled={busy}>
         <section className="es-work">
           <p className="es-kicker">The lineup · {organiser.name}</p><h1>Programme</h1><p>Give the day a shape. You can always change it.</p>
@@ -126,29 +142,23 @@ export default function Studio({organisations,initialEvents}:{organisations:Orga
               </div>)}
             </div>;
           })}
-          <div className="es-add"><h2>Add activity</h2><div>{kindEntries.map(([kind,meta])=><button className="es-secondary" key={kind} disabled={draft.activities.length>=MAX_ACTIVITIES} onClick={()=>add(kind)}>+ {meta.label}</button>)}</div>{draft.activities.length===MAX_ACTIVITIES && <p>This release supports up to {MAX_ACTIVITIES} activities in one event.</p>}</div>
+          <div className="es-add"><h2>Add activity</h2><div>{kindEntries.map(([kind,meta])=><button className="es-secondary" key={kind} disabled={draft.activities.length>=MAX_ACTIVITIES} onClick={()=>add(kind)}>+ {kind==="tournament"?"Competition session":meta.label}</button>)}</div>{draft.activities.length===MAX_ACTIVITIES && <p>This release supports up to {MAX_ACTIVITIES} activities in one event.</p>}</div>
         </section>
-        <aside className="es-fields es-details"><h2>Event details</h2>
-          <label>Event name<input placeholder="Rally Day" maxLength={100} value={draft.title} onChange={e=>change("title",e.target.value)}/></label>
-          <label>Date<input type="date" value={draft.date} onChange={e=>change("date",e.target.value)}/></label>
-          <label>Venue<input placeholder="Court or venue name" maxLength={160} value={draft.venue} onChange={e=>change("venue",e.target.value)}/></label>
-          <label>Time zone<input list="es-timezones" maxLength={100} value={draft.timezone} onChange={e=>change("timezone",e.target.value)}/></label>
-          <datalist id="es-timezones">{["UTC",...Intl.supportedValuesOf("timeZone")].map(z=><option key={z} value={z}/>)}</datalist>
-          <label><span className="es-field-caption">Public introduction <small>Optional</small></span><textarea rows={3} maxLength={700} value={draft.description} onChange={e=>change("description",e.target.value)}/></label>
-        </aside>
+        <EventDetails draft={draft} change={change}/>
       </fieldset>}
+    </>}
     <section className="es-publish"><div><h2>Public page</h2>
       <p>{current?.publishedRevision!=null ? "People see the last version you published." : "Your event stays private until you publish it."}</p>
-      <p>Unscheduled activities stay in your draft. Publishing does not open registration.</p>
+      <p>Unscheduled activities stay in your draft. Publishing does not open registration or grant WPU sanction.</p>
       {issues.length>0 && <ul>{issues.map(i=><li key={i}>{i}</li>)}</ul>}
       {!issues.length && (!current || dirty) && <p>Save your draft to publish these changes.</p>}
       {current?.publishedRevision!=null && <Link className="es-live-link" href={"/events/"+current.slug} target="_blank" rel="noopener">Open public page</Link>}</div>
       <div className="es-publish-buttons">
         {current?.publishedRevision!=null && <button className="es-secondary" disabled={busy} onClick={()=>setConfirmation("unpublish")}>Take offline</button>}
-        <button className="es-primary" disabled={busy || !current || dirty || !!issues.length || current.publishedRevision===current.revision} onClick={()=>setConfirmation("publish")}>{current?.publishedRevision!=null?"Publish changes":"Review and publish"}</button>
+        <button className="es-primary" disabled={busy || !current || dirty || !!issues.length || current.publishedRevision===current.revision} onClick={()=>setConfirmation("publish")}>{current?.publishedRevision!=null?"Publish changes":"Publish event page"}</button>
       </div>
       {confirmation && <div className="es-confirm" role="group" aria-label="Confirm publication change">
-        <p>{confirmation==="publish" ? "Make this saved programme public under "+organiser.name+"?" : "Take the public page offline? The draft will still be available here."}</p>
+        <p>{confirmation==="publish" ? "Make this saved event page public under "+organiser.name+"?" : "Take the public page offline? The draft will still be available here."}</p>
         <button className="es-secondary" onClick={()=>setConfirmation(null)}>Cancel</button>
         <button className="es-primary" onClick={()=>void save(confirmation)}>{confirmation==="publish"?"Publish event":"Take page offline"}</button>
       </div>}

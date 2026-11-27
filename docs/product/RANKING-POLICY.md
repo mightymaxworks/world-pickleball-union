@@ -5,13 +5,16 @@
 ## LOCKED
 - Calendar-year seasons, January 1 through December 31; prior seasons remain viewable.
 - Best 10 results per discipline per season; preserve all awards in ledger even when not counted.
-- Five tournament tiers T1–T5; simple tier-and-placement points direction.
+- Five tiers T1–T5 assigned to sanctioned divisions. Points follow the approved tier and placement schedule.
 - Small-field point reductions.
-- All tournaments eligible for ranking points subject to objective integrity; no paid ranking gate.
-- Individual doubles awards belong to each player and survive partner changes.
+- All WPU-sanctioned divisions award points from verified results, subject to the common integrity rules. There is no paid ranking gate.
+- Each doubles or mixed doubles partner receives the full placement award on their own individual leaderboard record. The award survives partner changes. Both partners must independently meet any published points minimum.
 - Team competitions have a separate team ranking ledger.
 - Distinct MS, WS, MD, WD, XD and applicable age divisions; external skill ratings are not WPU rankings.
+- Skill ratings only describe skill. WPU and external skill ratings do not determine sanctioned qualification, seeding or ranking awards. Ranking-based entry uses the relevant WPU leaderboard and a published cutoff snapshot. No points minimum is required for open entry, and an unranked player is not necessarily a beginner.
 - No bonus points merely for travel, WPU affiliation or commercial status.
+
+See the [Federation competition standard](FEDERATION-COMPETITION-STANDARD.md) for organiser-facing rules.
 
 ## Proposed mathematical skeleton — not final
 For result placement p at tier t and field size n:
