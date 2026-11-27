@@ -30,9 +30,13 @@ if [[ "$logged" == missing ]]; then
   trap 'rm -f "$batch"' EXIT
   cat "database/$file" > "$batch"
   printf "\nINSERT INTO wpu_schema_migrations(filename,sha256) VALUES('%s','%s');\n" "$file" "$sha" >> "$batch"
-  d1 --yes --file "$batch" | jq -e 'length>0 and all(.[]; .success)' >/dev/null
+  # Remote file imports can emit progress before their final output.
+  # Use Wrangler's exit status, then verify the checksum and objects below.
+  d1 --yes --file "$batch" >/dev/null
 fi
 [[ "$(scalar "$registry")" == "$sha" && "$(scalar "$expected")" == 5 ]]
-d1 --command 'PRAGMA foreign_key_check(wpu_studio_events); PRAGMA foreign_key_check(wpu_studio_event_audit);' \
-  | jq -e 'length==2 and all(.[]; .success and (.results | length==0))' >/dev/null
+for table in wpu_studio_events wpu_studio_event_audit; do
+  d1 --command "PRAGMA foreign_key_check($table);" \
+    | jq -e 'length==1 and .[0].success and (.[0].results | length==0)' >/dev/null
+done
 echo 'Event Studio schema verified. No access was granted and no events were published.'
