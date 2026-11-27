@@ -79,7 +79,12 @@ export default function Studio({organisations,initialEvents}:{organisations:Orga
 
   if(view==="list") return <div className="es-start">
     <section className="es-start-top"><div><p className="es-kicker">Organiser workspace</p><h1>What are we<br/>putting on?</h1><p>Start with a lineup. Make it yours as you go.</p></div>
-    <div className="es-org-switch"><label htmlFor="es-organisation">Hosting organisation</label><select id="es-organisation" value={organisation} onChange={e=>setOrganisation(e.target.value)}>{organisations.map(o=><option value={o.id} key={o.id}>{o.name}</option>)}</select>
+    <div className="es-org-switch">{organisations.length>1 ? <>
+      <label htmlFor="es-organisation">Hosting organisation</label>
+      <select id="es-organisation" value={organisation} onChange={e=>setOrganisation(e.target.value)}>
+        {organisations.map(o=><option value={o.id} key={o.id}>{o.name}</option>)}
+      </select>
+    </> : <div className="es-org-current"><span>Hosting organisation</span><strong>{organiser.name}</strong></div>}
       <p>This name appears on the public page.</p></div></section>
     <div className="es-section-heading"><h2>Start with a template</h2><button className="es-secondary" onClick={()=>start([])}>Start from scratch</button></div>
     <div className="es-templates">{templates.map((t,i)=><button className={"es-template es-kind-"+t.kinds[0]} key={t.title} onClick={()=>start(t.kinds)}>
