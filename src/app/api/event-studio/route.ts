@@ -20,7 +20,7 @@ export async function POST(request: Request) {
     const account=await signedInAccount();
     if (!account) return controlError(401,"Your session has ended. Sign in to WPU and try again.");
     if (!await eventStudioReady()) return controlError(503,"Event Studio is not available yet.");
-    const body=await controlBody(request,40000);
+    const body=await controlBody(request,96000);
     if (!body) return controlError(400,"The event could not be read. Check the fields and try again.");
     if (body.action==="create") {
       const draft=parseDraft(body.draft);
