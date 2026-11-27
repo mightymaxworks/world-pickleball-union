@@ -1,8 +1,9 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { displayDate, emptyDraft, kinds, MAX_ACTIVITIES, publishIssues, type Activity, type ActivityKind, type EventDraft, type EventRecord, type Organisation } from "@/lib/events/model";
+import { localTiers, type SanctionWorkspace } from "@/lib/events/sanction";
 import PublicProgramme from "./programme";
 import Competition, { CompetitionStatus, EventDetails } from "./competition";
 
@@ -31,9 +32,29 @@ export default function Studio({organisations,initialEvents}:{organisations:Orga
   const [error,setError]=useState("");
   const [confirmation,setConfirmation]=useState<"publish"|"unpublish"|null>(null);
   const mutation=useRef(false);
+  const [sanctions,setSanctions]=useState<{key:string;workspace?:SanctionWorkspace;error?:string}>();
+  const [sanctionReload,setSanctionReload]=useState(0);
   const organiser=organisations.find(o=>o.id===organisation) ?? organisations[0];
   const dirty=!!current && JSON.stringify(current.draft)!==JSON.stringify(draft);
   const issues=publishIssues(draft);
+  const sanctionId=view!=="list" && draft.divisions.length ? current?.id : undefined;
+  const sanctionKey=sanctionId ? [sanctionId,current?.revision,current?.publishedRevision,sanctionReload].join(":") : "";
+  useEffect(()=>{
+    if (!sanctionId) return;
+    const abort=new AbortController();
+    fetch("/api/event-studio/sanctions?event="+encodeURIComponent(sanctionId),{signal:abort.signal})
+      .then(async r=>{
+        if (!r.ok) throw new Error();
+        const workspace=await r.json() as SanctionWorkspace;
+        if (!abort.signal.aborted) setSanctions({key:sanctionKey,workspace});
+      })
+      .catch(()=>{if (!abort.signal.aborted) setSanctions({key:sanctionKey,error:"Couldn’t load tier review status."});});
+    return ()=>abort.abort();
+  },[sanctionId,sanctionKey]);
+  const sanction= sanctions?.key===sanctionKey?sanctions:undefined;
+  const liveCount=Object.keys(sanction?.workspace?.live??{}).length;
+  const previewTiers=issues.length?{}:!dirty && sanction?.workspace ? sanction.workspace.preview : localTiers(draft);
+  const hasLocal=draft.divisions.some(d=>d.entry.mode==="open");
   const status=!current ? "Unsaved draft" : current.publishedRevision===null ? dirty ? "Unsaved changes" : "Saved draft" :
     current.publishedRevision!==current.revision || dirty ? "Public · unpublished edits" : "Published";
   const initialZone=()=>Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC";
@@ -113,14 +134,17 @@ export default function Studio({organisations,initialEvents}:{organisations:Orga
       </div></div>
     {message && <p className="es-message" role="status">{message}</p>}{error && <p className="es-error" role="alert">{error}</p>}
     {view==="preview" ? <>
-      {draft.divisions.length>0 && <aside className="es-comp-preview-status" aria-label="Preview only"><div><strong>{audience==="player"?"Player preview":"Spectator preview"}</strong><p>Nothing changes on your public page until you publish.</p></div><CompetitionStatus isPublic={current?.publishedRevision!=null}/></aside>}
-      <PublicProgramme event={{organiser:organiser.name,programme:draft}} spectator={audience==="spectator"}/>
+      {draft.divisions.length>0 && <aside className="es-comp-preview-status" aria-label="Preview only"><div><strong>{audience==="player"?"Player preview":"Spectator preview"}</strong><p>Nothing changes on your public page until you publish.</p></div><CompetitionStatus isPublic={current?.publishedRevision!=null} liveCount={liveCount} hasLocal={hasLocal}/></aside>}
+      <PublicProgramme event={{organiser:organiser.name,programme:draft,tiers:previewTiers}} spectator={audience==="spectator"} preview/>
     </> : <>
       <nav className="es-studio-sections" aria-label="Event workspace">
         <button className="es-section-tab" disabled={busy} aria-pressed={section==="programme"} onClick={()=>setSection("programme")}>Programme</button>
         <button className="es-section-tab" disabled={busy} aria-pressed={section==="competition"} onClick={()=>setSection("competition")}>Competition</button>
       </nav>
-      {section==="competition" ? <fieldset className="es-comp-shell" disabled={busy}><Competition draft={draft} change={change} isPublic={current?.publishedRevision!=null} preview={preview}/></fieldset> :
+      {section==="competition" ? <fieldset className="es-comp-shell" disabled={busy}><Competition draft={draft} change={change} isPublic={current?.publishedRevision!=null} preview={preview}
+        event={current} ready={!!current && !dirty && !issues.length} workspace={sanction?.workspace}
+        updateSanction={workspace=>setSanctions({key:sanctionKey,workspace})} refreshSanction={()=>setSanctionReload(n=>n+1)}
+        sanctionError={sanction?.error??""}/></fieldset> :
       <fieldset className="es-grid" disabled={busy}>
         <section className="es-work">
           <p className="es-kicker">The lineup · {organiser.name}</p><h1>Programme</h1><p>Give the day a shape. You can always change it.</p>
@@ -149,7 +173,7 @@ export default function Studio({organisations,initialEvents}:{organisations:Orga
     </>}
     <section className="es-publish"><div><h2>Public page</h2>
       <p>{current?.publishedRevision!=null ? "People see the last version you published." : "Your event stays private until you publish it."}</p>
-      <p>Unscheduled activities stay in your draft. Publishing does not open registration or grant WPU sanction.</p>
+      <p>Unscheduled activities stay in your draft. Publishing sanctions eligible Local Open divisions at T5. It does not open registration.</p>
       {issues.length>0 && <ul>{issues.map(i=><li key={i}>{i}</li>)}</ul>}
       {!issues.length && (!current || dirty) && <p>Save your draft to publish these changes.</p>}
       {current?.publishedRevision!=null && <Link className="es-live-link" href={"/events/"+current.slug} target="_blank" rel="noopener">Open public page</Link>}</div>
@@ -158,7 +182,7 @@ export default function Studio({organisations,initialEvents}:{organisations:Orga
         <button className="es-primary" disabled={busy || !current || dirty || !!issues.length || current.publishedRevision===current.revision} onClick={()=>setConfirmation("publish")}>{current?.publishedRevision!=null?"Publish changes":"Publish event page"}</button>
       </div>
       {confirmation && <div className="es-confirm" role="group" aria-label="Confirm publication change">
-        <p>{confirmation==="publish" ? "Make this saved event page public under "+organiser.name+"?" : "Take the public page offline? The draft will still be available here."}</p>
+        <p>{confirmation==="publish" ? "Make this saved event page public under "+organiser.name+"? Eligible Local Open divisions will be sanctioned at T5." : "Take the public page offline? The draft will still be available here."}</p>
         <button className="es-secondary" onClick={()=>setConfirmation(null)}>Cancel</button>
         <button className="es-primary" onClick={()=>void save(confirmation)}>{confirmation==="publish"?"Publish event":"Take page offline"}</button>
       </div>}

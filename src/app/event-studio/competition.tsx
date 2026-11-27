@@ -4,16 +4,18 @@ import {
   newDivision, nextDivisionName, rankingTracks, tracksFor,
   type Division, type DivisionKind, type DrawFormat, type RankingTrack,
 } from "@/lib/events/competition";
-import { displayDate, type EventDraft } from "@/lib/events/model";
+import { displayDate, type EventDraft, type EventRecord } from "@/lib/events/model";
+import { tierLabel, type SanctionWorkspace } from "@/lib/events/sanction";
+import Sanctions from "./sanctions";
 
 type Update = <K extends keyof EventDraft>(key:K,value:EventDraft[K])=>void;
 const kinds=Object.keys(divisionKinds) as DivisionKind[];
 const marks:Record<DivisionKind,string>={singles:"1",doubles:"2",mixed:"2",team:"+"};
 
-export function CompetitionStatus({isPublic}:{isPublic:boolean}) {
+export function CompetitionStatus({isPublic,liveCount=0,hasLocal=false}:{isPublic:boolean;liveCount?:number;hasLocal?:boolean}) {
   return <dl className="es-comp-status" aria-label="Competition status">
     <div><dt>Event page</dt><dd>{isPublic?"Public":"Private draft"}</dd></div>
-    <div><dt>WPU sanction</dt><dd>Not sanctioned</dd></div>
+    <div><dt>WPU sanction</dt><dd>{liveCount ? liveCount+" sanctioned" : hasLocal ? "T5 on publish" : "Not sanctioned"}</dd></div>
     <div><dt>Registration</dt><dd>Not open</dd></div>
   </dl>;
 }
@@ -39,8 +41,9 @@ export function EventDetails({draft,change,compact=false}:{draft:EventDraft;chan
 }
 
 export default function Competition({
-  draft, change, isPublic, preview,
-}: {draft:EventDraft;change:Update;isPublic:boolean;preview:()=>void}) {
+  draft, change, isPublic, preview, event, ready, workspace, updateSanction, refreshSanction, sanctionError,
+}: {draft:EventDraft;change:Update;isPublic:boolean;preview:()=>void;event:EventRecord|null;ready:boolean;workspace:SanctionWorkspace|undefined;
+    updateSanction:(value:SanctionWorkspace)=>void;refreshSanction:()=>void;sanctionError:string}) {
   const [editing,setEditing]=useState<string|null>(null);
   const [announcement,setAnnouncement]=useState("");
   const atLimit=draft.divisions.length>=MAX_DIVISIONS;
@@ -65,7 +68,7 @@ export default function Competition({
   return <div className="es-comp">
     <header className="es-comp-header">
       <div><p className="es-kicker">Event Studio</p><h1>Competition</h1><p>Set up the divisions players can enter. Add schedule highlights in Programme when you’re ready.</p></div>
-      <CompetitionStatus isPublic={isPublic}/>
+      <CompetitionStatus isPublic={isPublic} liveCount={Object.keys(workspace?.live??{}).length} hasLocal={draft.divisions.some(d=>d.entry.mode==="open")}/>
     </header>
     <EventDetails draft={draft} change={change} compact/>
     <section className="es-comp-section" aria-labelledby="es-add-division">
@@ -83,12 +86,23 @@ export default function Competition({
       {draft.divisions.map(d=>{
         const meta=divisionKinds[d.kind], isEditing=editing===d.id, title=d.name.trim() || meta.label;
         const mode=d.entry.mode, entry=d.entry;
-        const tracks=tracksFor[d.kind];
+        const tracks=tracksFor[d.kind], requests=workspace?.requests.filter(r=>r.divisionId===d.id)??[];
+        const latest=ready?requests.find(r=>r.matchesDraft):undefined, liveTier=workspace?.live[d.id];
+        const plannedTier=ready?workspace?.preview[d.id]:undefined;
         return <article className="es-comp-division" key={d.id}>
           <div className="es-comp-division-head">
             <div><p className="es-kicker">{meta.label}</p><h3>{title}</h3>
               <p>{drawFormats[d.format]}{d.capacity===null?"":" · "+d.capacity+" "+meta.units}</p>
-              <p>{describeEntry(d,displayDate)}</p></div>
+              <p>{describeEntry(d,displayDate)}</p>
+              <p className="es-division-sanction">
+                {liveTier ? "Live · WPU-sanctioned "+tierLabel(liveTier) : plannedTier && plannedTier!=="T5" ?
+                  "Approved · "+tierLabel(plannedTier)+" on publish" : d.entry.mode==="open"?"T5 Local on publish":"Not sanctioned"}
+              </p>
+              {latest?.status==="pending" && <p>{tierLabel(latest.tier)} · Under review</p>}
+              {latest?.status==="changes_requested" && <p><strong>{tierLabel(latest.tier)} · Changes requested.</strong> {latest.note}</p>}
+              {!latest && ready && requests.length>0 && !requests.some(r=>r.matchesDraft) &&
+                <p>Previous tier reviews were for different division details.</p>}
+            </div>
             <button className="es-secondary" aria-expanded={isEditing} aria-label={(isEditing?"Close ":"Edit ")+title} onClick={()=>setEditing(isEditing?null:d.id)}>{isEditing?"Done":"Edit"}</button>
           </div>
           {isEditing && <div className="es-fields es-comp-division-edit">
@@ -119,6 +133,8 @@ export default function Competition({
         </article>;
       })}
     </section>}
+    {!!draft.divisions.length && <Sanctions key={event?.id??"new"} draft={draft} event={event} ready={ready} workspace={workspace} update={updateSanction}
+      refresh={refreshSanction} loadError={sanctionError}/>}
     <section className="es-comp-next">
       <div><h2>See it as a player</h2><p>Check the event details and entry rules. A preview doesn’t publish the page or open registration.</p></div>
       <button className="es-primary" onClick={preview}>Preview as a player</button>

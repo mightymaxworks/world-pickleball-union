@@ -4,7 +4,9 @@ on:
     paths:
       - .github/workflows/wpu-production-event-studio.yml
       - database/wpu-event-studio-v1.sql
+      - database/wpu-event-sanction-v1.sql
       - scripts/wpu-event-studio-release.sh
+      - scripts/wpu-event-sanction-release.sh
       - tests/event-studio.test.mjs
       - src/lib/events/**
   push:
@@ -12,7 +14,9 @@ on:
     paths:
       - .github/workflows/wpu-production-event-studio.yml
       - database/wpu-event-studio-v1.sql
+      - database/wpu-event-sanction-v1.sql
       - scripts/wpu-event-studio-release.sh
+      - scripts/wpu-event-sanction-release.sh
 permissions:
   contents: read
 concurrency:
@@ -29,7 +33,7 @@ jobs:
           node-version: '24'
           cache: npm
       - run: npm ci
-      - run: bash -n scripts/wpu-event-studio-release.sh
+      - run: bash -n scripts/wpu-event-studio-release.sh && bash -n scripts/wpu-event-sanction-release.sh
       - run: node --experimental-strip-types --test tests/event-studio.test.mjs
       - if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         env:
@@ -40,3 +44,4 @@ jobs:
           test -n "$CLOUDFLARE_API_TOKEN"
           test -n "$CLOUDFLARE_ACCOUNT_ID"
           bash scripts/wpu-event-studio-release.sh prepare
+          bash scripts/wpu-event-sanction-release.sh prepare

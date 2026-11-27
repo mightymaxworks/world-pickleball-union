@@ -1,6 +1,6 @@
 # WPU Federation Competition Standard
 
-This is the shared operating standard for participating federations. Numerical point tables, tier approval criteria, qualifying routes and competition-specific allowances require WPU approval and publication before use. A published event page is not evidence of sanction.
+This is the shared operating standard for participating federations. Numerical point tables, tier approval criteria, qualifying routes and competition-specific allowances require WPU approval and publication before use. A published event page can include both sanctioned and unsanctioned divisions. Only the sanction badge on a division confirms its tier.
 
 ## What federations can run
 
@@ -13,6 +13,14 @@ Clubs and federations can run local open draws, development divisions, challenge
 | T3 | Challenger competition |
 | T2 | Professional competition |
 | T1 | Championship competition |
+
+## How to get sanctioned
+
+**Local Open (T5).** A verified organisation’s authorised organiser completes the required event and division details and publishes. A complete open-entry division gets T5 automatically. There is no review form. This release does not retrospectively sanction old publications. A private draft does not confer sanction.
+
+**Higher tiers (T4–T1).** In Event Studio, save the tournament, then open **Request a higher tier** under Competition. Select the target tier and divisions. Explain the expected field and how players qualify, who is officiating, and how results will be verified. WPU staff decide in WPU Control based on the requested level, the integrity and suitability of the field and eligibility rules, readiness for officiating and results verification, and the evidence of delivery capacity. WPU reviews higher tiers in this release instead of inventing automatic thresholds. The organiser sees any requested changes in Event Studio.
+
+The decision applies to the submitted division, date, time zone, venue and entry rules. Revisions to those details need a new review before an approved higher tier carries to the revised public page. A pending request never counts as approval. A Local Open division may keep its T5 public badge while a higher tier is under review. International attendance, event size and prizes do not on their own qualify for a higher tier.
 
 ## Entry and seeding
 
@@ -27,6 +35,6 @@ Match results and published tiebreaks determine final placement. All WPU-sanctio
 
 ## Release boundary
 
-Event Studio can store and preview divisions and their proposed entry rules. Publication makes the information page public only. Sanction approval, registration, ranking snapshots, qualifying decisions and point awards are not activated by this release.
+Event Studio stores and previews divisions and entry rules. This release supports automatic T5 sanctioning and higher-tier requests and decisions. Registration, ranking snapshots, qualifying decisions and point awards are not activated.
 
 See the [WPU ranking policy](RANKING-POLICY.md) for settled rules and policy work still open.

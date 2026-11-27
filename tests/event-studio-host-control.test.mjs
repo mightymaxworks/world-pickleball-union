@@ -7,6 +7,7 @@ import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import ts from "typescript";
 import * as model from "../src/lib/events/model.ts";
+import * as sanction from "../src/lib/events/sanction.ts";
 
 const source=readFileSync(new URL("../src/app/event-studio/studio.tsx",import.meta.url),"utf8");
 const require=createRequire(import.meta.url);
@@ -16,6 +17,7 @@ vm.runInNewContext(outputText,{
  exports,
  require(id){
    if(id==="@/lib/events/model") return model;
+   if(id==="@/lib/events/sanction") return sanction;
    if(id==="next/link" || id==="./programme" || id==="./competition") return {default:()=>null};
    return require(id);
  },

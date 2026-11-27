@@ -1,3 +1,4 @@
+import type { TiersByDivision } from "./sanction.ts";
 import { divisionIssues, isCalendarDate, parseDivisions, publicDivisions, type Division } from "./competition.ts";
 
 export const kinds = {
@@ -15,7 +16,7 @@ export type EventRecord = {
   id: string; organisation: Organisation; slug: string; revision: number; publishedRevision: number | null;
   draft: EventDraft; updatedAt: string;
 };
-export type PublicEvent = { organiser: string; programme: EventDraft };
+export type PublicEvent = { organiser: string; programme: EventDraft; tiers?: TiersByDivision };
 export const MAX_ACTIVITIES = 16;
 
 export function emptyDraft(): EventDraft {

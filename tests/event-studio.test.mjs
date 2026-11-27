@@ -3,6 +3,8 @@ import { readFileSync } from "node:fs";
 import { DatabaseSync } from "node:sqlite";
 import { test } from "node:test";
 import { emptyDraft, parseDraft, publishIssues, publicProgramme, displayDate, eventSlug } from "../src/lib/events/model.ts";
+import { canReviewSanctions, decideSanction, organiserSanctions, sanctionQueue, sanctionReviewReady, submitSanctions } from "../src/lib/events/sanction-service.ts";
+import { readEvidence } from "../src/lib/events/sanction.ts";
 import { describeEntry, newDivision, nextDivisionName, MAX_DIVISIONS } from "../src/lib/events/competition.ts";
 import { changeEvent, createEvent, eventStudioReady, getEvent, getPublicEvent, listEvents, listOrganisations } from "../src/lib/events/service.ts";
 
@@ -131,4 +133,107 @@ test("a competition can publish without a programme, but never leaks edits or au
  assert.deepEqual(await getPublicEvent(event.slug),first);
  assert.equal((await changeEvent("one",event.id,2,"unpublish")).status,"ok");
  assert.equal(await getPublicEvent(event.slug),null);
+});
+
+const evidence={field:"Expected competitive field",officiating:"Named head referee and court officials",verification:"Director reviews signed score sheets"};
+const central={account:"three",email:"three@example.com"};
+const scoped={account:"two",email:"two@example.com"};
+function sanctionFixture(t) {
+ const db=fixture();t.after(()=>{db.close();delete globalThis[binding];});
+ db.exec(schema("wpu-event-studio-v1.sql"));
+ db.exec(schema("wpu-organisation-intake-v1.sql"));
+ db.exec(schema("wpu-control-affiliations-v1.sql"));
+ db.exec(schema("wpu-federation-activation-v1.sql"));
+ db.exec(schema("wpu-event-sanction-v1.sql"));
+ db.exec(`INSERT INTO wpu_organisation_intake_reviewers(account_id) VALUES('three'),('two');
+  INSERT INTO wpu_federation_publishers(account_id) VALUES('three');`);
+ return db;
+}
+function competitionPlan() {
+ const singles=newDivision("singles",crypto.randomUUID(),[]);
+ const mixed=newDivision("mixed",crypto.randomUUID(),[]);
+ const ranked={...mixed,name:"International Mixed",entry:{mode:"ranking",track:"mixed-doubles",minimum:800,cutoffDate:"2027-04-03"}};
+ return { ...rally(),venue:'Élite "Court" 🏓',activities:[],divisions:[singles,ranked] };
+}
+
+test("a complete Local Open division gets T5 only on publication, including without a review migration",async t=>{
+ const db=fixture();t.after(()=>{db.close();delete globalThis[binding];});
+ db.exec(schema("wpu-event-studio-v1.sql"));
+ const plan=competitionPlan(), [open,ranked]=plan.divisions;
+ const event=await createEvent("one","a",plan);
+ assert.equal(await sanctionReviewReady(),false);
+ assert.equal(await getPublicEvent(event.slug),null);
+ assert.deepEqual((await organiserSanctions("one",event)).preview,{[open.id]:"T5"});
+ assert.equal((await changeEvent("one",event.id,1,"publish")).status,"ok");
+ assert.deepEqual((await getPublicEvent(event.slug)).tiers,{[open.id]:"T5"});
+ const stored=JSON.parse(db.prepare("SELECT published_json FROM wpu_studio_events").get().published_json);
+ assert.equal(stored.sanctionPolicy,1);
+ assert.equal(stored.programme.divisions[1].id,ranked.id);
+ // A pre-release publication remains a public programme without editorial backfilling.
+ delete stored.sanctionPolicy;
+ db.prepare("UPDATE wpu_studio_events SET published_json=? WHERE id=?").run(JSON.stringify(stored),event.id);
+ assert.deepEqual((await getPublicEvent(event.slug)).tiers,{});
+});
+
+test("higher tier requests and review are scoped, atomic, and limited to the reviewed division",async t=>{
+ const db=sanctionFixture(t);
+ const plan=competitionPlan(), [open,ranked]=plan.divisions;
+ const event=await createEvent("one","a",plan);
+ assert.equal(await canReviewSanctions(scoped),false);
+ assert.equal(await canReviewSanctions({...central,email:scoped.email}),false);
+ assert.equal(await canReviewSanctions(central),true);
+ assert.equal(readEvidence({...evidence,field:" "}),null);
+ assert.equal(await submitSanctions("two",event,[open.id,ranked.id],"T2",evidence),"conflict");
+ assert.equal(await submitSanctions("one",event,[open.id,ranked.id],"T2",evidence),"ok");
+ assert.equal(await submitSanctions("one",event,[open.id,ranked.id],"T2",evidence),"conflict");
+ assert.equal((await organiserSanctions("two",event)).requests.length,0);
+ assert.equal((await sanctionQueue(scoped,false,0)).items.length,0);
+ const queue=(await sanctionQueue(central,false,0)).items;
+ assert.equal(queue.length,2);
+ assert.ok(queue.every(x=>x.current));
+ const openRequest=queue.find(x=>x.division===open.name);
+ const rankedRequest=queue.find(x=>x.division===ranked.name);
+ assert.equal((await changeEvent("one",event.id,1,"publish")).status,"ok");
+ assert.deepEqual((await getPublicEvent(event.slug)).tiers,{[open.id]:"T5"});
+ assert.equal(await decideSanction(scoped,rankedRequest.id,"approved",""),false);
+ assert.equal(await decideSanction(central,rankedRequest.id,"approved",""),true);
+ assert.equal(await decideSanction(central,rankedRequest.id,"approved",""),false);
+ assert.equal(await decideSanction(central,openRequest.id,"changes_requested",""),false);
+ assert.equal(await decideSanction(central,openRequest.id,"changes_requested","Confirm officials"),true);
+ assert.equal((await sanctionQueue(central,false,0)).items.length,0);
+ assert.equal((await sanctionQueue(central,true,0)).items.length,2);
+ const published=await getPublicEvent(event.slug);
+ assert.deepEqual(published.tiers,{[open.id]:"T5",[ranked.id]:"T2"});
+ assert.doesNotMatch(JSON.stringify(published),/Confirm officials|Named head referee|decided/);
+ assert.equal((await organiserSanctions("one",event)).requests.find(x=>x.id===openRequest.id).note,"Confirm officials");
+ assert.throws(()=>db.prepare("UPDATE wpu_event_sanction_requests SET requested_tier='T1' WHERE id=?").run(rankedRequest.id),/decide only once/);
+ assert.throws(()=>db.prepare("DELETE FROM wpu_event_sanction_requests WHERE id=?").run(rankedRequest.id),/retain competition/);
+});
+
+test("edits don’t alter live tiers, and a higher tier never carries to different division settings",async t=>{
+ sanctionFixture(t);
+ const plan=competitionPlan(), [open,ranked]=plan.divisions;
+ const event=await createEvent("one","a",plan);
+ assert.equal(await submitSanctions("one",event,[open.id,ranked.id],"T3",evidence),"ok");
+ const queue=(await sanctionQueue(central,false,0)).items;
+ const pending=queue.find(x=>x.division===open.name);
+ const approved=queue.find(x=>x.division===ranked.name);
+ // Unrelated programme and description changes do not require a new decision.
+ const description={...plan,description:"Revised promoter copy",activities:[activity("09:00")]};
+ const saved=await changeEvent("one",event.id,1,"save",description);
+ assert.equal(saved.status,"ok");
+ assert.equal(await submitSanctions("one",event,[open.id],"T4",evidence),"conflict");
+ assert.equal(await decideSanction(central,approved.id,"approved",""),true);
+ assert.equal((await changeEvent("one",event.id,2,"publish")).status,"ok");
+ assert.equal((await getPublicEvent(event.slug)).tiers[ranked.id],"T3");
+ const changed={...description,venue:"Different venue",divisions:[{...open,capacity:32},ranked]};
+ const current=await changeEvent("one",event.id,2,"save",changed);
+ assert.equal(current.status,"ok");
+ assert.equal((await getPublicEvent(event.slug)).tiers[ranked.id],"T3");
+ assert.equal((await sanctionQueue(central,false,0)).items[0].current,false);
+ assert.equal(await decideSanction(central,pending.id,"approved",""),false);
+ assert.equal(await decideSanction(central,pending.id,"changes_requested","Resubmit the new plan"),true);
+ assert.equal((await changeEvent("one",event.id,3,"publish")).status,"ok");
+ assert.deepEqual((await getPublicEvent(event.slug)).tiers,{[open.id]:"T5"});
+ assert.equal(await submitSanctions("one",current.event,[ranked.id],"T3",evidence),"ok");
 });
