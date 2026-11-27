@@ -115,12 +115,12 @@ export default function Studio({organisations,initialEvents}:{organisations:Orga
               {!items.length && <p className="es-blank">{scheduled?"Add a time to see an activity on the published programme.":"Nothing unscheduled."}</p>}
               {items.map(a=><div className={"es-activity es-kind-"+a.kind} key={a.id}>
                 <button className="es-activity-head" aria-expanded={openActivity===a.id} onClick={()=>setOpenActivity(openActivity===a.id?null:a.id)}><time>{a.time || "—"}</time>
-                  <span><strong>{a.title || kinds[a.kind].label}</strong><small>{kinds[a.kind].label}{a.location?" · "+a.location:""}</small></span><span>Edit</span></button>
+                  <span><strong>{a.title || kinds[a.kind].label}</strong><small>{kinds[a.kind].label}{a.location?" · "+a.location:""}</small></span><span>{openActivity===a.id ? "Close" : "Edit"}</span></button>
                 {openActivity===a.id && <div className="es-fields es-activity-edit">
                   <label>Activity name<input maxLength={100} value={a.title} onChange={e=>adjust(a.id,{title:e.target.value})}/></label>
-                  <div className="es-pair"><label>Start time<input type="time" value={a.time} onChange={e=>adjust(a.id,{time:e.target.value})}/></label>
-                    <label>Location <small>Optional</small><input maxLength={120} value={a.location} onChange={e=>adjust(a.id,{location:e.target.value})}/></label></div>
-                  <label>Public details <small>Optional</small><textarea maxLength={350} rows={2} value={a.description} onChange={e=>adjust(a.id,{description:e.target.value})}/></label>
+                  <div className="es-pair"><label><span className="es-field-caption">Start time</span><input type="time" value={a.time} onChange={e=>adjust(a.id,{time:e.target.value})}/></label>
+                    <label><span className="es-field-caption">Location <small>Optional</small></span><input maxLength={120} value={a.location} onChange={e=>adjust(a.id,{location:e.target.value})}/></label></div>
+                  <label><span className="es-field-caption">Public details <small>Optional</small></span><textarea maxLength={350} rows={2} value={a.description} onChange={e=>adjust(a.id,{description:e.target.value})}/></label>
                   <div className="es-item-actions"><button className="es-back" onClick={()=>change("activities",draft.activities.filter(x=>x.id!==a.id))}>Remove activity</button><button className="es-secondary" onClick={()=>setOpenActivity(null)}>Done</button></div>
                 </div>}
               </div>)}
@@ -134,7 +134,7 @@ export default function Studio({organisations,initialEvents}:{organisations:Orga
           <label>Venue<input placeholder="Court or venue name" maxLength={160} value={draft.venue} onChange={e=>change("venue",e.target.value)}/></label>
           <label>Time zone<input list="es-timezones" maxLength={100} value={draft.timezone} onChange={e=>change("timezone",e.target.value)}/></label>
           <datalist id="es-timezones">{["UTC",...Intl.supportedValuesOf("timeZone")].map(z=><option key={z} value={z}/>)}</datalist>
-          <label>Public introduction <small>Optional</small><textarea rows={3} maxLength={700} value={draft.description} onChange={e=>change("description",e.target.value)}/></label>
+          <label><span className="es-field-caption">Public introduction <small>Optional</small></span><textarea rows={3} maxLength={700} value={draft.description} onChange={e=>change("description",e.target.value)}/></label>
         </aside>
       </fieldset>}
     <section className="es-publish"><div><h2>Public page</h2>
