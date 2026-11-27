@@ -16,7 +16,7 @@ Make Join WPU, Player Passport sign-in and organisation participation discoverab
 Select an eligible national federation in WPU Control, verify operational readiness, keep or assign scoped staff, then publish, pause or resume online Passport requests. Existing affiliations and URLs remain intact. The staff and player acceptance run for the second real federation is separate from deployment and can run alongside tournament design. See the [activation runbook](FEDERATION-ACTIVATION.md).
 
 ## Milestone 2 — Shared tournament vertical slice
-One event builder for authorised federations, associations, clubs and organisers. Scope permissions to their organisations and events. Start with one Bhutan event and one doubles division, then exercise registration, public event page, basic matches and finalisation. Exit: registered organiser runs a real test event end to end.
+One Event Studio for authorised federations, associations, clubs and organisers. Scope permissions to their organisations and events. Release 1 creates, saves and publishes a federation-branded programme on WPU. Release 2 adds free doubles and clinic bookings. Release 3 adds one doubles division with event-day scheduling, scoring and finalisation. Rehearse with isolated sample data, then run one real event with a ready organiser. Bhutan is not a tournament prerequisite. See [release 1](EVENT-STUDIO-RELEASE-ONE.md).
 
 ## Milestone 3 — All required formats
 Round robin, single elimination, pool-to-knockout, double elimination including reset, team ties; seeding, byes, scheduling, scoring, corrections. Exit: deterministic fixtures for each format and edge cases.
