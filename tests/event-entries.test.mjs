@@ -6,9 +6,9 @@ import { test } from "node:test";
 import { newDivision } from "../src/lib/events/competition.ts";
 import { changeEvent,createEvent } from "../src/lib/events/service.ts";
 import { acceptEntry,claimOffer,entriesReady,entryFor,entryPlayer,invitation,openRegistration,organiserEntryList,
-  organiserRegistrations,playerEntries,publicRegistration,registrationFor,resetUnusedRegistration,saveBirthDate,setRegistrationPaused,startEntry,withdrawEntry } from "../src/lib/entries/service.ts";
+  organiserRegistrationSetup,organiserRegistrations,playerEntries,publicRegistration,registrationFor,registrationSetupReady,resetUnusedRegistration,saveBirthDate,saveRegistrationSetup,setRegistrationPaused,startEntry,withdrawEntry } from "../src/lib/entries/service.ts";
 import { checkoutConfig,processWebhook,settleCheckout,startCheckout,verifiedWebhook } from "../src/lib/entries/checkout.ts";
-import { entryReturnPath,parseRegistrationInput,toMinorUnits,validBirthDate } from "../src/lib/entries/model.ts";
+import { entryReturnPath,parseRegistrationInput,parseRegistrationSetup,toMinorUnits,validBirthDate } from "../src/lib/entries/model.ts";
 
 const binding=Symbol.for("__cloudflare-context__");
 const current=()=>Math.floor(Date.now()/1000);
@@ -16,7 +16,7 @@ const payload=(amount=0)=>({closesAt:current()+86400,amount,currency:"SGD",terms
 const cfg={secret:"sk_test_not_a_secret",signing:"whsec_demo",host:"wpu",live:false,origin:"https://wpu-checkout.example"};
 function fixture(t){
   const db=new DatabaseSync(":memory:");
-  for(const schema of ["identity-foundation","passwordless-auth","passwordless-auth-v2","passwordless-auth-v3","event-studio","event-sanction","event-entries"]){
+  for(const schema of ["identity-foundation","passwordless-auth","passwordless-auth-v2","passwordless-auth-v3","event-studio","event-sanction","event-entries","event-registration-setup"]){
     const name=schema.includes("-v")?schema:schema+"-v1";
     db.exec(readFileSync(new URL("../database/wpu-"+name+".sql",import.meta.url),"utf8"));
   }
@@ -54,6 +54,35 @@ test("entry routing, minor units and DOB are narrowly validated",()=>{
  assert.equal(entryReturnPath("//example.com",id,undefined),null);
  assert.equal(validBirthDate("2026-02-30"),false);
  assert.equal(validBirthDate("2025-01-01",Date.parse("2026-03-01")),true);
+});
+
+test("organisers prepare registration privately, then publish and open in separate steps",async t=>{
+  fixture(t);
+  assert.equal(await registrationSetupReady(),true);
+  const div=newDivision("singles",crypto.randomUUID(),[]);
+  const details={title:"Private settings",date:new Date(Date.now()+8*86400000).toISOString().slice(0,10),timezone:"Asia/Singapore",
+    venue:"Test courts",description:"",activities:[],divisions:[{...div,capacity:2}]};
+  const event=await createEvent("a1","wpu",details);
+  const partial=parseRegistrationSetup({...payload(),closesAt:null,amount:null,contact:""});
+  assert.ok(partial);
+  assert.equal(parseRegistrationInput(partial),null);
+  assert.equal(await saveRegistrationSetup("a8",event.id,event.revision,div.id,0,partial),null);
+  const prepared=await saveRegistrationSetup("a1",event.id,event.revision,div.id,0,partial);
+  assert.equal(prepared.revision,1);
+  assert.deepEqual(await organiserRegistrationSetup("a8",event.id),[]);
+  assert.deepEqual(await organiserRegistrationSetup("a1",event.id),[prepared]);
+  assert.deepEqual(await publicRegistration(event.slug),[]);
+  assert.equal(await openRegistration("a1",event.id,div.id,payload(),null,1),"missing");
+  assert.equal((await changeEvent("a1",event.id,event.revision,"publish")).status,"ok");
+  assert.deepEqual(await publicRegistration(event.slug),[]);
+  const revised=await saveRegistrationSetup("a1",event.id,event.revision,div.id,1,payload(500));
+  assert.equal(revised.revision,2);
+  assert.equal(await saveRegistrationSetup("a1",event.id,event.revision,div.id,1,payload()),null);
+  assert.equal(await openRegistration("a1",event.id,div.id,revised.settings,null,2),"payments");
+  assert.equal(await openRegistration("a1",event.id,div.id,revised.settings,cfg.host,1),"conflict");
+  assert.equal(await openRegistration("a1",event.id,div.id,revised.settings,cfg.host,2),"ok");
+  assert.equal((await publicRegistration(event.slug))[0].fee.amount,500);
+  assert.equal(await saveRegistrationSetup("a1",event.id,event.revision,div.id,2,payload()),null);
 });
 
 test("free singles can fill, waitlist and offer the next place without duplicating a player",async t=>{

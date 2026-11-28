@@ -34,4 +34,22 @@ if [[ "$logged" == missing ]]; then
 fi
 [[ "$(scalar "$registry")" == "$sha" && "$(scalar "$expected")" == 8 ]]
 d1 --command 'PRAGMA foreign_key_check(wpu_event_entries);'   | jq -e 'length==1 and .[0].success and (.[0].results | length==0)' >/dev/null
-echo 'Tournament registration schema verified. No registration opened and no payment was taken.'
+
+readonly setup_file=wpu-event-registration-setup-v1.sql
+setup_sha=$(sha256sum "database/$setup_file" | cut -d' ' -f1)
+setup_expected="SELECT count(*) AS n FROM sqlite_master WHERE type='table' AND name='wpu_event_registration_setup';"
+setup_registry="SELECT coalesce((SELECT sha256 FROM wpu_schema_migrations WHERE filename='$setup_file'),'missing') AS n;"
+setup_logged=$(scalar "$setup_registry")
+if [[ "$setup_logged" == missing ]]; then
+  [[ "$(scalar "$setup_expected")" == 0 ]]
+  if [[ "$1" == inspect ]]; then echo 'Private registration setup schema is pending.'; exit 0; fi
+  "$wrangler" d1 time-travel info "$database"
+  setup_batch=$(mktemp)
+  trap 'rm -f "${batch:-}" "$setup_batch"' EXIT
+  cat "database/$setup_file" > "$setup_batch"
+  printf "\nINSERT INTO wpu_schema_migrations(filename,sha256) VALUES('%s','%s');\n" "$setup_file" "$setup_sha" >> "$setup_batch"
+  d1 --yes --file "$setup_batch" >/dev/null
+fi
+[[ "$(scalar "$setup_registry")" == "$setup_sha" && "$(scalar "$setup_expected")" == 1 ]]
+d1 --command 'PRAGMA foreign_key_check(wpu_event_registration_setup);' | jq -e 'length==1 and .[0].success and (.[0].results | length==0)' >/dev/null
+echo 'Tournament registration and private setup schemas verified. No registration opened and no payment was taken.'
