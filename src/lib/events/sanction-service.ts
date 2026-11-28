@@ -12,14 +12,18 @@ export async function sanctionReviewReady() {
   return row?.ok===1;
 }
 
-const basisMatch=(json:string)=>`EXISTS(SELECT 1 FROM json_each(${json},'$.divisions') d
-  WHERE json_extract(d.value,'$.id')=r.division_id
-   AND NOT EXISTS(SELECT 1 FROM json_each(d.value,'$.startingScore.matchups') m WHERE json_extract(m.value,'$.ahead')<>'none')
-   AND json_array(
+const basisMatch=(json:string)=>{
+  const base=`json_array(
     json_extract(${json},'$.title'),json_extract(${json},'$.date'),json_extract(${json},'$.timezone'),json_extract(${json},'$.venue'),
     json_extract(d.value,'$.id'),json_extract(d.value,'$.kind'),json_extract(d.value,'$.name'),json_extract(d.value,'$.format'),
     json_extract(d.value,'$.capacity'),json_extract(d.value,'$.entry.mode'),json_extract(d.value,'$.entry.track'),
-    json_extract(d.value,'$.entry.minimum'),json_extract(d.value,'$.entry.cutoffDate'))=r.basis_json)`;
+    json_extract(d.value,'$.entry.minimum'),json_extract(d.value,'$.entry.cutoffDate'))`;
+  return `EXISTS(SELECT 1 FROM json_each(${json},'$.divisions') d
+  WHERE json_extract(d.value,'$.id')=r.division_id
+   AND NOT EXISTS(SELECT 1 FROM json_each(d.value,'$.startingScore.matchups') m WHERE json_extract(m.value,'$.ahead')<>'none')
+   AND (CASE WHEN json_extract(d.value,'$.minimumAge') IS NULL THEN ${base}
+        ELSE json_insert(${base},'$[#]',json_extract(d.value,'$.minimumAge')) END)=r.basis_json)`;
+};
 const asRequests=(draft:EventDraft)=>draft.divisions.filter(canSanctionDivision).map(d=>({divisionId:d.id,key:sanctionBasis(draft,d)}));
 
 async function withApproved(eventId:string,draft:EventDraft,tiers:TiersByDivision) {
@@ -104,11 +108,11 @@ export async function sanctionQueue(reviewer:Reviewer,history:boolean,offset:num
     WHERE (r.status='pending')=? AND ${networkReviewer}
     ORDER BY r.created_at ${history?"DESC":"ASC"},r.id LIMIT 21 OFFSET ?`,[history?0:1,reviewer.account,reviewer.email,offset]);
   return {hasMore:rows.length>20,items:rows.slice(0,20).map(r=>{
-    const [title,date,timezone,venue,,kind,division,format,capacity,mode,track,minimum,cutoff]=JSON.parse(String(r.basis_json));
+    const [title,date,timezone,venue,,kind,division,format,capacity,mode,track,minimum,cutoff,minimumAge]=JSON.parse(String(r.basis_json));
     return {id:String(r.id),tier:r.requested_tier as HigherTier,status:r.status as SanctionRequest["status"],evidence:JSON.parse(String(r.evidence_json)) as Evidence,
       title:String(title),date:String(date),timezone:String(timezone),venue:String(venue),kind:String(kind),division:String(division),
       format:String(format),capacity:Number(capacity),mode:String(mode),track:track===null?null:String(track),
-      minimum:minimum===null?null:Number(minimum),cutoff:cutoff===null?null:String(cutoff),organisation:String(r.organisation),
+      minimum:minimum===null?null:Number(minimum),cutoff:cutoff===null?null:String(cutoff),minimumAge:typeof minimumAge==="number"?minimumAge:null,organisation:String(r.organisation),
       current:r.current_plan===1,note:String(r.decision_note??""),createdAt:String(r.created_at),
       publicSlug:r.published_revision===null?null:String(r.slug)};
   })};

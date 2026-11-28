@@ -24,7 +24,8 @@ export type SanctionWorkspace={
 export function sanctionBasis(draft:EventDraft,division:Division) {
   const entry=division.entry;
   return JSON.stringify([draft.title,draft.date,draft.timezone,draft.venue,division.id,division.kind,division.name,division.format,
-    division.capacity,entry.mode,...(entry.mode==="ranking"?[entry.track,entry.minimum,entry.cutoffDate]:[null,null,null])]);
+    division.capacity,entry.mode,...(entry.mode==="ranking"?[entry.track,entry.minimum,entry.cutoffDate]:[null,null,null]),
+    ...(division.minimumAge===undefined?[]:[division.minimumAge])]);
 }
 
 export const canSanctionDivision=(division:Division)=>!usesStartingHandicap(division.startingScore);

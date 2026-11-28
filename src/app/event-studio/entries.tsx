@@ -13,6 +13,80 @@ function localTime(seconds:number|null) {
   const date=new Date(seconds*1000);
   return new Date(date.getTime()-date.getTimezoneOffset()*60_000).toISOString().slice(0,16);
 }
+
+function BulkSetup({event,choices,setups,payments,onSaved}:{event:EventRecord;choices:Choice[];setups:SavedRegistrationSetup[];payments:boolean;onSaved:(n:number)=>void}) {
+  const [selected,setSelected]=useState<string[]>([]);
+  const [close,setClose]=useState("");
+  const [contact,setContact]=useState("");
+  const [terms,setTerms]=useState("");
+  const [paid,setPaid]=useState(false);
+  const [currency,setCurrency]=useState<Currency>("SGD");
+  const [playerFee,setPlayerFee]=useState("");
+  const [pairFee,setPairFee]=useState("");
+  const [busy,setBusy]=useState(false);
+  const [error,setError]=useState("");
+  const lock=useRef(false);
+  const chosen=choices.filter(d=>selected.includes(d.id));
+  const alreadySaved=new Map(setups.map(s=>[s.divisionId,s.revision]));
+  const replace=chosen.filter(d=>alreadySaved.has(d.id)).length;
+  const units=(unit:ReturnType<typeof feeUnit>)=>chosen.some(d=>feeUnit(d.kind)===unit);
+  async function save(){
+    if(lock.current||!chosen.length)return;
+    const closesAt=close?Math.floor(new Date(close).getTime()/1000):null;
+    const values=chosen.map(d=>{
+      const fee=feeUnit(d.kind)==="per player"?playerFee:pairFee;
+      const amount=paid?toMinorUnits(fee):0;
+      return {divisionId:d.id,revision:alreadySaved.get(d.id)??0,settings:{closesAt,amount,currency,terms,contact},
+        invalid:paid&&Boolean(fee.trim())&&(amount===null||amount<50)};
+    });
+    if(closesAt!==null&&!Number.isFinite(closesAt)||values.some(v=>v.invalid)){
+      setError("Enter a valid closing time and paid fees of at least 0.50, or leave them blank for now.");return;
+    }
+    lock.current=true;setBusy(true);setError("");
+    try{
+      const r=await fetch(endpoint,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({event:event.id,
+        eventRevision:event.revision,action:"save-setups",setups:values.map(({divisionId,revision,settings})=>({divisionId,revision,settings}))})});
+      const data=await r.json();
+      if(!r.ok){setError(data.error||"Couldn’t save the selected divisions.");return;}
+      onSaved(values.length);
+    }catch{setError("Couldn’t confirm the save. Refresh registrations before trying again.");}
+    finally{setBusy(false);lock.current=false;}
+  }
+  return <details className="es-bulk"><summary>Set up several divisions</summary>
+    <form className="es-fields es-bulk-content" onSubmit={e=>{e.preventDefault();void save();}}>
+      <fieldset className="es-choice-set" disabled={busy}><legend>Divisions · {chosen.length} selected</legend>
+        <div className="es-publish-buttons">
+          <button type="button" className="es-back" onClick={()=>setSelected(choices.filter(d=>!alreadySaved.has(d.id)).map(d=>d.id))}>Select unconfigured</button>
+          <button type="button" className="es-back" onClick={()=>setSelected(choices.map(d=>d.id))}>Select all</button>
+          <button type="button" className="es-back" onClick={()=>setSelected([])}>Clear selection</button>
+        </div>
+        <div className="es-choice-grid">{choices.map(d=><label key={d.id}>
+          <input type="checkbox" checked={selected.includes(d.id)} onChange={e=>setSelected(e.target.checked?[...selected,d.id]:selected.filter(id=>id!==d.id))}/>
+          <span>{d.name}{alreadySaved.has(d.id)&&<small>Setup already saved</small>}</span>
+        </label>)}</div>
+      </fieldset>
+      <fieldset className="es-fields es-setup-fields" disabled={busy}>
+        <div className="es-comp-edit-row">
+          <label>Close entries at <small>Device time zone</small><input type="datetime-local" value={close} onChange={e=>setClose(e.target.value)}/></label>
+          <label>Public organiser contact email<input type="email" value={contact} maxLength={254} onChange={e=>setContact(e.target.value)}/></label>
+        </div>
+        <label>Payment method<select value={paid?"paid":"free"} onChange={e=>setPaid(e.target.value==="paid")}>
+          <option value="free">No payment · free entry</option><option value="paid">Online card checkout</option></select></label>
+        {paid&&<><div className="es-comp-edit-row">
+          {units("per player")&&<label>Total fee per player<input inputMode="decimal" maxLength={8} value={playerFee} onChange={e=>setPlayerFee(e.target.value)}/></label>}
+          {units("per pair")&&<label>Total fee per pair<input inputMode="decimal" maxLength={8} value={pairFee} onChange={e=>setPairFee(e.target.value)}/></label>}
+          <label>Currency<select value={currency} onChange={e=>setCurrency(e.target.value as Currency)}><option value="SGD">SGD</option><option value="USD">USD</option></select></label>
+        </div>{!payments&&<p>Card checkout isn’t connected for this organisation. You can save the settings, but paid entries can’t open yet.</p>}</>}
+        <label>Cancellation terms<textarea rows={3} maxLength={1200} value={terms} onChange={e=>setTerms(e.target.value)}/></label>
+      </fieldset>
+      {replace>0&&<p role="status">This replaces {replace} saved {replace===1?"setup":"setups"}, including any fields left blank.</p>}
+      <button className="es-primary" disabled={busy||!chosen.length} type="submit">Save {chosen.length||""} {chosen.length===1?"division":"divisions"} as draft</button>
+      <p>No entries will open. Use the individual division editor below for exceptions.</p>
+      {error&&<p role="alert" className="es-error">{error}</p>}
+    </form>
+  </details>;
+}
+
 function SetupForm({event,division,initial,payments,canOpen,onOpened}:{event:EventRecord;division:Choice;initial?:SavedRegistrationSetup;payments:boolean;canOpen:boolean;onOpened:()=>void}) {
   const starting=initial?.settings??defaultSetup;
   const [saved,setSaved]=useState(initial);
@@ -144,7 +218,9 @@ export default function Entries({event,dirty,saveEvent}:{event:EventRecord|null;
           </div>}
         </div>}
         {!workspace.setupReady?<p>Registration setup is temporarily unavailable. Your event and entries are unchanged.</p>:
-          selected?<div className="es-registration-setup">
+          selected?<>{choices.length>1&&<BulkSetup event={event} choices={choices} setups={workspace.setups} payments={workspace.payments}
+              onSaved={n=>{setFeedback({error:false,text:n+" division setups saved privately. No entries opened."});setLoad(l=>l+1);}}/>}
+          <div className="es-registration-setup">
             <h3>{workspace.setups.some(s=>s.divisionId===selected.id)?"Edit saved setup":"Set up a division"}</h3>
             <label>Division<select value={selected.id} onChange={e=>setDivision(e.target.value)}>
               {choices.map(d=><option key={d.id} value={d.id}>{d.name}</option>)}
@@ -152,7 +228,7 @@ export default function Entries({event,dirty,saveEvent}:{event:EventRecord|null;
             <SetupForm key={selected.id} event={event} division={selected} payments={workspace.payments}
               initial={workspace.setups.find(s=>s.divisionId===selected.id)} canOpen={published===revision}
               onOpened={()=>{setFeedback({error:false,text:"Registration is open. The event page now accepts entries."});setLoad(n=>n+1);}}/>
-          </div>:<p>{workspace.registered.length?"All eligible divisions already have registration.":"In Competition, add an open-entry singles or doubles division without a starting-score handicap."}</p>}
+          </div></>:<p>{workspace.registered.length?"All eligible divisions already have registration.":"In Competition, add an open-entry singles or doubles division without a starting-score handicap."}</p>}
       </>}
     {feedback.text&&<p role={feedback.error?"alert":"status"} className={feedback.error?"es-error":undefined}>{feedback.text}</p>}
     {event&&!dirty&&<button className="es-back" disabled={busy} onClick={()=>setLoad(n=>n+1)}>Refresh registrations</button>}

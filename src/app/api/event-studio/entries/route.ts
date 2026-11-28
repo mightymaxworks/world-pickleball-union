@@ -1,9 +1,10 @@
 import { controlBody, controlError, controlJson, isSameOrigin, signedInAccount } from "@/lib/control/http";
 import { isEventId } from "@/lib/events/model";
+import { MAX_DIVISIONS } from "@/lib/events/competition";
 import { getEvent } from "@/lib/events/service";
 import { checkoutConfig } from "@/lib/entries/checkout";
-import { canRegisterDivision, parseRegistrationInput, parseRegistrationSetup } from "@/lib/entries/model";
-import { entriesReady, openRegistration, organiserEntryList, organiserRegistrations, organiserRegistrationSetup, registrationSetupReady, resetUnusedRegistration, saveRegistrationSetup, setRegistrationPaused } from "@/lib/entries/service";
+import { canRegisterDivision, parseRegistrationInput, parseRegistrationSetup, type RegistrationSetupChange } from "@/lib/entries/model";
+import { entriesReady, openRegistration, organiserEntryList, organiserRegistrations, organiserRegistrationSetup, registrationSetupReady, resetUnusedRegistration, saveRegistrationSetups, setRegistrationPaused } from "@/lib/entries/service";
 
 export const dynamic="force-dynamic";
 const unavailable=()=>controlError(503,"Registration is temporarily unavailable.");
@@ -35,20 +36,32 @@ export async function GET(request:Request) {
 export async function POST(request:Request) {
   if(!isSameOrigin(request))return controlError(403,"This request did not come from Event Studio.");
   try{
-    const body=await controlBody(request,8192);
-    if(!body||!isEventId(body.division))return controlError(400,"Choose a division.");
+    const body=await controlBody(request,128000);
+    if(!body)return controlError(400,"Choose a division.");
     const user=await organiser(body.event);if(user instanceof Response)return user;
     const {account,event}=user;
-    if(body.action==="save-setup"){
+    if(body.action==="save-setup"||body.action==="save-setups"){
       if(!await registrationSetupReady())return unavailable();
-      const settings=parseRegistrationSetup(body.settings), revision=body.setupRevision;
-      if(!settings||typeof revision!=="number"||!Number.isSafeInteger(revision)||revision<0)
-        return controlError(422,"Check the amount, closing time and contact fields.");
-      if(body.eventRevision!==event.revision||!event.draft.divisions.some(d=>d.id===body.division&&canRegisterDivision(d)))
-        return controlError(409,"Save the latest division rules before updating registration settings.");
-      const setup=await saveRegistrationSetup(account,event.id,event.revision,body.division,revision,settings);
-      return setup?controlJson({setup}):controlError(409,"The setup changed or registration is already open. Refresh and try again.");
-    }else if(body.action==="open"){
+      const batch=body.action==="save-setups";
+      const input=batch?body.setups:[{divisionId:body.division,revision:body.setupRevision,settings:body.settings}];
+      if(!Array.isArray(input)||!input.length||input.length>MAX_DIVISIONS)return controlError(422,"Select the divisions to configure.");
+      const changes:RegistrationSetupChange[]=[], seen=new Set<string>();
+      const eligible=new Set(event.draft.divisions.filter(canRegisterDivision).map(d=>d.id));
+      for(const item of input){
+        if(!item||typeof item!=="object")return controlError(422,"Check the registration settings.");
+        const {divisionId,revision}=item;
+        const settings=parseRegistrationSetup(item.settings);
+        if(!isEventId(divisionId)||seen.has(divisionId)||!settings||typeof revision!=="number"||!Number.isSafeInteger(revision)||revision<0)
+          return controlError(422,"Check the selected divisions, fees, closing time and contact fields.");
+        if(!eligible.has(divisionId)||body.eventRevision!==event.revision)
+          return controlError(409,"Save the latest division rules before updating registration settings.");
+        seen.add(divisionId);changes.push({divisionId,revision,settings});
+      }
+      const setups=await saveRegistrationSetups(account,event.id,event.revision,changes);
+      return setups?controlJson(batch?{setups}:{setup:setups[0]}):controlError(409,"A setup changed or registration is already open. No settings were saved. Refresh and try again.");
+    }
+    if(!isEventId(body.division))return controlError(400,"Choose a division.");
+    if(body.action==="open"){
       if(!await registrationSetupReady())return unavailable();
       if(event.publishedRevision!==event.revision)return controlError(409,"Publish the current division rules before opening entries.");
       const setup=(await organiserRegistrationSetup(account,event.id)).find(s=>s.divisionId===body.division);

@@ -72,6 +72,7 @@ export default function CompetitionSanctionWorkspace() {
         <dl>
           <div><dt>Event</dt><dd>{displayDate(item.date)} · {item.venue} ({item.timezone})</dd></div>
           <div><dt>Division</dt><dd>{divisionKinds[item.kind as DivisionKind].label} · {drawFormats[item.format as DrawFormat]} · {item.capacity} {divisionKinds[item.kind as DivisionKind].units}</dd></div>
+          {item.minimumAge&&<div><dt>Minimum age</dt><dd>{item.minimumAge} on the event date{isDoublesKind(item.kind)?" for both partners":""}</dd></div>}
           <div><dt>Entry rule</dt><dd>{item.mode==="open"?"Open entry, no WPU ranking requirement":item.minimum+" WPU "+
             rankingTracks[item.track as RankingTrack]+" points on "+displayDate(item.cutoff??"")+
             (isDoublesKind(item.kind)?" for each partner independently":"")}</dd></div>
