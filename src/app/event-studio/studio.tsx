@@ -32,6 +32,10 @@ export default function Studio({organisations,initialEvents}:{organisations:Orga
   const [message,setMessage]=useState("");
   const [error,setError]=useState("");
   const [confirmation,setConfirmation]=useState<"publish"|"unpublish"|null>(null);
+  const [review,setReview]=useState(false);
+  const reviewHeading=useRef<HTMLHeadingElement>(null);
+  const toolbar=useRef<HTMLDivElement>(null);
+  const confirmPrompt=useRef<HTMLParagraphElement>(null);
   const mutation=useRef(false);
   const [sanctions,setSanctions]=useState<{key:string;workspace?:SanctionWorkspace;error?:string}>();
   const [sanctionReload,setSanctionReload]=useState(0);
@@ -58,16 +62,22 @@ export default function Studio({organisations,initialEvents}:{organisations:Orga
   const hasLocal=Object.keys(localTiers(draft)).length>0;
   const status=!current ? "Unsaved draft" : current.publishedRevision===null ? dirty ? "Unsaved changes" : "Saved draft" :
     current.publishedRevision!==current.revision || dirty ? "Public · unpublished edits" : "Published";
+  const isPublic=current?.publishedRevision!=null;
+  const isCurrent=!!current && isPublic && !dirty && current.publishedRevision===current.revision;
+  useEffect(()=>{
+    if(review) reviewHeading.current?.focus({preventScroll:true});
+  },[review]);
+  useEffect(()=>{if(confirmation) confirmPrompt.current?.focus();},[confirmation]);
   const initialZone=()=>Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC";
   function start(kinds:ActivityKind[],competition=false) {
     setCurrent(null);setDraft({...emptyDraft(),timezone:initialZone(),activities:kinds.map(activity)});
     setSection(competition?"competition":"programme");
-    setView("edit");setMessage("");setError("");setOpenActivity(null);setConfirmation(null);
+    setView("edit");setMessage("");setError("");setOpenActivity(null);setConfirmation(null);setReview(false);
   }
   function open(event:EventRecord) {
     setCurrent(event);setDraft(event.draft);setOrganisation(event.organisation.id);
     setSection(event.draft.divisions.length?"competition":"programme");
-    setView("edit");setMessage("");setError("");setConfirmation(null);setOpenActivity(null);
+    setView("edit");setMessage("");setError("");setConfirmation(null);setOpenActivity(null);setReview(false);
   }
   function change<K extends keyof EventDraft>(key:K,value:EventDraft[K]) {
     setDraft(d=>({...d,[key]:value}));setMessage("");setConfirmation(null);
@@ -98,13 +108,22 @@ export default function Studio({organisations,initialEvents}:{organisations:Orga
     finally { mutation.current=false;setBusy(false); }
   }
   function preview() {
-    setAudience("player");setView("preview");setConfirmation(null);
+    setAudience("player");setView("preview");setConfirmation(null);setReview(false);
     window.scrollTo({top:0});
   }
+  function openReview() {
+    setReview(true);setConfirmation(null);
+    toolbar.current?.parentElement?.scrollIntoView({block:"start"});
+    if(review) reviewHeading.current?.focus({preventScroll:true});
+  }
+  function closeReview() {
+    setReview(false);setConfirmation(null);
+    toolbar.current?.querySelector<HTMLButtonElement>(".es-review-trigger")?.focus({preventScroll:true});
+  }
   function back() {
-    if (view==="preview") {setView("edit");return;}
+    if (view==="preview") {setView("edit");setReview(false);setConfirmation(null);return;}
     if ((!current || dirty) && !window.confirm("Leave without saving your changes?")) return;
-    setView("list");setMessage("");setError("");setConfirmation(null);
+    setView("list");setMessage("");setError("");setConfirmation(null);setReview(false);
   }
 
   if(view==="list") return <div className="es-start">
@@ -127,13 +146,35 @@ export default function Studio({organisations,initialEvents}:{organisations:Orga
 
   const ordered=[...draft.activities].sort((a,b)=>(a.time||"99:99").localeCompare(b.time||"99:99"));
   return <div className="es-studio">
-    <div className="es-toolbar"><button className="es-back" disabled={busy} onClick={back}>{view==="preview"?"Back to studio":"All events"}</button><span className="es-pill">{status}</span>
+    <div className="es-toolbar" ref={toolbar}><button className="es-back" disabled={busy} onClick={back}>{view==="preview"?"Back to studio":"All events"}</button><span className="es-pill">{status}</span>
       <div className="es-actions">
         {view==="edit" ? <button className="es-secondary" disabled={busy} onClick={preview}>Preview</button> :
           <div className="es-switch" aria-label="Preview audience"><button aria-pressed={audience==="player"} onClick={()=>setAudience("player")}>Player</button><button aria-pressed={audience==="spectator"} onClick={()=>setAudience("spectator")}>Spectator</button></div>}
-        <button className="es-primary" disabled={busy || !!current&&!dirty} onClick={()=>void save(current?"save":"create")}>{busy?"Working…":"Save draft"}</button>
+        <button className="es-secondary" disabled={busy || !!current&&!dirty} onClick={()=>void save(current?"save":"create")}>Save draft</button>
+        <button className="es-primary es-review-trigger" disabled={busy} aria-expanded={review} aria-controls={review?"es-publication-review":undefined} onClick={openReview}>{isCurrent?"Public page":"Review & publish"}</button>
       </div></div>
-    {message && <p className="es-message" role="status">{message}</p>}{error && <p className="es-error" role="alert">{error}</p>}
+    {(busy || message) && <p className="es-message" role="status">{busy?"Working…":message}</p>}{error && <p className="es-error" role="alert">{error}</p>}
+    {review && <section id="es-publication-review" className="es-publish" aria-labelledby="es-review-heading"><div>
+      <p className="es-kicker">Review &amp; publish</p>
+      <h2 id="es-review-heading" ref={reviewHeading} tabIndex={-1}>Public event page</h2>
+      <p>{isPublic ? "People see the last version you published." : "Your event stays private until you publish it."}</p>
+      <p>Publishing does not open registration. Eligible Local Open divisions are sanctioned at T5.</p>
+      {issues.length>0 && <><h3>Before you can publish</h3><ul>{issues.map((i,index)=><li key={index}>{i}</li>)}</ul></>}
+      {(!current || dirty) && <p>Save your draft before publishing.</p>}
+      {isPublic && <Link className="es-live-link" href={"/events/"+current.slug} target="_blank" rel="noopener">Open public page</Link>}
+    </div>
+      <div className="es-publish-buttons">
+        <button className="es-back" disabled={busy} onClick={closeReview}>Close review</button>
+        {isPublic && <button className="es-secondary" disabled={busy} onClick={()=>setConfirmation("unpublish")}>Take offline</button>}
+        {!isCurrent && (!current || dirty) && <button className="es-secondary" disabled={busy} onClick={()=>void save(current?"save":"create")}>Save draft</button>}
+        {!isCurrent && <button className="es-primary" disabled={busy || !current || dirty || !!issues.length} onClick={()=>setConfirmation("publish")}>{isPublic?"Publish changes":"Publish event page"}</button>}
+      </div>
+      {confirmation && <div className="es-confirm" role="group" aria-label="Confirm publication change">
+        <p ref={confirmPrompt} tabIndex={-1}>{confirmation==="publish" ? "Make this saved event page public under "+organiser.name+"? This does not open any new registrations." : "Take the public page offline? The draft will still be available here."}</p>
+        <button className="es-secondary" onClick={()=>{setConfirmation(null);reviewHeading.current?.focus({preventScroll:true});}}>Cancel</button>
+        <button className="es-primary" onClick={()=>void save(confirmation)}>{confirmation==="publish"?"Publish event":"Take page offline"}</button>
+      </div>}
+    </section>}
     {view==="preview" ? <>
       {draft.divisions.length>0 && <aside className="es-comp-preview-status" aria-label="Preview only"><div><strong>{audience==="player"?"Player preview":"Spectator preview"}</strong><p>Nothing changes on your public page until you publish.</p></div><CompetitionStatus isPublic={current?.publishedRevision!=null} liveCount={liveCount} hasLocal={hasLocal}/></aside>}
       <PublicProgramme event={{organiser:organiser.name,programme:draft,tiers:previewTiers}} spectator={audience==="spectator"} preview/>
@@ -173,21 +214,5 @@ export default function Studio({organisations,initialEvents}:{organisations:Orga
         <EventDetails draft={draft} change={change}/>
       </fieldset>}
     </>}
-    <section className="es-publish"><div><h2>Public page</h2>
-      <p>{current?.publishedRevision!=null ? "People see the last version you published." : "Your event stays private until you publish it."}</p>
-      <p>Unscheduled activities stay in your draft. Publishing sanctions eligible Local Open divisions at T5. It does not open registration.</p>
-      {issues.length>0 && <ul>{issues.map(i=><li key={i}>{i}</li>)}</ul>}
-      {!issues.length && (!current || dirty) && <p>Save your draft to publish these changes.</p>}
-      {current?.publishedRevision!=null && <Link className="es-live-link" href={"/events/"+current.slug} target="_blank" rel="noopener">Open public page</Link>}</div>
-      <div className="es-publish-buttons">
-        {current?.publishedRevision!=null && <button className="es-secondary" disabled={busy} onClick={()=>setConfirmation("unpublish")}>Take offline</button>}
-        <button className="es-primary" disabled={busy || !current || dirty || !!issues.length || current.publishedRevision===current.revision} onClick={()=>setConfirmation("publish")}>{current?.publishedRevision!=null?"Publish changes":"Publish event page"}</button>
-      </div>
-      {confirmation && <div className="es-confirm" role="group" aria-label="Confirm publication change">
-        <p>{confirmation==="publish" ? "Make this saved event page public under "+organiser.name+"? Eligible Local Open divisions will be sanctioned at T5." : "Take the public page offline? The draft will still be available here."}</p>
-        <button className="es-secondary" onClick={()=>setConfirmation(null)}>Cancel</button>
-        <button className="es-primary" onClick={()=>void save(confirmation)}>{confirmation==="publish"?"Publish event":"Take page offline"}</button>
-      </div>}
-    </section>
   </div>;
 }
