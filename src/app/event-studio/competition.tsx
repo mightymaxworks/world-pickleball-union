@@ -6,8 +6,9 @@ import {
   type Division, type DivisionKind, type DrawFormat, type RankingTrack,
 } from "@/lib/events/competition";
 import { displayDate, type EventDraft, type EventRecord } from "@/lib/events/model";
-import { tierLabel, type SanctionWorkspace } from "@/lib/events/sanction";
+import { canSanctionDivision, tierLabel, type SanctionWorkspace } from "@/lib/events/sanction";
 import Sanctions from "./sanctions";
+import { StartingScoreSettings } from "./starting-score";
 
 type Update = <K extends keyof EventDraft>(key:K,value:EventDraft[K])=>void;
 const kinds:readonly DivisionKind[]=["singles",...doublesKinds,"team"];
@@ -68,7 +69,7 @@ export default function Competition({
   return <div className="es-comp">
     <header className="es-comp-header">
       <div><p className="es-kicker">Event Studio</p><h1>Competition</h1><p>Set up the divisions players can enter. Add schedule highlights in Programme when you’re ready.</p></div>
-      <CompetitionStatus isPublic={isPublic} liveCount={Object.keys(workspace?.live??{}).length} hasLocal={draft.divisions.some(d=>d.entry.mode==="open")}/>
+      <CompetitionStatus isPublic={isPublic} liveCount={Object.keys(workspace?.live??{}).length} hasLocal={draft.divisions.some(d=>d.entry.mode==="open"&&canSanctionDivision(d))}/>
     </header>
     <EventDetails draft={draft} change={change} compact/>
     <section className="es-comp-section" aria-labelledby="es-add-division">
@@ -89,7 +90,7 @@ export default function Competition({
         const mode=d.entry.mode, entry=d.entry;
         const tracks=tracksFor[d.kind], requests=workspace?.requests.filter(r=>r.divisionId===d.id)??[];
         const latest=ready?requests.find(r=>r.matchesDraft):undefined, liveTier=workspace?.live[d.id];
-        const plannedTier=ready?workspace?.preview[d.id]:undefined;
+        const plannedTier=ready?workspace?.preview[d.id]:undefined, participation=!canSanctionDivision(d);
         return <article className="es-comp-division" key={d.id}>
           <div className="es-comp-division-head">
             <div><p className="es-kicker">{meta.label}</p><h3>{title}</h3>
@@ -97,8 +98,9 @@ export default function Competition({
               <p>{describeEntry(d,displayDate)}</p>
               <p className="es-division-sanction">
                 {liveTier ? "Live · WPU-sanctioned "+tierLabel(liveTier) : plannedTier && plannedTier!=="T5" ?
-                  "Approved · "+tierLabel(plannedTier)+" on publish" : d.entry.mode==="open"?"T5 Local on publish":"Not sanctioned"}
+                  "Approved · "+tierLabel(plannedTier)+" on publish" : d.entry.mode==="open"&&!participation?"T5 Local on publish":"Not sanctioned"}
               </p>
+              {participation && <p>Starting-score handicap · Participation only</p>}
               {latest?.status==="pending" && <p>{tierLabel(latest.tier)} · Under review</p>}
               {latest?.status==="changes_requested" && <p><strong>{tierLabel(latest.tier)} · Changes requested.</strong> {latest.note}</p>}
               {!latest && ready && requests.length>0 && !requests.some(r=>r.matchesDraft) &&
@@ -131,6 +133,7 @@ export default function Competition({
               </div>
               <p className="es-comp-help">{isDoublesKind(d.kind)?"Both partners must meet the minimum on their own. ":""}This shows the entry rule only. Eligibility checks begin with registration.</p>
             </>}
+            {d.kind==="doubles" && <StartingScoreSettings plan={d.startingScore} change={startingScore=>update(d,{startingScore})}/>}
             <div className="es-comp-edit-actions">
               <button className="es-secondary" disabled={atLimit} onClick={()=>duplicate(d)}>Duplicate division</button>
               <button className="es-back" onClick={()=>{change("divisions",draft.divisions.filter(other=>other.id!==d.id));setEditing(null);setAnnouncement(title+" removed.");}}>Remove division</button>

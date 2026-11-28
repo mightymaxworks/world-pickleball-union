@@ -30,6 +30,14 @@ The decision applies to the submitted division, date, time zone, venue and entry
 - Men’s Doubles, Women’s Doubles and Mixed Doubles are distinct competition categories. Set the category in Event Studio and use its matching WPU leaderboard if a points cutoff applies. Keep Open Doubles separate when there is no specified gender category.
 - In doubles and mixed doubles, the entry is a pair but the ranking is individual. Both partners must independently meet the minimum on the relevant leaderboard. Do not pool or average points. Use the separate team ledger for team ranking rules.
 
+## Open Doubles starting scores
+
+Open Doubles allows men’s, women’s and mixed-gender pairs in the same draw. Mixed Doubles is a separate category for mixed-gender pairs. Open Doubles defaults to 0–0. An organiser can publish three independent starting-score rules per division, each choosing a side and a head start or keeping 0–0. Same-category pairs always start even. The points follow the pair and apply to each game, not to a particular side of the scorecard. A head start must be below the stated game target.
+
+A division with a nonzero head start is participation-only. It receives no WPU sanction tier or ranking points. A division where every game begins 0–0 remains eligible under the ordinary rules. Previously published draws keep their existing rules and tiers until the organiser publishes an update.
+
+Event Studio publishes the setting so entrants can read it in advance. When registration and live scoring are added, lock the division's rules when registration opens and retain the start separately from points earned through play. The scorer must not count the head start as points earned through play for point-differential tiebreaks.
+
 ## Results and awards
 
 Match results and published tiebreaks determine final placement. All WPU-sanctioned divisions award points under the approved tier and placement schedule, with small-field adjustments where applicable. Only verified results can post. A doubles or mixed doubles placement earns the full approved award for each player individually, independent of prize splits or future partner choices. Team awards post to a separate ledger. A correction must leave an audit trail and cannot award points twice.

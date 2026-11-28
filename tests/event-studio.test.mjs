@@ -4,6 +4,7 @@ import { DatabaseSync } from "node:sqlite";
 import { test } from "node:test";
 import { emptyDraft, parseDraft, publishIssues, publicProgramme, displayDate, eventSlug } from "../src/lib/events/model.ts";
 import { canReviewSanctions, decideSanction, organiserSanctions, sanctionQueue, sanctionReviewReady, submitSanctions } from "../src/lib/events/sanction-service.ts";
+import { evenStartingScores, startingScoreFor } from "../src/lib/events/starting-score.ts";
 import { readEvidence } from "../src/lib/events/sanction.ts";
 import { changeDoublesCategory, describeEntry, newDivision, nextDivisionName, MAX_DIVISIONS } from "../src/lib/events/competition.ts";
 import { changeEvent, createEvent, eventStudioReady, getEvent, getPublicEvent, listEvents, listOrganisations } from "../src/lib/events/service.ts";
@@ -285,4 +286,90 @@ test("changing the doubles category is explicit and does not rewrite an existing
  live=await getPublicEvent(event.slug);
  assert.equal(live.programme.divisions[0].kind,"womens-doubles");
  assert.equal(live.tiers[women.id],"T5");
+});
+
+function handicapPlan() {
+ const plan=evenStartingScores();
+ plan.matchups.womenMen={ahead:"women",points:3};
+ plan.matchups.menMixed={ahead:"mixed",points:1};
+ return plan;
+}
+
+test("Open Doubles starting scores resolve independently and follow the pair when sides reverse",()=>{
+ assert.deepEqual(startingScoreFor(undefined,"women","men"),[0,0]);
+ const plan=handicapPlan();
+ assert.deepEqual(startingScoreFor(plan,"women","men"),[3,0]);
+ assert.deepEqual(startingScoreFor(plan,"men","women"),[0,3]);
+ assert.deepEqual(startingScoreFor(plan,"women","mixed"),[0,0]);
+ assert.deepEqual(startingScoreFor(plan,"mixed","women"),[0,0]);
+ assert.deepEqual(startingScoreFor(plan,"men","mixed"),[0,1]);
+ assert.deepEqual(startingScoreFor(plan,"mixed","men"),[1,0]);
+ for(const kind of ["women","men","mixed"]) assert.deepEqual(startingScoreFor(plan,kind,kind),[0,0]);
+ // The organiser can choose either side, with no assumed advantage by pair type.
+ plan.matchups.womenMixed={ahead:"mixed",points:4};
+ assert.deepEqual(startingScoreFor(plan,"women","mixed"),[0,4]);
+ plan.matchups.womenMixed={ahead:"women",points:11};
+ assert.equal(startingScoreFor(plan,"women","mixed"),null);
+});
+
+test("only Open Doubles accepts starting-score settings, with no missing or over-target head starts at publish",()=>{
+ const open=newDivision("doubles",crypto.randomUUID(),[]);
+ const plan={...rally(),activities:[],divisions:[open]};
+ assert.deepEqual(parseDraft(plan).divisions[0],open);
+ const configured={...open,startingScore:handicapPlan()};
+ const parsed=parseDraft({...plan,divisions:[configured]});
+ assert.deepEqual(parsed.divisions[0],configured);
+ assert.deepEqual(publishIssues(parsed),[]);
+ assert.deepEqual(publicProgramme(parsed).divisions[0].startingScore,configured.startingScore);
+ const asDivision=startingScore=>({...plan,divisions:[{...open,startingScore}]});
+ for(const kind of ["singles","mens-doubles","womens-doubles","mixed","team"]){
+  assert.equal(parseDraft({...plan,divisions:[{...configured,kind}]}),null);
+ }
+ const wrongSide=handicapPlan();
+ wrongSide.matchups.womenMen.ahead="mixed";
+ assert.equal(parseDraft(asDivision(wrongSide)),null);
+ const decimal=handicapPlan();
+ decimal.matchups.womenMen.points=0.5;
+ assert.equal(parseDraft(asDivision(decimal)),null);
+ const missingMatch=handicapPlan();
+ delete missingMatch.matchups.womenMixed;
+ assert.equal(parseDraft(asDivision(missingMatch)),null);
+ const incomplete=handicapPlan();
+ incomplete.matchups.womenMen.points=null;
+ assert.match(publishIssues(parseDraft(asDivision(incomplete))).join(" "),/enter the starting points/);
+ incomplete.matchups.womenMen.points=11;
+ assert.match(publishIssues(parseDraft(asDivision(incomplete))).join(" "),/below the game target/);
+ incomplete.gameTo=1;
+ assert.match(publishIssues(parseDraft(asDivision(incomplete))).join(" "),/game target of at least 2/);
+ const recategorised=changeDoublesCategory(configured,"mixed",[configured]);
+ assert.equal(recategorised.startingScore,undefined);
+ assert.ok(parseDraft({...plan,divisions:[recategorised]}));
+});
+
+test("a handicapped Open Doubles snapshot is participation-only while ordinary Open draws can still be sanctioned",async t=>{
+ sanctionFixture(t);
+ const open=newDivision("doubles",crypto.randomUUID(),[]);
+ const regular=newDivision("doubles",crypto.randomUUID(),[open]);
+ const third=newDivision("doubles",crypto.randomUUID(),[open,regular]);
+ const initial={...rally(),activities:[],divisions:[open,regular,third]};
+ const event=await createEvent("one","a",initial);
+ assert.equal(await submitSanctions("one",event,[open.id,third.id],"T3",evidence),"ok");
+ const queue=(await sanctionQueue(central,false,0)).items;
+ const approved=queue.find(r=>r.division===open.name);
+ const pending=queue.find(r=>r.division===third.name);
+ assert.equal(await decideSanction(central,approved.id,"approved",""),true);
+ assert.equal((await changeEvent("one",event.id,1,"publish")).status,"ok");
+ assert.equal((await getPublicEvent(event.slug)).tiers[open.id],"T3");
+ const revised={...initial,divisions:[{...open,startingScore:handicapPlan()},
+   {...regular,startingScore:evenStartingScores()},{...third,startingScore:handicapPlan()}]};
+ const saved=await changeEvent("one",event.id,1,"save",revised);
+ assert.equal(saved.status,"ok");
+ assert.equal((await getPublicEvent(event.slug)).tiers[open.id],"T3");
+ assert.equal(await submitSanctions("one",saved.event,[open.id,regular.id],"T2",evidence),"participation");
+ assert.equal((await sanctionQueue(central,false,0)).items.find(r=>r.id===pending.id).current,false);
+ assert.equal(await decideSanction(central,pending.id,"approved",""),false);
+ assert.equal((await changeEvent("one",event.id,2,"publish")).status,"ok");
+ const page=await getPublicEvent(event.slug);
+ assert.deepEqual(page.tiers,{[regular.id]:"T5"});
+ assert.deepEqual(page.programme.divisions[0].startingScore,handicapPlan());
 });

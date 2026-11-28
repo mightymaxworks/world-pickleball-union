@@ -1,3 +1,5 @@
+import { parseStartingScores, startingScoreIssues, type StartingScorePlan } from "./starting-score.ts";
+
 export const divisionKinds = {
   singles: { label:"Singles", description:"One player per entry", capacity:16, units:"players", preset:"Open singles" },
   doubles: { label:"Doubles", description:"Two players per entry", capacity:16, units:"pairs", preset:"Open doubles" },
@@ -40,6 +42,7 @@ export type Division = {
   format:DrawFormat;
   capacity:number | null;
   entry:EntryRule;
+  startingScore?:StartingScorePlan;
 };
 
 export const MAX_DIVISIONS=64;
@@ -81,7 +84,7 @@ export function changeDoublesCategory(division:Division,kind:DoublesKind,existin
   const name=defaultName?nextDivisionName(divisionKinds[kind].preset,existing.filter(d=>d.id!==division.id)):division.name;
   const allowed=tracksFor[kind];
   const entry=division.entry;
-  return {...division,kind,name,entry:entry.mode==="ranking" && (!entry.track || !allowed.includes(entry.track)) ?
+  return {...division,kind,name,startingScore:undefined,entry:entry.mode==="ranking" && (!entry.track || !allowed.includes(entry.track)) ?
     {...entry,track:allowed.length===1?allowed[0]:null,minimum:null} : entry};
 }
 
@@ -114,14 +117,16 @@ export function parseDivisions(input:unknown,validId:(value:unknown)=>value is s
   if (!Array.isArray(input) || input.length>MAX_DIVISIONS) return null;
   const ids=new Set<string>(), divisions:Division[]=[];
   for (const value of input) {
-    if (!object(value) || !hasOnly(value,["id","kind","name","format","capacity","entry"])) return null;
+    if (!object(value) || !hasOnly(value,["id","kind","name","format","capacity","entry","startingScore"])) return null;
     const {id,kind,name,format,capacity}=value;
     if (!validId(id) || ids.has(id) || !own(kind,divisionKinds) || !own(format,drawFormats)) return null;
     if (typeof name!=="string" || name.length>MAX_DIVISION_NAME || (capacity!==null && !draftNumber(capacity))) return null;
     const entry=parseEntry(value.entry,kind);
     if (!entry) return null;
+    const startingScore=value.startingScore===undefined?undefined:parseStartingScores(value.startingScore);
+    if (value.startingScore!==undefined && (!startingScore || kind!=="doubles")) return null;
     ids.add(id);
-    divisions.push({id,kind,name:name.trim(),format,capacity,entry});
+    divisions.push({id,kind,name:name.trim(),format,capacity,entry,...(startingScore?{startingScore}:{})});
   }
   return divisions;
 }
@@ -135,6 +140,7 @@ export function divisionIssues(divisions:readonly Division[],eventDate:string) {
     else if (names.has(d.name.trim().toLowerCase())) issues.push(label+" needs a distinct name.");
     names.add(d.name.trim().toLowerCase());
     if (!capacityValid(d.capacity)) issues.push(label+" needs a capacity of 2 to "+MAX_DIVISION_CAPACITY+" "+divisionKinds[d.kind].units+".");
+    if (d.startingScore) issues.push(...startingScoreIssues(d.startingScore).map(issue=>label+" — "+issue));
     if (d.entry.mode==="ranking") {
       if (!d.entry.track || !tracksFor[d.kind].includes(d.entry.track)) issues.push(label+" needs a WPU leaderboard.");
       if (!minimumValid(d.entry.minimum)) issues.push(label+" needs a minimum number of WPU points.");
@@ -155,8 +161,9 @@ export function describeEntry(division:Division,formatDate:(date:string)=>string
 }
 
 export function publicDivisions(divisions:readonly Division[]) {
-  return divisions.map(({id,kind,name,format,capacity,entry}):Division=>({
+  return divisions.map(({id,kind,name,format,capacity,entry,startingScore}):Division=>({
     id,kind,name,format,capacity,
+    ...(startingScore?{startingScore}:{}),
     entry:entry.mode==="open"?{mode:"open"}:{mode:"ranking",track:entry.track,minimum:entry.minimum,cutoffDate:entry.cutoffDate},
   }));
 }

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { higherTiers, tierLabel, type Evidence, type HigherTier, type SanctionWorkspace } from "@/lib/events/sanction";
+import { canSanctionDivision, higherTiers, tierLabel, type Evidence, type HigherTier, type SanctionWorkspace } from "@/lib/events/sanction";
 import type { EventDraft, EventRecord } from "@/lib/events/model";
 
 const evidenceFields=[
@@ -19,7 +19,7 @@ export default function Sanctions({draft,event,ready,workspace,update,refresh,lo
   const [busy,setBusy]=useState(false);
   const [message,setMessage]=useState("");
   const [error,setError]=useState("");
-  const options=draft.divisions.filter(d=>!workspace?.requests.some(r=>r.divisionId===d.id && r.matchesDraft &&
+  const options=draft.divisions.filter(d=>canSanctionDivision(d)&&!workspace?.requests.some(r=>r.divisionId===d.id && r.matchesDraft &&
     (r.status==="pending" || (r.status==="approved" && r.tier<=tier))));
   const ids=selected.filter(id=>options.some(d=>d.id===id));
   async function submit() {
@@ -49,7 +49,7 @@ export default function Sanctions({draft,event,ready,workspace,update,refresh,lo
             {higherTiers.map(t=><option key={t} value={t}>{tierLabel(t)}</option>)}
           </select></label>
         </fieldset>
-        {options.length===0?<p>All divisions are already in review or approved at this level or higher.</p>:
+        {options.length===0?<p>No divisions are eligible to request this tier. Participation-only divisions, pending requests and divisions already approved at this level or higher are excluded.</p>:
           <fieldset className="es-tier-options" disabled={busy}><legend>Divisions to review</legend>{options.map(d=><label key={d.id}>
             <input type="checkbox" checked={ids.includes(d.id)} onChange={e=>setSelected(e.target.checked?[...ids,d.id]:ids.filter(id=>id!==d.id))}/>
             {d.name}

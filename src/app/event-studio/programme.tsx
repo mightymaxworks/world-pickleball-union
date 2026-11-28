@@ -1,7 +1,8 @@
 import { displayDate, kinds, publicProgramme, type PublicEvent } from "@/lib/events/model";
 
-import { tierLabel } from "@/lib/events/sanction";
+import { canSanctionDivision, tierLabel } from "@/lib/events/sanction";
 import { describeEntry, divisionKinds, drawFormats } from "@/lib/events/competition";
+import { StartingScoreSummary } from "./starting-score";
 
 export default function PublicProgramme({event, spectator=false, preview=false}: {event:PublicEvent; spectator?:boolean;preview?:boolean}) {
   const {programme,organiser,tiers}=event;
@@ -38,6 +39,8 @@ export default function PublicProgramme({event, spectator=false, preview=false}:
         <p className="es-division-sanction">{tiers?.[division.id] ?
           (preview?"On publish · ":"WPU-sanctioned · ")+tierLabel(tiers[division.id]) : "Not WPU-sanctioned"}</p>
         <p>{drawFormats[division.format]}{division.capacity===null?"":" · "+division.capacity+" "+divisionKinds[division.kind].units}</p>
+        {division.kind==="doubles" && <StartingScoreSummary plan={division.startingScore}/>}
+        {!canSanctionDivision(division) && <p>Participation only · No WPU ranking points</p>}
       </section>)}</div>
       <p className="es-disclaimer">{preview?"This is a preview. Publishing does not open registration.":"Only the tiers shown as sanctioned are confirmed. This page does not accept entries."}</p>
     </div>}

@@ -171,3 +171,17 @@
 .es-tier-options legend{padding:0;font-weight:750;margin-bottom:.45rem}
 .es-tier-options label{display:flex;align-items:center;gap:.65rem;min-height:2.75rem;padding:.28rem .45rem;border:1px solid var(--es-border);border-radius:.45rem;margin-bottom:.3rem}
 .es-tier-options input[type=checkbox]{width:1.15rem;height:1.15rem;min-height:0;accent-color:#37503e}
+
+.es-starting-score{min-width:0;margin:0;padding:.8rem;border:1px solid var(--es-border);border-radius:.55rem;display:grid;gap:.65rem;background:#fcfcf8}
+.es-starting-score legend{padding:0 .3rem;font-weight:750}
+.es-fields label.es-starting-toggle{display:flex;align-items:center;gap:.55rem;min-height:2.75rem}
+.es .es-starting-toggle input[type=checkbox]{width:1.15rem;height:1.15rem;min-height:0;margin:0;accent-color:#37503e}
+.es-game-target{max-width:12rem}
+.es-starting-rows{display:grid;gap:.65rem}
+.es-starting-row{min-width:0;margin:0;padding:.45rem .55rem;border:1px solid var(--es-border);border-radius:.4rem;display:grid;grid-template-columns:minmax(0,1.7fr) minmax(0,1fr);gap:.55rem}
+.es-starting-row legend{font-size:.88rem;overflow-wrap:anywhere}
+.es-starting-summary{display:grid;gap:.35rem;margin-top:.65rem}
+.es-starting-summary dl{margin:0}
+.es-starting-summary dl div{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:.4rem;padding:.2rem 0;border-bottom:1px solid #cad8bd}
+.es-starting-summary dd{margin:0;font-weight:750;white-space:nowrap}
+@media(max-width:440px){.es-starting-row{grid-template-columns:1fr}}

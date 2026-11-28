@@ -35,6 +35,7 @@ export async function POST(request:Request) {
     if (event.revision!==body.revision) return controlError(409,"This event changed in another session. Reload it before sending a request.");
     if (!await sanctionReviewReady()) return unavailable();
     const result=await submitSanctions(account,event,body.divisions,body.tier,evidence);
+    if (result==="participation") return controlError(422,"Divisions with starting-score handicaps are participation-only and cannot receive a WPU tier.");
     if (result==="incomplete") return controlError(422,"Complete and save your event and division details before requesting review.");
     if (result==="conflict") return controlError(409,"An eligible selection already has a request or sanction at this level, or the event changed. Reload the requests and check your divisions.");
     return controlJson(await organiserSanctions(account,event),201);
