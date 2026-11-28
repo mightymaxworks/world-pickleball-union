@@ -1,8 +1,8 @@
 import { useState } from "react";
 import {
-  changeDoublesCategory, describeEntry, divisionKinds, doublesCategoryLabel, doublesKinds, drawFormats, isDoublesKind,
+  changeDoublesCategory, changeSinglesCategory, describeEntry, divisionKinds, doublesCategoryLabel, doublesKinds, drawFormats, isDoublesKind, isSinglesKind,
   MAX_DIVISION_CAPACITY, MAX_DIVISION_NAME, MAX_DIVISIONS,
-  newDivision, nextDivisionName, rankingTracks, tracksFor,
+  newDivision, nextDivisionName, planDivisions, rankingTracks, singlesCategoryLabel, singlesKinds, tracksFor, validMinimumAge,
   type Division, type DivisionKind, type DrawFormat, type RankingTrack,
 } from "@/lib/events/competition";
 import { displayDate, type EventDraft, type EventRecord } from "@/lib/events/model";
@@ -11,7 +11,41 @@ import Sanctions from "./sanctions";
 import { StartingScoreSettings } from "./starting-score";
 
 type Update = <K extends keyof EventDraft>(key:K,value:EventDraft[K])=>void;
-const kinds:readonly DivisionKind[]=["singles",...doublesKinds,"team"];
+const kinds:readonly DivisionKind[]=[...singlesKinds,...doublesKinds,"team"];
+const label=(kind:DivisionKind)=>isSinglesKind(kind)?singlesCategoryLabel(kind):isDoublesKind(kind)?doublesCategoryLabel(kind):divisionKinds[kind].label;
+const agePresets=[null,35,50,60] as const;
+
+function BulkDivisions({existing,onAdd}:{existing:Division[];onAdd:(divisions:Division[])=>void}) {
+  const [categories,setCategories]=useState<DivisionKind[]>([]);
+  const [ages,setAges]=useState<(number|null)[]>([null]);
+  const [skipped,setSkipped]=useState<string[]>([]);
+  const rows=planDivisions(categories,ages,existing), selected=rows.filter(d=>!skipped.includes(d.id));
+  const available=MAX_DIVISIONS-existing.length;
+  return <details className="es-bulk"><summary>Add multiple divisions</summary>
+    <div className="es-bulk-content">
+      <fieldset className="es-choice-set"><legend>Categories</legend><div className="es-choice-grid">
+        {kinds.map(kind=><label key={kind}><input type="checkbox" checked={categories.includes(kind)} onChange={e=>{
+          setCategories(e.target.checked?[...categories,kind]:categories.filter(k=>k!==kind));
+          setSkipped(keys=>keys.filter(key=>!key.startsWith(kind+":")));
+        }}/>{label(kind)}</label>)}
+      </div></fieldset>
+      <fieldset className="es-choice-set"><legend>Age brackets</legend><div className="es-choice-grid">
+        {agePresets.map(age=><label key={age??"all"}><input type="checkbox" checked={ages.includes(age)} onChange={e=>{
+          setAges(e.target.checked?[...ages,age]:ages.filter(a=>a!==age));
+          setSkipped(keys=>keys.filter(key=>!key.endsWith(":"+(age??"all"))));
+        }}/>{age===null?"All ages":age+"+"}</label>)}
+      </div><p>Minimum age is measured on the event date. Team presets use All ages.</p></fieldset>
+      {rows.length>0?<fieldset className="es-choice-set"><legend>Preview · {selected.length} selected</legend><div className="es-choice-grid">
+        {rows.map(d=><label key={d.id}><input type="checkbox" checked={!skipped.includes(d.id)} onChange={e=>setSkipped(e.target.checked?skipped.filter(k=>k!==d.id):[...skipped,d.id])}/>
+          <span>{d.name}<small>{d.capacity} {divisionKinds[d.kind].units}</small></span></label>)}
+      </div></fieldset>:<p>Select a category and an age bracket to preview divisions.</p>}
+      {selected.length>available&&<p role="alert">Choose up to {available} more divisions for this event.</p>}
+      <button type="button" className="es-primary" disabled={!selected.length||selected.length>available} onClick={()=>{
+        onAdd(selected.map(d=>({...d,id:crypto.randomUUID()})));setCategories([]);setSkipped([]);
+      }}>Add {selected.length||""} {selected.length===1?"division":"divisions"} to draft</button>
+    </div>
+  </details>;
+}
 
 export function CompetitionStatus({isPublic,liveCount=0,hasLocal=false}:{isPublic:boolean;liveCount?:number;hasLocal?:boolean}) {
   return <dl className="es-comp-status" aria-label="Competition status">
@@ -73,11 +107,14 @@ export default function Competition({
     </header>
     <EventDetails draft={draft} change={change} compact/>
     <section className="es-comp-section" aria-labelledby="es-add-division">
-      <div className="es-comp-section-head"><div><h2 id="es-add-division">Add a division</h2><p>Start with an open-entry preset. Change the rules only if you need to.</p></div></div>
+      <div className="es-comp-section-head"><div><h2 id="es-add-division">Add divisions</h2><p>Pick one preset or build several from categories and age brackets.</p></div></div>
+      {!atLimit&&<BulkDivisions existing={draft.divisions} onAdd={divisions=>{
+        change("divisions",[...draft.divisions,...divisions]);setAnnouncement(divisions.length+" divisions added to the draft.");
+      }}/>}
       <div className="es-comp-presets">
         {kinds.map(kind=><button key={kind} className="es-comp-preset" disabled={atLimit} onClick={()=>add(kind)}>
-          <span className="es-comp-mark" aria-hidden="true">{isDoublesKind(kind)?"2":kind==="singles"?"1":"+"}</span><span><strong>{isDoublesKind(kind)?doublesCategoryLabel(kind):divisionKinds[kind].label}</strong>
-          <small>{kind==="doubles"?"No gender category":divisionKinds[kind].description}</small></span>
+          <span className="es-comp-mark" aria-hidden="true">{isDoublesKind(kind)?"2":isSinglesKind(kind)?"1":"+"}</span><span><strong>{label(kind)}</strong>
+          <small>{kind==="doubles"||kind==="singles"?"No gender category":divisionKinds[kind].description}</small></span>
         </button>)}
       </div>
       {atLimit && <p>This event has reached the limit of {MAX_DIVISIONS} divisions.</p>}
@@ -109,6 +146,9 @@ export default function Competition({
             <button className="es-secondary" aria-expanded={isEditing} aria-label={(isEditing?"Close ":"Edit ")+title} onClick={()=>setEditing(isEditing?null:d.id)}>{isEditing?"Done":"Edit"}</button>
           </div>
           {isEditing && <div className="es-fields es-comp-division-edit">
+            {isSinglesKind(d.kind) && <label>Singles category<select value={d.kind} onChange={e=>{
+              if (isSinglesKind(e.target.value)) update(d,changeSinglesCategory(d,e.target.value,draft.divisions));
+            }}>{singlesKinds.map(kind=><option key={kind} value={kind}>{singlesCategoryLabel(kind)}</option>)}</select></label>}
             {isDoublesKind(d.kind) && <label>Doubles category<select value={d.kind} onChange={e=>{
               if (isDoublesKind(e.target.value)) update(d,changeDoublesCategory(d,e.target.value,draft.divisions));
             }}>
@@ -120,6 +160,10 @@ export default function Competition({
                 {Object.entries(drawFormats).map(([value,label])=><option key={value} value={value}>{label}</option>)}</select></label>
               <label>Capacity ({meta.units})<input type="number" inputMode="numeric" min={2} max={MAX_DIVISION_CAPACITY} step={1} value={d.capacity??""} onChange={e=>{const n=e.target.valueAsNumber;update(d,{capacity:Number.isSafeInteger(n)&&n>=0?n:null});}}/></label>
             </div>
+            {d.kind!=="team"&&<label>Minimum age <small>Optional · measured on the event date</small>
+              <input type="number" inputMode="numeric" min={1} max={120} step={1} value={d.minimumAge??""} onChange={e=>{
+                const n=e.target.valueAsNumber;if(e.target.value===""||validMinimumAge(n))update(d,{minimumAge:e.target.value===""?undefined:n});
+              }}/></label>}
             <label>How do players qualify?<select value={mode} onChange={e=>update(d,{entry:e.target.value==="ranking"?{mode:"ranking",track:tracks.length===1?tracks[0]:null,minimum:null,cutoffDate:""}:{mode:"open"}})}>
               <option value="open">Open entry</option><option value="ranking">WPU ranking points</option>
             </select></label>

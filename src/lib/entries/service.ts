@@ -2,9 +2,10 @@ import { randomBytes, randomUUID } from "node:crypto";
 import { queryD1 } from "../supporters-db.ts";
 import { organiserPredicate } from "../events/organiser-scope.ts";
 import { parseDraft } from "../events/model.ts";
+import { isSinglesKind, validMinimumAge } from "../events/competition.ts";
 import {
-  canJoinKind, canRegisterDivision, parseRegistrationSetup, validBirthDate, type Currency, type EntryPlayer, type EntryStatus,
-  type EntryView, type PilotKind, type Registration, type RegistrationInput, type RegistrationSetup, type SavedRegistrationSetup,
+  canJoinKind, canRegisterDivision, meetsMinimumAge, parseRegistrationSetup, validBirthDate, type Currency, type EntryPlayer, type EntryStatus,
+  type EntryView, type PilotKind, type Registration, type RegistrationInput, type RegistrationSetup, type RegistrationSetupChange, type SavedRegistrationSetup,
 } from "./model.ts";
 
 const now=()=>Math.floor(Date.now()/1000);
@@ -12,6 +13,17 @@ export const HOLD_SECONDS=20*60;
 const active="status NOT IN ('withdrawn','expired')";
 const seatRoom=(r:string)=>`(SELECT count(*) FROM wpu_event_entries t WHERE t.event_id=${r}.event_id AND t.division_id=${r}.division_id AND t.reserved=1)<${r}.capacity`;
 const noWaiting=(r:string)=>`NOT EXISTS(SELECT 1 FROM wpu_event_entries t WHERE t.event_id=${r}.event_id AND t.division_id=${r}.division_id AND t.status='waitlisted')`;
+const ageMinimum="json_extract(r.division_json,'$.minimumAge')";
+const meetsAgeSql=(person:"p"|"l")=>`(${ageMinimum} IS NULL OR (
+  CAST(substr(r.event_date,1,4) AS INTEGER)-CAST(substr(${person}.birth_date,1,4) AS INTEGER)-
+  (substr(r.event_date,6,5)<substr(${person}.birth_date,6,5)))>=${ageMinimum})`;
+// Keep the original D1 kind as the entry shape. The locked division snapshot
+// is the source of truth for the singles category and its eligibility.
+function registrationKind(row:Record<string,unknown>):PilotKind {
+  const category=row.category;
+  return row.kind==="singles"&&isSinglesKind(category)?category:row.kind as PilotKind;
+}
+const divisionCategory="json_extract(r.division_json,'$.kind')";
 
 export async function entriesReady() {
   const [row]=await queryD1("SELECT count(*) AS n FROM sqlite_master WHERE type='table' AND name IN ('wpu_event_registration','wpu_event_entries')");
@@ -32,21 +44,33 @@ export async function organiserRegistrationSetup(account:string,eventId:string) 
   return rows.map(toSetup);
 }
 export async function saveRegistrationSetup(account:string,eventId:string,eventRevision:number,divisionId:string,expected:number,settings:RegistrationSetup) {
-  const rows=await queryD1(`INSERT INTO wpu_event_registration_setup(event_id,division_id,setup_json)
-    SELECT e.id,?,? FROM wpu_studio_events e WHERE e.id=? AND e.revision=? AND ${organiserPredicate("e.organisation_id")}
-    AND EXISTS (SELECT 1 FROM json_each(e.draft_json,'$.divisions') d WHERE json_extract(d.value,'$.id')=?)
-    AND NOT EXISTS(SELECT 1 FROM wpu_event_registration r WHERE r.event_id=e.id AND r.division_id=?)
-    AND (?=0 OR EXISTS(SELECT 1 FROM wpu_event_registration_setup s WHERE s.event_id=e.id AND s.division_id=?))
+  return (await saveRegistrationSetups(account,eventId,eventRevision,[{divisionId,revision:expected,settings}]))?.[0]??null;
+}
+export async function saveRegistrationSetups(account:string,eventId:string,eventRevision:number,changes:RegistrationSetupChange[]) {
+  if(!changes.length||new Set(changes.map(c=>c.divisionId)).size!==changes.length)return null;
+  const rows=await queryD1(`WITH selected AS MATERIALIZED (
+    SELECT json_extract(value,'$.divisionId') AS division_id,json_extract(value,'$.revision') AS expected,
+      json_extract(value,'$.settings') AS setup_json FROM json_each(?)
+  ), valid AS MATERIALIZED (
+    SELECT e.id AS event_id,s.division_id,s.setup_json FROM wpu_studio_events e CROSS JOIN selected s
+    LEFT JOIN wpu_event_registration_setup a ON a.event_id=e.id AND a.division_id=s.division_id
+    WHERE e.id=? AND e.revision=? AND ${organiserPredicate("e.organisation_id")}
+      AND coalesce(a.revision,0)=s.expected
+      AND EXISTS (SELECT 1 FROM json_each(e.draft_json,'$.divisions') d WHERE json_extract(d.value,'$.id')=s.division_id)
+      AND NOT EXISTS(SELECT 1 FROM wpu_event_registration r WHERE r.event_id=e.id AND r.division_id=s.division_id)
+  )
+  INSERT INTO wpu_event_registration_setup(event_id,division_id,setup_json)
+    SELECT event_id,division_id,setup_json FROM valid WHERE (SELECT count(*) FROM valid)=(SELECT count(*) FROM selected)
     ON CONFLICT(event_id,division_id) DO UPDATE SET setup_json=excluded.setup_json,revision=wpu_event_registration_setup.revision+1
-    WHERE wpu_event_registration_setup.revision=? RETURNING division_id,revision,setup_json`,
-    [divisionId,JSON.stringify(settings),eventId,eventRevision,account,divisionId,divisionId,expected,divisionId,expected]);
-  return rows[0]?toSetup(rows[0]):null;
+    RETURNING division_id,revision,setup_json`,[JSON.stringify(changes),eventId,eventRevision,account]);
+  return rows.length===changes.length?rows.map(toSetup):null;
 }
 export async function entryPlayer(account:string):Promise<EntryPlayer|null> {
   const [r]=await queryD1(`SELECT p.id,p.display_name,p.birth_date,p.gender FROM wpu_accounts a
     JOIN wpu_persons p ON p.id=a.person_id JOIN wpu_player_profiles q ON q.person_id=p.id
     WHERE a.id=? AND a.status='active' AND EXISTS(SELECT 1 FROM wpu_auth_emails m WHERE m.account_id=a.id AND m.verified_at IS NOT NULL)`,[account]);
-  return r?{id:String(r.id),name:String(r.display_name),hasBirthDate:validBirthDate(r.birth_date),
+  const birthDate=validBirthDate(r?.birth_date)?String(r?.birth_date):undefined;
+  return r?{id:String(r.id),name:String(r.display_name),hasBirthDate:!!birthDate,...(birthDate?{birthDate}:{}),
     gender:r.gender==="male"||r.gender==="female"?r.gender:null}:null;
 }
 export async function saveBirthDate(account:string,value:string) {
@@ -76,7 +100,7 @@ export async function openRegistration(account:string,eventId:string,divisionId:
     ${setupRevision===undefined?"":`AND e.revision=e.published_revision AND EXISTS (SELECT 1 FROM wpu_event_registration_setup s
       WHERE s.event_id=e.id AND s.division_id=? AND s.revision=?)`}
     ON CONFLICT(event_id,division_id) DO NOTHING RETURNING division_id`,
-    [divisionId,division.name,division.kind,division.capacity,input.closesAt,input.amount,input.currency,input.terms,input.contact,divisionId,eventId,event.published_revision,account,
+    [divisionId,division.name,isSinglesKind(division.kind)?"singles":division.kind,division.capacity,input.closesAt,input.amount,input.currency,input.terms,input.contact,divisionId,eventId,event.published_revision,account,
       ...(setupRevision===undefined?[]:[divisionId,setupRevision])]);
   return rows.length?"ok":"conflict";
 }
@@ -94,17 +118,17 @@ export async function resetUnusedRegistration(account:string,eventId:string,divi
   return rows.length===1;
 }
 function registration(r:Record<string,unknown>):Registration {
-  return {divisionId:String(r.division_id),name:String(r.division_name),kind:r.kind as PilotKind,capacity:Number(r.capacity),closesAt:Number(r.closes_at),
+  return {divisionId:String(r.division_id),name:String(r.division_name),kind:registrationKind(r),capacity:Number(r.capacity),closesAt:Number(r.closes_at),
     terms:String(r.terms),contact:String(r.contact),accepting:r.paused===0&&Number(r.closes_at)>now(),ended:Number(r.closes_at)<=now(),
     fee:{amount:Number(r.fee_minor),currency:r.currency as Currency}};
 }
 export async function publicRegistration(slug:string) {
-  const rows=await queryD1(`SELECT r.* FROM wpu_event_registration r JOIN wpu_studio_events e ON e.id=r.event_id
+  const rows=await queryD1(`SELECT r.*,${divisionCategory} AS category FROM wpu_event_registration r JOIN wpu_studio_events e ON e.id=r.event_id
     JOIN wpu_organisations o ON o.id=e.organisation_id AND o.status='verified' WHERE e.slug=? AND e.published_json IS NOT NULL`,[slug]);
   return rows.map(registration);
 }
 export async function organiserRegistrations(account:string,eventId:string) {
-  const rows=await queryD1(`SELECT r.*,t.status,count(t.id) AS n
+  const rows=await queryD1(`SELECT r.*,${divisionCategory} AS category,t.status,count(t.id) AS n
     FROM wpu_event_registration r JOIN wpu_studio_events e ON e.id=r.event_id
     LEFT JOIN wpu_event_entries t ON t.event_id=r.event_id AND t.division_id=r.division_id
       AND (t.hold_until IS NULL OR t.hold_until>?)
@@ -132,10 +156,11 @@ export async function organiserEntryList(account:string,eventId:string,divisionI
     partner:typeof r.partner==="string"?r.partner:null,holdUntil:r.hold_until===null?null:Number(r.hold_until)}))};
 }
 export async function registrationFor(slug:string,divisionId:string) {
-  const [row]=await queryD1(`SELECT r.*,e.slug,e.organisation_id,json_extract(e.published_json,'$.programme.timezone') AS event_zone FROM wpu_event_registration r JOIN wpu_studio_events e ON e.id=r.event_id
+  const [row]=await queryD1(`SELECT r.*,${divisionCategory} AS category,${ageMinimum} AS minimum_age,e.slug,e.organisation_id,json_extract(e.published_json,'$.programme.timezone') AS event_zone FROM wpu_event_registration r JOIN wpu_studio_events e ON e.id=r.event_id
     JOIN wpu_organisations o ON o.id=e.organisation_id AND o.status='verified'
     WHERE e.slug=? AND r.division_id=? AND e.published_json IS NOT NULL`,[slug,divisionId]);
-  return row?{...registration(row),eventId:String(row.event_id),hostId:String(row.organisation_id),slug:String(row.slug),timeZone:String(row.event_zone??"UTC")}:null;
+  return row?{...registration(row),eventId:String(row.event_id),hostId:String(row.organisation_id),slug:String(row.slug),timeZone:String(row.event_zone??"UTC"),
+    eventDate:String(row.event_date),minimumAge:validMinimumAge(row.minimum_age)?row.minimum_age:undefined}:null;
 }
 type RegisterContext=NonNullable<Awaited<ReturnType<typeof registrationFor>>>;
 
@@ -158,12 +183,12 @@ async function reconcile(eventId:string,divisionId:string) {
 const viewEntry=(r:Record<string,unknown>,playerId:string):EntryView=>{
   const lead=r.lead_id===playerId;
   return {id:String(r.id),status:r.status as EntryStatus,divisionId:String(r.division_id),name:String(r.division_name),
-    eventSlug:String(r.slug),eventTitle:String(r.event_title??"WPU tournament"),kind:r.kind as PilotKind,holdUntil:r.hold_until===null?null:Number(r.hold_until),
+    eventSlug:String(r.slug),eventTitle:String(r.event_title??"WPU tournament"),kind:registrationKind(r),holdUntil:r.hold_until===null?null:Number(r.hold_until),
     seatHeld:r.reserved===1,role:lead?"lead":"partner",...(lead&&r.status==="invited"?{invite:String(r.invite)}:{}),
     fee:{amount:Number(r.fee_minor),currency:r.currency as Currency},terms:String(r.terms),contact:String(r.contact),
     canPay:r.status==="ready"||r.status==="paying"&&r.payer_id===playerId};
 };
-const entryFields=`t.*,r.kind,r.division_name,r.fee_minor,r.currency,r.terms,r.contact,e.slug,e.organisation_id,json_extract(e.published_json,'$.programme.title') AS event_title`;
+const entryFields=`t.*,r.kind,${divisionCategory} AS category,r.division_name,r.fee_minor,r.currency,r.terms,r.contact,e.slug,e.organisation_id,json_extract(e.published_json,'$.programme.title') AS event_title`;
 const entryJoin=`FROM wpu_event_entries t JOIN wpu_event_registration r ON r.event_id=t.event_id AND r.division_id=t.division_id
   JOIN wpu_studio_events e ON e.id=t.event_id`;
 export async function entryFor(context:RegisterContext,playerId:string) {
@@ -185,14 +210,19 @@ export async function invitation(context:RegisterContext,code:string) {
   return typeof r?.display_name==="string"?r.display_name:null;
 }
 export async function startEntry(context:RegisterContext,player:EntryPlayer) {
-  if(!canJoinKind(context.kind,player))return "ineligible";
+  if(!canJoinKind(context.kind,player)||!meetsMinimumAge(player.birthDate,context.eventDate,context.minimumAge))return "ineligible";
   await reconcile(context.eventId,context.divisionId);
-  const time=now(),id=randomUUID(),invite=context.kind==="singles"?null:randomBytes(24).toString("hex");
+  const time=now(),id=randomUUID(),invite=isSinglesKind(context.kind)?null:randomBytes(24).toString("hex");
   const rows=await queryD1(`WITH choice AS (
     SELECT r.event_id,r.division_id,r.kind,r.fee_minor,(${seatRoom("r")} AND ${noWaiting("r")}) AS room
       FROM wpu_event_registration r JOIN wpu_studio_events e ON e.id=r.event_id
       JOIN wpu_organisations o ON o.id=e.organisation_id AND o.status='verified'
+      JOIN wpu_persons p ON p.id=? AND p.birth_date IS NOT NULL
       WHERE r.event_id=? AND r.division_id=? AND r.paused=0 AND r.closes_at>? AND e.published_json IS NOT NULL
+        AND ${meetsAgeSql("p")}
+        AND (CASE ${divisionCategory} WHEN 'mens-singles' THEN p.gender='male' WHEN 'womens-singles' THEN p.gender='female'
+          WHEN 'mens-doubles' THEN p.gender='male' WHEN 'womens-doubles' THEN p.gender='female'
+          WHEN 'mixed' THEN p.gender IN ('male','female') ELSE 1 END)
   )
   INSERT INTO wpu_event_entries(id,event_id,division_id,lead_id,invite,status,reserved,hold_until,created_at,queued_at)
     SELECT ?,event_id,division_id,?,?,
@@ -201,7 +231,7 @@ export async function startEntry(context:RegisterContext,player:EntryPlayer) {
       CASE WHEN kind='singles' AND NOT room THEN ? END
       FROM choice r WHERE NOT EXISTS(SELECT 1 FROM wpu_event_entries t WHERE t.event_id=r.event_id AND t.division_id=r.division_id AND t.${active}
         AND (t.lead_id=? OR t.partner_id=?))
-    RETURNING id`,[context.eventId,context.divisionId,time,id,player.id,invite,time+HOLD_SECONDS,time,time,player.id,player.id]);
+    RETURNING id`,[player.id,context.eventId,context.divisionId,time,id,player.id,invite,time+HOLD_SECONDS,time,time,player.id,player.id]);
   return rows.length?"ok":"unavailable";
 }
 export async function acceptEntry(context:RegisterContext,player:EntryPlayer,code:string) {
@@ -210,7 +240,7 @@ export async function acceptEntry(context:RegisterContext,player:EntryPlayer,cod
   const [lead]=await queryD1(`SELECT l.gender,t.lead_id FROM wpu_event_entries t JOIN wpu_persons l ON l.id=t.lead_id
     WHERE t.event_id=? AND t.division_id=? AND t.invite=? AND t.status='invited' AND t.hold_until>?`,[context.eventId,context.divisionId,code,time]);
   if (!lead||lead.lead_id===player.id) return "unavailable";
-  if(!canJoinKind(context.kind,player,(lead.gender??null) as EntryPlayer["gender"]))return "ineligible";
+  if(!canJoinKind(context.kind,player,(lead.gender??null) as EntryPlayer["gender"])||!meetsMinimumAge(player.birthDate,context.eventDate,context.minimumAge))return "ineligible";
   const rows=await queryD1(`WITH choice AS (
     SELECT t.id,r.fee_minor,(t.reserved=1 OR (${seatRoom("r")} AND ${noWaiting("r")})) AS room
     FROM wpu_event_entries t JOIN wpu_event_registration r ON r.event_id=t.event_id AND r.division_id=t.division_id
@@ -218,7 +248,7 @@ export async function acceptEntry(context:RegisterContext,player:EntryPlayer,cod
       AND t.lead_id<>? AND NOT EXISTS(SELECT 1 FROM wpu_event_entries a WHERE a.event_id=t.event_id AND a.division_id=t.division_id
         AND a.${active} AND (a.lead_id=? OR a.partner_id=?))
       AND EXISTS(SELECT 1 FROM wpu_persons l JOIN wpu_persons p ON p.id=? WHERE l.id=t.lead_id
-        AND l.birth_date IS NOT NULL AND p.birth_date IS NOT NULL
+        AND l.birth_date IS NOT NULL AND p.birth_date IS NOT NULL AND ${meetsAgeSql("p")} AND ${meetsAgeSql("l")}
         AND (r.kind='doubles' OR r.kind='mens-doubles' AND l.gender='male' AND p.gender='male'
           OR r.kind='womens-doubles' AND l.gender='female' AND p.gender='female' OR r.kind='mixed' AND l.gender<>p.gender))
   )

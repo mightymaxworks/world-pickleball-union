@@ -6,9 +6,9 @@ import { test } from "node:test";
 import { newDivision } from "../src/lib/events/competition.ts";
 import { changeEvent,createEvent } from "../src/lib/events/service.ts";
 import { acceptEntry,claimOffer,entriesReady,entryFor,entryPlayer,invitation,openRegistration,organiserEntryList,
-  organiserRegistrationSetup,organiserRegistrations,playerEntries,publicRegistration,registrationFor,registrationSetupReady,resetUnusedRegistration,saveBirthDate,saveRegistrationSetup,setRegistrationPaused,startEntry,withdrawEntry } from "../src/lib/entries/service.ts";
+  organiserRegistrationSetup,organiserRegistrations,playerEntries,publicRegistration,registrationFor,registrationSetupReady,resetUnusedRegistration,saveBirthDate,saveRegistrationSetup,saveRegistrationSetups,setRegistrationPaused,startEntry,withdrawEntry } from "../src/lib/entries/service.ts";
 import { checkoutConfig,processWebhook,settleCheckout,startCheckout,verifiedWebhook } from "../src/lib/entries/checkout.ts";
-import { entryReturnPath,parseRegistrationInput,parseRegistrationSetup,toMinorUnits,validBirthDate } from "../src/lib/entries/model.ts";
+import { entryReturnPath,feeUnit,meetsMinimumAge,parseRegistrationInput,parseRegistrationSetup,toMinorUnits,validBirthDate } from "../src/lib/entries/model.ts";
 
 const binding=Symbol.for("__cloudflare-context__");
 const current=()=>Math.floor(Date.now()/1000);
@@ -43,6 +43,68 @@ async function create(division,amount=0){
   return {draft,event,context};
 }
 const player=i=>entryPlayer("a"+i);
+
+test("bulk setup is private, scoped and all-or-nothing even with an existing setup",async t=>{
+ fixture(t);
+ const date=new Date(Date.now()+8*86400000).toISOString().slice(0,10);
+ const men=newDivision("mens-singles",crypto.randomUUID(),[]), mixed=newDivision("mixed",crypto.randomUUID(),[]);
+ const event=await createEvent("a1","wpu",{title:"Bulk day",date,timezone:"Asia/Singapore",venue:"Test courts",description:"",activities:[],divisions:[men,mixed]});
+ const changes=[{divisionId:men.id,revision:0,settings:payload(3000)},{divisionId:mixed.id,revision:0,settings:payload(6000)}];
+ assert.equal(await saveRegistrationSetups("a8",event.id,event.revision,changes),null);
+ assert.equal(await saveRegistrationSetups("a1",event.id,event.revision,[changes[0],{...changes[1],revision:1}]),null);
+ assert.deepEqual(await organiserRegistrationSetup("a1",event.id),[]);
+ const saved=await saveRegistrationSetups("a1",event.id,event.revision,changes);
+ assert.equal(saved.length,2);
+ assert.deepEqual(await publicRegistration(event.slug),[]);
+ assert.equal(await saveRegistrationSetups("a1",event.id,event.revision,[{...changes[0],revision:1,settings:payload()},changes[1]]),null);
+ assert.deepEqual((await organiserRegistrationSetup("a1",event.id)).map(s=>s.settings.amount).sort((a,b)=>a-b),[3000,6000]);
+ assert.equal((await changeEvent("a1",event.id,event.revision,"publish")).status,"ok");
+ assert.deepEqual(await publicRegistration(event.slug),[]);
+ const staging=saved.find(s=>s.divisionId===men.id);
+ assert.equal(await openRegistration("a1",event.id,men.id,staging.settings,cfg.host,staging.revision),"ok");
+ assert.equal(await saveRegistrationSetups("a1",event.id,event.revision,changes.map(c=>({...c,revision:1,settings:payload()}))),null);
+ assert.deepEqual((await organiserRegistrationSetup("a1",event.id)).map(s=>s.settings.amount).sort((a,b)=>a-b),[3000,6000]);
+});
+
+test("singles categories use solo entries and require the correct category and age",async t=>{
+ const db=fixture(t);
+ const div=newDivision("womens-singles",crypto.randomUUID(),[]);
+ const {context}=await create({...div,minimumAge:35},2500);
+ const before=new Date(context.eventDate+"T00:00:00Z");
+ before.setUTCFullYear(before.getUTCFullYear()-35);
+ const atCutoff=before.toISOString().slice(0,10);
+ before.setUTCDate(before.getUTCDate()+2);
+ const tooYoung=before.toISOString().slice(0,10);
+ db.prepare("UPDATE wpu_persons SET birth_date=? WHERE id IN ('p1','p2')").run(atCutoff);
+ db.prepare("UPDATE wpu_persons SET birth_date=? WHERE id='p3'").run(tooYoung);
+ assert.equal(context.kind,"womens-singles");
+ assert.equal(feeUnit(context.kind),"per player");
+ assert.equal(await startEntry(context,await player(2)),"ineligible");
+ assert.equal(await startEntry(context,await player(3)),"ineligible");
+ // The database uses the Passport even if a profile was changed after it was read.
+ assert.equal(await startEntry(context,{...await player(2),gender:"female"}),"unavailable");
+ assert.equal(await startEntry(context,await player(1)),"ok");
+ const entry=await entryFor(context,"p1");
+ assert.equal(entry.kind,"womens-singles");
+ assert.equal(entry.status,"ready");
+ assert.equal(entry.invite,undefined);
+ const men=await create(newDivision("mens-singles",crypto.randomUUID(),[]));
+ assert.equal(await startEntry(men.context,await player(1)),"ineligible");
+ assert.equal(await startEntry(men.context,await player(2)),"ok");
+ assert.equal((await playerEntries("p2"))[0].kind,"mens-singles");
+ assert.equal(meetsMinimumAge("2000-02-29","2035-02-28",35),false);
+ assert.equal(meetsMinimumAge("2000-02-29","2035-03-01",35),true);
+});
+
+test("minimum age applies to both doubles partners",async t=>{
+ const db=fixture(t);
+ const {context}=await create({...newDivision("mixed",crypto.randomUUID(),[]),minimumAge:35});
+ db.exec("UPDATE wpu_persons SET birth_date='2005-01-01' WHERE id='p2'; UPDATE wpu_persons SET birth_date='1970-01-01' WHERE id IN ('p1','p4')");
+ assert.equal(await startEntry(context,await player(1)),"ok");
+ const invite=(await entryFor(context,"p1")).invite;
+ assert.equal(await acceptEntry(context,await player(2),invite),"ineligible");
+ assert.equal(await acceptEntry(context,await player(4),invite),"ok");
+});
 
 test("entry routing, minor units and DOB are narrowly validated",()=>{
  const id=crypto.randomUUID(),code="a".repeat(48);

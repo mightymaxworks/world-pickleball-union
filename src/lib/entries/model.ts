@@ -1,8 +1,8 @@
-import { isCalendarDate, type Division } from "../events/competition.ts";
+import { isCalendarDate, isSinglesKind, type Division } from "../events/competition.ts";
 import { usesStartingHandicap } from "../events/starting-score.ts";
 import { isEventId, isEventSlug } from "../events/model.ts";
 
-export const pilotKinds=["singles","doubles","mens-doubles","womens-doubles","mixed"] as const;
+export const pilotKinds=["singles","mens-singles","womens-singles","doubles","mens-doubles","womens-doubles","mixed"] as const;
 export type PilotKind=(typeof pilotKinds)[number];
 export const isPilotKind=(value:unknown):value is PilotKind=>pilotKinds.some(k=>k===value);
 export const canRegisterDivision=(d:Division)=>isPilotKind(d.kind)&&d.entry.mode==="open"&&!usesStartingHandicap(d.startingScore);
@@ -19,12 +19,13 @@ export type Registration={divisionId:string;name:string;kind:PilotKind;capacity:
   terms:string;contact:string;accepting:boolean;ended:boolean;fee:EntryFee;counts?:Partial<Record<EntryStatus,number>>};
 export type EntryView={id:string;status:EntryStatus;divisionId:string;name:string;eventSlug:string;eventTitle:string;kind:PilotKind;
   holdUntil:number|null;seatHeld:boolean;role:"lead"|"partner";invite?:string;fee:EntryFee;canPay:boolean;terms:string;contact:string};
-export type EntryPlayer={id:string;name:string;hasBirthDate:boolean;gender:"male"|"female"|null};
+export type EntryPlayer={id:string;name:string;hasBirthDate:boolean;birthDate?:string;gender:"male"|"female"|null};
 export type RegistrationInput={closesAt:number;amount:number;currency:Currency;terms:string;contact:string};
 export type RegistrationSetup=Omit<RegistrationInput,"closesAt"|"amount">&{closesAt:number|null;amount:number|null};
 export type SavedRegistrationSetup={divisionId:string;revision:number;settings:RegistrationSetup};
+export type RegistrationSetupChange={divisionId:string;revision:number;settings:RegistrationSetup};
 export const formatFee=({amount,currency}:EntryFee)=>amount===0?"Free":new Intl.NumberFormat("en-SG",{style:"currency",currency,currencyDisplay:"code"}).format(amount/100);
-export const feeUnit=(kind:PilotKind)=>kind==="singles"?"per player":"per pair";
+export const feeUnit=(kind:PilotKind)=>isSinglesKind(kind)?"per player":"per pair";
 export function toMinorUnits(value:string) {
   if (!/^\d{1,5}(\.\d{1,2})?$/.test(value.trim())) return null;
   const [whole,fraction=""]=value.trim().split(".");
@@ -53,10 +54,16 @@ export function validBirthDate(value:unknown,now=Date.now()):value is string {
 }
 export function canJoinKind(kind:PilotKind,player:EntryPlayer,partnerGender?:EntryPlayer["gender"]) {
   if (!player.hasBirthDate) return false;
-  if (kind==="mens-doubles") return player.gender==="male";
-  if (kind==="womens-doubles") return player.gender==="female";
+  if (kind==="mens-doubles"||kind==="mens-singles") return player.gender==="male";
+  if (kind==="womens-doubles"||kind==="womens-singles") return player.gender==="female";
   if (kind==="mixed") return !!player.gender&&(partnerGender===undefined||!!partnerGender&&player.gender!==partnerGender);
   return true;
+}
+export function meetsMinimumAge(birthDate:string|undefined,eventDate:string,minimumAge:number|undefined) {
+  if (minimumAge===undefined) return true;
+  if (!birthDate||!isCalendarDate(birthDate)||!isCalendarDate(eventDate))return false;
+  const years=Number(eventDate.slice(0,4))-Number(birthDate.slice(0,4))-(eventDate.slice(5)<birthDate.slice(5)?1:0);
+  return years>=minimumAge;
 }
 export function entryReturnPath(slug:unknown,division:unknown,invite:unknown) {
   if (!isEventSlug(slug)||!isEventId(division)||(invite!==undefined&&!isInvite(invite))) return null;

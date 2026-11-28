@@ -208,4 +208,15 @@
 .es-registration-setup :is(form,fieldset,label){width:100%;min-width:0}
 .es-registration-setup>label{display:grid;gap:.4rem;font-weight:700}
 .es-setup-fields{border:0;padding:0;margin:0}
+.es-bulk{width:min(100%,54rem);border:1px solid #bdcdb7;border-radius:.75rem;background:#f8faf3;padding:.7rem .9rem}
+.es-bulk>summary{cursor:pointer;font-weight:800;color:#294638;padding:.25rem 0}
+.es-bulk-content{display:grid;justify-items:start;gap:.85rem;padding-top:.7rem;width:100%}
+.es-bulk-content>fieldset,.es-choice-set{width:100%;min-width:0}
+.es-choice-set{border:1px solid var(--es-border);border-radius:.55rem;margin:0;padding:.6rem}
+.es-choice-set legend{font-weight:750;padding:0 .25rem}
+.es-choice-set p{margin-top:.35rem;color:var(--es-soft)}
+.es-choice-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,12rem),1fr));gap:.35rem}
+.es-choice-grid label,.es-fields .es-choice-grid label{display:flex;align-items:flex-start;gap:.45rem;border-radius:.35rem;padding:.35rem .45rem;font-size:.86rem;font-weight:700;background:#edf3e9;overflow-wrap:anywhere}
+.es-choice-grid input[type=checkbox]{width:1rem;height:1rem;margin:.15rem 0 0;flex:0 0 auto;accent-color:#365a47}
+.es-choice-grid small{display:block;font-weight:500;color:var(--es-soft)}
 @media(max-width:480px){.es-entry-panel>.es-primary,.es-registration .es-item-actions>button{width:100%}.es-studio-sections{gap:.15rem}.es-section-tab{padding-inline:.5rem}}

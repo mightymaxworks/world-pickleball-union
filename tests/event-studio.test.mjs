@@ -6,7 +6,7 @@ import { emptyDraft, parseDraft, publishIssues, publicProgramme, displayDate, ev
 import { canReviewSanctions, decideSanction, organiserSanctions, sanctionQueue, sanctionReviewReady, submitSanctions } from "../src/lib/events/sanction-service.ts";
 import { evenStartingScores, startingScoreFor } from "../src/lib/events/starting-score.ts";
 import { readEvidence } from "../src/lib/events/sanction.ts";
-import { changeDoublesCategory, describeEntry, newDivision, nextDivisionName, MAX_DIVISIONS } from "../src/lib/events/competition.ts";
+import { changeDoublesCategory, changeSinglesCategory, describeEntry, newDivision, nextDivisionName, planDivisions, MAX_DIVISIONS } from "../src/lib/events/competition.ts";
 import { changeEvent, createEvent, eventStudioReady, getEvent, getPublicEvent, listEvents, listOrganisations } from "../src/lib/events/service.ts";
 
 const schema=filename=>readFileSync(new URL("../database/"+filename,import.meta.url),"utf8");
@@ -38,6 +38,27 @@ test("the draft parser rejects malformed dates, zones, times and unsupported act
  assert.equal(parseDraft({...rally(),activities:[duplicate,duplicate]}),null);
  assert.equal(publishIssues(emptyDraft()).length,4);
  assert.match(eventSlug("测试",crypto.randomUUID()),/^event-/);
+});
+
+test("bulk planning makes distinct category and age rows without reclassifying legacy singles",()=>{
+ const existing=newDivision("singles",crypto.randomUUID(),[]);
+ const plan=planDivisions(["mens-singles","womens-singles","mixed","team"],[null,35,50],[existing]);
+ assert.equal(plan.length,10);
+ const women=plan.find(d=>d.kind==="womens-singles"&&d.minimumAge===35);
+ assert.equal(women.name,"Women’s Singles 35+");
+ assert.equal(plan.filter(d=>d.kind==="team").length,1);
+ const real=plan.map(d=>({...d,id:crypto.randomUUID()}));
+ const parsed=parseDraft({...rally(),divisions:[existing,...real]});
+ assert.equal(parsed.divisions[0].kind,"singles");
+ const division=publicProgramme(parsed).divisions.find(d=>d.name===women.name);
+ assert.equal(division.minimumAge,35);
+ assert.match(describeEntry(division,displayDate),/35 or older on the event date/);
+ const changed=changeSinglesCategory(division,"mens-singles",[]);
+ assert.equal(changed.name,"Men’s Singles 35+");
+ const ranked={...division,entry:{mode:"ranking",track:"womens-singles",minimum:10,cutoffDate:"2027-04-16"}};
+ assert.match(describeEntry(ranked,displayDate),/Each player needs 10 WPU Women’s Singles points/);
+ assert.equal(parseDraft({...rally(),divisions:[{...ranked,entry:{...ranked.entry,track:"mens-singles"}}]}),null);
+ assert.equal(parseDraft({...rally(),divisions:[{...division,minimumAge:-1}]}),null);
 });
 
 test("verified scoped organiser drafts stay private, publish atomically and remain isolated", async t=>{
@@ -156,6 +177,25 @@ function competitionPlan() {
  const ranked={...mixed,name:"International Mixed",entry:{mode:"ranking",track:"mixed-doubles",minimum:800,cutoffDate:"2027-04-03"}};
  return { ...rally(),venue:'Élite "Court" 🏓',activities:[],divisions:[singles,ranked] };
 }
+
+test("changing an age bracket invalidates the previous sanction review basis",async t=>{
+ sanctionFixture(t);
+ const draft=competitionPlan();
+ const division={...newDivision("womens-singles",crypto.randomUUID(),[]),minimumAge:35};
+ const event=await createEvent("one","a",{...draft,divisions:[division]});
+ assert.equal(await submitSanctions("one",event,[division.id],"T3",evidence),"ok");
+ const first=(await sanctionQueue(central,false,0)).items[0];
+ assert.equal(first.minimumAge,35);
+ assert.equal(first.current,true);
+ const edit=await changeEvent("one",event.id,1,"save",{...event.draft,divisions:[{...division,minimumAge:50}]});
+ assert.equal(edit.status,"ok");
+ assert.equal((await sanctionQueue(central,false,0)).items.find(x=>x.id===first.id).current,false);
+ assert.equal(await decideSanction(central,first.id,"approved",""),false);
+ assert.equal(await submitSanctions("one",edit.event,[division.id],"T3",evidence),"ok");
+ const second=(await sanctionQueue(central,false,0)).items.find(x=>x.id!==first.id);
+ assert.equal(second.minimumAge,50);
+ assert.equal(await decideSanction(central,second.id,"approved",""),true);
+});
 
 test("a complete Local Open division gets T5 only on publication, including without a review migration",async t=>{
  const db=fixture();t.after(()=>{db.close();delete globalThis[binding];});

@@ -1,8 +1,9 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
 import { feeUnit, formatFee, registrationStatus, type EntryView, type Registration } from "@/lib/entries/model";
+import { isSinglesKind } from "@/lib/events/competition";
 
-type State={hasBirthDate:boolean;entry:EntryView|null;invitedBy:string|null;accepting:boolean};
+type State={hasBirthDate:boolean;entry:EntryView|null;invitedBy:string|null;accepting:boolean;eligibilityError:string|null};
 const endpoint="/api/events/entries";
 export default function EntryForm({event,division,invite,plan,returned}:{
   event:string;division:string;invite?:string;plan:Registration;returned:boolean;
@@ -64,7 +65,7 @@ export default function EntryForm({event,division,invite,plan,returned}:{
       {entry.status==="invited"&&<p>{entry.seatHeld?"A place is held until your partner accepts or the invite expires.":"The draw is full. If your partner accepts while it’s still full, your pair joins the waitlist."} Nobody pays before both players accept.</p>}
       {entry.status==="waitlisted"&&<p>You have not been charged. Check back here to claim a place if one opens.</p>}
       {entry.status==="paying"&&<p>{entry.canPay?"You started checkout. Resume it here if you haven’t paid.":"Your partner started checkout. You don’t need to pay."} Confirmation appears after the payment is verified.</p>}
-      {entry.status==="confirmed"&&<p>{entry.kind==="singles"?"You’re in.":"Your pair is in."}{entry.fee.amount>0?" Payment confirmed.":""}</p>}
+      {entry.status==="confirmed"&&<p>{isSinglesKind(entry.kind)?"You’re in.":"Your pair is in."}{entry.fee.amount>0?" Payment confirmed.":""}</p>}
     </div>}
     {!current&&profile?.accepting&&(!invite||profile.invitedBy)&&(!profile.hasBirthDate?
       <form className="es-fields" onSubmit={e=>{e.preventDefault();void action("birthDate");}}>
@@ -72,10 +73,10 @@ export default function EntryForm({event,division,invite,plan,returned}:{
         <label>Date of birth<input type="date" autoComplete="bday" required value={birth} onChange={e=>setBirth(e.target.value)}/></label>
         <button className="es-primary" disabled={busy} type="submit">Save and continue</button>
       </form>:
-      <div className="es-entry-panel">
+      profile.eligibilityError?<p className="es-entry-notice">{profile.eligibilityError}</p>:<div className="es-entry-panel">
         {profile.invitedBy&&<p>{profile.invitedBy} invited you to enter as their partner. Accepting does not charge you.</p>}
         <button className="es-primary" disabled={busy} onClick={()=>void action(invite?"accept":"enter")}>
-          {invite?"Accept partner invite":plan.kind!=="singles"?"Create pair and invite partner":plan.fee.amount?"Reserve and continue to payment":"Enter division"}
+          {invite?"Accept partner invite":!isSinglesKind(plan.kind)?"Create pair and invite partner":plan.fee.amount?"Reserve and continue to payment":"Enter division"}
         </button>
       </div>)}
     {!current&&profile&&invite&&!profile.invitedBy&&<p>This invite has expired or was already used. Ask your partner for a new link.</p>}
@@ -88,7 +89,7 @@ export default function EntryForm({event,division,invite,plan,returned}:{
       {entry.status==="paying"?"Resume checkout":"Pay "+formatFee(entry.fee)+" "+feeUnit(entry.kind)}
     </button>}
     {entry&&current&&entry.status!=="paying"&&!(entry.status==="confirmed"&&entry.fee.amount>0)&&
-      (withdraw?<div className="es-entry-notice"><p>{entry.kind==="singles"?"Withdraw your entry?":"Withdraw the entire pair?"}</p>
+      (withdraw?<div className="es-entry-notice"><p>{isSinglesKind(entry.kind)?"Withdraw your entry?":"Withdraw the entire pair?"}</p>
         <button className="es-secondary" disabled={busy} onClick={()=>void action("withdraw")}>Confirm withdrawal</button>
         <button className="es-back" onClick={()=>setWithdraw(false)}>Keep entry</button>
       </div>:<button className="es-back" disabled={busy} onClick={()=>setWithdraw(true)}>Withdraw entry</button>)}

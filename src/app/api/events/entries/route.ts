@@ -1,7 +1,7 @@
 import { controlBody, controlError, controlJson, isSameOrigin, signedInAccount } from "@/lib/control/http";
 import { isEventId, isEventSlug } from "@/lib/events/model";
 import { checkoutConfig, startCheckout } from "@/lib/entries/checkout";
-import { isInvite, validBirthDate } from "@/lib/entries/model";
+import { canJoinKind, isInvite, meetsMinimumAge, validBirthDate } from "@/lib/entries/model";
 import {
   acceptEntry, claimOffer, entriesReady, entryFor, entryPlayer, invitation, registrationFor, saveBirthDate, startEntry, withdrawEntry,
 } from "@/lib/entries/service";
@@ -24,8 +24,12 @@ export async function GET(request:Request) {
     if(!isEventSlug(slug)||!isEventId(division)||(invite!==null&&!isInvite(invite)))return controlError(400,"Invalid entry link.");
     const context=await registrationFor(slug,division);
     if(!context)return controlError(404,"This division is not available for registration.");
+    const player=user.player;
+    const eligibilityError=!player.hasBirthDate?null:
+      !meetsMinimumAge(player.birthDate,context.eventDate,context.minimumAge)?"Your Passport doesn’t meet this division’s minimum age on the event date.":
+      !canJoinKind(context.kind,player)?"Your Passport doesn’t meet this division’s category.":null;
     return controlJson({hasBirthDate:user.player.hasBirthDate,accepting:context.accepting,
-      entry:await entryFor(context,user.player.id),invitedBy:invite?await invitation(context,invite):null});
+      eligibilityError,entry:await entryFor(context,player.id),invitedBy:invite?await invitation(context,invite):null});
   }catch{return unavailable();}
 }
 export async function POST(request:Request) {
@@ -46,7 +50,7 @@ export async function POST(request:Request) {
       if(!context.accepting)return controlError(409,"Entries are closed.");
       if(body.action==="accept"&&!isInvite(body.invite))return controlError(400,"Invalid partner invite.");
       const state=body.action==="enter"?await startEntry(context,player):await acceptEntry(context,player,body.invite as string);
-      if(state==="ineligible")return controlError(422,"This Passport or pair does not meet the division category.");
+      if(state==="ineligible")return controlError(422,"This Passport or pair does not meet the division’s category or age requirements.");
       if(state!=="ok")return controlError(409,"This invite or entry is no longer available. Check your status.");
     }else if((body.action==="claim"||body.action==="withdraw"||body.action==="pay")&&isEventId(body.id)){
       if(body.action==="pay"){
