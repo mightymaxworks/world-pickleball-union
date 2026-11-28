@@ -33,7 +33,7 @@ export default function PublicProgramme({event, spectator=false, preview=false, 
       </div>
     </div>
     {!!scheduled.divisions.length && <div className="es-lineup-preview es-public-divisions">
-      <div className="es-preview-heading"><div><p className="es-kicker">Competition</p><h2>Divisions</h2></div><span>{registrations.some(r=>r.accepting)?"Registration open":"Registration not open"}</span></div>
+      <div className="es-preview-heading"><div><p className="es-kicker">Competition</p><h2>Divisions</h2></div>{!preview&&<span>{registrations.some(r=>r.accepting)?"Registration open":"Registration not open"}</span>}</div>
       <div className="es-public-cards">{scheduled.divisions.map(division=>{const registration=registrations.find(r=>r.divisionId===division.id);return <section key={division.id} className="es-kind-tournament">
         <p className="es-kicker">{divisionKinds[division.kind].label}</p>
         <h3>{division.name || "Unnamed division"}</h3>

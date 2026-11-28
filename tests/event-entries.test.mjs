@@ -9,6 +9,7 @@ import { acceptEntry,claimOffer,entriesReady,entryFor,entryPlayer,invitation,ope
   organiserRegistrationSetup,organiserRegistrations,playerEntries,publicRegistration,registrationFor,registrationSetupReady,resetUnusedRegistration,saveBirthDate,saveRegistrationSetup,saveRegistrationSetups,setRegistrationPaused,startEntry,withdrawEntry } from "../src/lib/entries/service.ts";
 import { checkoutConfig,processWebhook,settleCheckout,startCheckout,verifiedWebhook } from "../src/lib/entries/checkout.ts";
 import { entryReturnPath,feeUnit,meetsMinimumAge,parseRegistrationInput,parseRegistrationSetup,toMinorUnits,validBirthDate } from "../src/lib/entries/model.ts";
+import { registrationStage, setupBlocker } from "../src/lib/entries/workspace.ts";
 
 const binding=Symbol.for("__cloudflare-context__");
 const current=()=>Math.floor(Date.now()/1000);
@@ -43,6 +44,25 @@ async function create(division,amount=0){
   return {draft,event,context};
 }
 const player=i=>entryPlayer("a"+i);
+
+test("the workspace separates publishing, setup readiness and live registration status",()=>{
+ const now=Date.parse("2027-04-16T00:00:00Z");
+ const page={date:"2027-04-17",timezone:"Asia/Singapore",publishedCurrent:false,payments:false};
+ const settings={closesAt:Date.parse("2027-04-17T15:50:00Z")/1000,contact:"event@example.com",terms:"",currency:"SGD",amount:0};
+ const state=(extra={})=>registrationStage({settings,page,now,...extra});
+ assert.equal(state({settings:undefined}).stage,"new");
+ assert.equal(state({settings:{...settings,closesAt:null}}).stage,"incomplete");
+ assert.equal(state().stage,"saved");
+ assert.equal(state({page:{...page,publishedCurrent:true}}).stage,"ready");
+ assert.equal(state({unavailable:"Team entries unavailable."}).stage,"unavailable");
+ assert.equal(state({settings:{...settings,amount:1000,terms:"Contact the organiser."}}).stage,"blocked");
+ assert.match(setupBlocker({...settings,closesAt:Date.parse("2027-04-17T16:10:00Z")/1000},page,now),/on or before/);
+ const live={divisionId:"a",name:"Open Singles",kind:"singles",capacity:16,closesAt:settings.closesAt,
+   accepting:true,ended:false,contact:settings.contact,terms:"",fee:{currency:"SGD",amount:0}};
+ assert.equal(state({settings:undefined,live}).stage,"open");
+ assert.equal(state({live:{...live,accepting:false}}).stage,"paused");
+ assert.equal(state({live:{...live,accepting:false,ended:true}}).stage,"closed");
+});
 
 test("bulk setup is private, scoped and all-or-nothing even with an existing setup",async t=>{
  fixture(t);
