@@ -21,6 +21,8 @@ export type EntryView={id:string;status:EntryStatus;divisionId:string;name:strin
   holdUntil:number|null;seatHeld:boolean;role:"lead"|"partner";invite?:string;fee:EntryFee;canPay:boolean;terms:string;contact:string};
 export type EntryPlayer={id:string;name:string;hasBirthDate:boolean;gender:"male"|"female"|null};
 export type RegistrationInput={closesAt:number;amount:number;currency:Currency;terms:string;contact:string};
+export type RegistrationSetup=Omit<RegistrationInput,"closesAt"|"amount">&{closesAt:number|null;amount:number|null};
+export type SavedRegistrationSetup={divisionId:string;revision:number;settings:RegistrationSetup};
 export const formatFee=({amount,currency}:EntryFee)=>amount===0?"Free":new Intl.NumberFormat("en-SG",{style:"currency",currency,currencyDisplay:"code"}).format(amount/100);
 export const feeUnit=(kind:PilotKind)=>kind==="singles"?"per player":"per pair";
 export function toMinorUnits(value:string) {
@@ -36,6 +38,15 @@ export function parseRegistrationInput(input:Record<string,unknown>,now=Date.now
       typeof contact!=="string"||contact.length>254||!/^[-+.\w]+@[-.\w]+\.\w{2,}$/u.test(contact.trim())||
       (amount>0&&!terms.trim())) return null;
   return {closesAt,amount,currency,terms:terms.trim(),contact:contact.trim()} satisfies RegistrationInput;
+}
+// Incomplete and expired values may be saved privately. Opening uses the stricter parser above.
+export function parseRegistrationSetup(input:unknown):RegistrationSetup|null {
+  if(!input||typeof input!=="object"||Array.isArray(input))return null;
+  const {closesAt,amount,currency,terms,contact}=input as Record<string,unknown>;
+  if(closesAt!==null&&(typeof closesAt!=="number"||!Number.isSafeInteger(closesAt)||closesAt<0||closesAt>253402300799)||
+     amount!==null&&(typeof amount!=="number"||!Number.isSafeInteger(amount)||amount<0||amount>9_999_999)||!isCurrency(currency)||
+     typeof terms!=="string"||terms.length>1200||typeof contact!=="string"||contact.length>254) return null;
+  return {closesAt,amount,currency,terms:terms.trim(),contact:contact.trim()};
 }
 export function validBirthDate(value:unknown,now=Date.now()):value is string {
   return typeof value==="string"&&isCalendarDate(value)&&value<new Date(now).toISOString().slice(0,10);

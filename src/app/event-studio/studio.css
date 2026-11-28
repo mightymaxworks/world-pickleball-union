@@ -107,7 +107,7 @@
 @media(max-width:620px){.es-toolbar{gap:.25rem .4rem;padding:.4rem .55rem}.es-actions{width:100%;margin-left:0;justify-content:flex-end;gap:.35rem}.es-actions :is(.es-secondary,.es-primary,.es-switch button){padding-inline:.55rem}.es-publish>.es-publish-buttons{justify-content:flex-start}}
 @media(max-width:400px){.es-header{gap:.5rem}.es-header strong{padding-left:.5rem}.es-header img{width:95px}.es-template{padding:.65rem}.es-toolbar{padding:.5rem}.es-actions{margin-left:0}.es-activity-head{gap:.45rem}}
 
-.es-studio-sections{display:flex;gap:.35rem;padding:.45rem clamp(.65rem,3vw,2.25rem) 0;border-bottom:1px solid var(--es-border);background:#fcfcf8}
+.es-studio-sections{display:flex;flex-wrap:wrap;gap:.35rem;padding:.45rem clamp(.65rem,3vw,2.25rem) 0;border-bottom:1px solid var(--es-border);background:#fcfcf8}
 .es-section-tab{border:0;border-bottom:3px solid transparent;background:transparent;color:#3d5245;padding:.6rem .85rem;font-weight:700!important;min-height:2.75rem}
 .es-section-tab[aria-pressed=true]{border-color:#3e6350;color:var(--es-dark);background:#eff3e8;border-radius:.45rem .45rem 0 0}
 .es .es-section-tab:focus-visible{outline-offset:-3px}
@@ -203,8 +203,9 @@
 .es-entry-notice button{margin-top:.35rem}
 .es-entry-list{width:100%;margin:.35rem 0;padding:0;list-style:none;display:grid;gap:.45rem}
 .es-entry-list li{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:.55rem;border:1px solid var(--es-border);border-radius:.45rem;padding:.65rem;background:#fcfcf8}
-.es-entry-management{margin:0 clamp(.8rem,3vw,2.25rem) 1.2rem}
-.es-entry-management summary{cursor:pointer;padding:.4rem 0;color:#294638}
-.es-entry-management[open]>:not(summary){margin-top:.75rem}
-.es-entry-management>form{max-width:37rem}
-@media(max-width:480px){.es-entry-panel>.es-primary,.es-entry-management form>.es-primary{width:100%}}
+.es-registration .es-entry-management,.es-registration-setup{display:grid;gap:.9rem;justify-items:start}
+.es-registration-setup{width:min(100%,37rem)}
+.es-registration-setup :is(form,fieldset,label){width:100%;min-width:0}
+.es-registration-setup>label{display:grid;gap:.4rem;font-weight:700}
+.es-setup-fields{border:0;padding:0;margin:0}
+@media(max-width:480px){.es-entry-panel>.es-primary,.es-registration .es-item-actions>button{width:100%}.es-studio-sections{gap:.15rem}.es-section-tab{padding-inline:.5rem}}

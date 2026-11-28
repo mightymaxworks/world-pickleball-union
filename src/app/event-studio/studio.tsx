@@ -25,7 +25,7 @@ export default function Studio({organisations,initialEvents}:{organisations:Orga
   const [current,setCurrent]=useState<EventRecord|null>(null);
   const [draft,setDraft]=useState<EventDraft>(emptyDraft);
   const [view,setView]=useState<"list"|"edit"|"preview">("list");
-  const [section,setSection]=useState<"programme"|"competition">("programme");
+  const [section,setSection]=useState<"programme"|"competition"|"registration">("programme");
   const [audience,setAudience]=useState<"player"|"spectator">("player");
   const [openActivity,setOpenActivity]=useState<string|null>(null);
   const [busy,setBusy]=useState(false);
@@ -182,12 +182,14 @@ export default function Studio({organisations,initialEvents}:{organisations:Orga
       <nav className="es-studio-sections" aria-label="Event workspace">
         <button className="es-section-tab" disabled={busy} aria-pressed={section==="programme"} onClick={()=>setSection("programme")}>Programme</button>
         <button className="es-section-tab" disabled={busy} aria-pressed={section==="competition"} onClick={()=>setSection("competition")}>Competition</button>
+        <button className="es-section-tab" disabled={busy} aria-pressed={section==="registration"} onClick={()=>setSection("registration")}>Registration &amp; payments</button>
       </nav>
       {section==="competition" ? <fieldset className="es-comp-shell" disabled={busy}><Competition draft={draft} change={change} isPublic={current?.publishedRevision!=null} preview={preview}
         event={current} ready={!!current && !dirty && !issues.length} workspace={sanction?.workspace}
         updateSanction={workspace=>setSanctions({key:sanctionKey,workspace})} refreshSanction={()=>setSanctionReload(n=>n+1)}
-        sanctionError={sanction?.error??""}/>
-        <Entries key={current?.id??"new"} event={current} dirty={dirty}/></fieldset> :
+        sanctionError={sanction?.error??""}/></fieldset> : section==="registration" ?
+      <fieldset className="es-comp-shell" disabled={busy}><Entries key={current?.id??"new"} event={current} dirty={dirty}
+        saveEvent={()=>void save(current?"save":"create")}/></fieldset> :
       <fieldset className="es-grid" disabled={busy}>
         <section className="es-work">
           <p className="es-kicker">The lineup · {organiser.name}</p><h1>Programme</h1><p>Give the day a shape. You can always change it.</p>

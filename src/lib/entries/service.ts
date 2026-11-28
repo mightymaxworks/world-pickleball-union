@@ -3,8 +3,8 @@ import { queryD1 } from "../supporters-db.ts";
 import { organiserPredicate } from "../events/organiser-scope.ts";
 import { parseDraft } from "../events/model.ts";
 import {
-  canJoinKind, canRegisterDivision, validBirthDate, type Currency, type EntryPlayer, type EntryStatus,
-  type EntryView, type PilotKind, type Registration, type RegistrationInput,
+  canJoinKind, canRegisterDivision, parseRegistrationSetup, validBirthDate, type Currency, type EntryPlayer, type EntryStatus,
+  type EntryView, type PilotKind, type Registration, type RegistrationInput, type RegistrationSetup, type SavedRegistrationSetup,
 } from "./model.ts";
 
 const now=()=>Math.floor(Date.now()/1000);
@@ -16,6 +16,31 @@ const noWaiting=(r:string)=>`NOT EXISTS(SELECT 1 FROM wpu_event_entries t WHERE 
 export async function entriesReady() {
   const [row]=await queryD1("SELECT count(*) AS n FROM sqlite_master WHERE type='table' AND name IN ('wpu_event_registration','wpu_event_entries')");
   return row?.n===2;
+}
+export async function registrationSetupReady() {
+  const [row]=await queryD1("SELECT 1 AS ok FROM sqlite_master WHERE type='table' AND name='wpu_event_registration_setup'");
+  return row?.ok===1;
+}
+function toSetup(row:Record<string,unknown>):SavedRegistrationSetup {
+  const settings=parseRegistrationSetup(JSON.parse(String(row.setup_json)));
+  if(!settings)throw new Error("Invalid registration setup");
+  return {divisionId:String(row.division_id),revision:Number(row.revision),settings};
+}
+export async function organiserRegistrationSetup(account:string,eventId:string) {
+  const rows=await queryD1(`SELECT s.division_id,s.revision,s.setup_json FROM wpu_event_registration_setup s
+    JOIN wpu_studio_events e ON e.id=s.event_id WHERE e.id=? AND ${organiserPredicate("e.organisation_id")}`,[eventId,account]);
+  return rows.map(toSetup);
+}
+export async function saveRegistrationSetup(account:string,eventId:string,eventRevision:number,divisionId:string,expected:number,settings:RegistrationSetup) {
+  const rows=await queryD1(`INSERT INTO wpu_event_registration_setup(event_id,division_id,setup_json)
+    SELECT e.id,?,? FROM wpu_studio_events e WHERE e.id=? AND e.revision=? AND ${organiserPredicate("e.organisation_id")}
+    AND EXISTS (SELECT 1 FROM json_each(e.draft_json,'$.divisions') d WHERE json_extract(d.value,'$.id')=?)
+    AND NOT EXISTS(SELECT 1 FROM wpu_event_registration r WHERE r.event_id=e.id AND r.division_id=?)
+    AND (?=0 OR EXISTS(SELECT 1 FROM wpu_event_registration_setup s WHERE s.event_id=e.id AND s.division_id=?))
+    ON CONFLICT(event_id,division_id) DO UPDATE SET setup_json=excluded.setup_json,revision=wpu_event_registration_setup.revision+1
+    WHERE wpu_event_registration_setup.revision=? RETURNING division_id,revision,setup_json`,
+    [divisionId,JSON.stringify(settings),eventId,eventRevision,account,divisionId,divisionId,expected,divisionId,expected]);
+  return rows[0]?toSetup(rows[0]):null;
 }
 export async function entryPlayer(account:string):Promise<EntryPlayer|null> {
   const [r]=await queryD1(`SELECT p.id,p.display_name,p.birth_date,p.gender FROM wpu_accounts a
@@ -31,7 +56,7 @@ export async function saveBirthDate(account:string,value:string) {
       AND EXISTS(SELECT 1 FROM wpu_auth_emails m WHERE m.account_id=a.id AND m.verified_at IS NOT NULL))`,[value,account]);
   return (await entryPlayer(account))?.hasBirthDate===true;
 }
-export async function openRegistration(account:string,eventId:string,divisionId:string,input:RegistrationInput,paidHost:string|null) {
+export async function openRegistration(account:string,eventId:string,divisionId:string,input:RegistrationInput,paidHost:string|null,setupRevision?:number) {
   const [event]=await queryD1(`SELECT e.published_json,e.published_revision,e.organisation_id FROM wpu_studio_events e
     WHERE e.id=? AND e.published_json IS NOT NULL AND ${organiserPredicate("e.organisation_id")}`,[eventId,account]);
   if (!event) return "missing";
@@ -48,8 +73,11 @@ export async function openRegistration(account:string,eventId:string,divisionId:
     FROM wpu_studio_events e JOIN json_each(e.published_json,'$.programme.divisions') d ON json_extract(d.value,'$.id')=?
     WHERE e.id=? AND e.published_revision=? AND e.published_json IS NOT NULL
     AND ${organiserPredicate("e.organisation_id")}
+    ${setupRevision===undefined?"":`AND e.revision=e.published_revision AND EXISTS (SELECT 1 FROM wpu_event_registration_setup s
+      WHERE s.event_id=e.id AND s.division_id=? AND s.revision=?)`}
     ON CONFLICT(event_id,division_id) DO NOTHING RETURNING division_id`,
-    [divisionId,division.name,division.kind,division.capacity,input.closesAt,input.amount,input.currency,input.terms,input.contact,divisionId,eventId,event.published_revision,account]);
+    [divisionId,division.name,division.kind,division.capacity,input.closesAt,input.amount,input.currency,input.terms,input.contact,divisionId,eventId,event.published_revision,account,
+      ...(setupRevision===undefined?[]:[divisionId,setupRevision])]);
   return rows.length?"ok":"conflict";
 }
 export async function setRegistrationPaused(account:string,eventId:string,divisionId:string,paused:boolean) {

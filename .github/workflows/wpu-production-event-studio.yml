@@ -6,6 +6,7 @@ on:
       - database/wpu-event-studio-v1.sql
       - database/wpu-event-sanction-v1.sql
       - database/wpu-event-entries-v1.sql
+      - database/wpu-event-registration-setup-v1.sql
       - scripts/wpu-event-studio-release.sh
       - scripts/wpu-event-sanction-release.sh
       - scripts/wpu-event-entry-release.sh
@@ -20,6 +21,7 @@ on:
       - database/wpu-event-studio-v1.sql
       - database/wpu-event-sanction-v1.sql
       - database/wpu-event-entries-v1.sql
+      - database/wpu-event-registration-setup-v1.sql
       - scripts/wpu-event-studio-release.sh
       - scripts/wpu-event-sanction-release.sh
       - scripts/wpu-event-entry-release.sh
