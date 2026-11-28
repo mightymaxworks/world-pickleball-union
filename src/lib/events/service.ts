@@ -67,7 +67,11 @@ export async function changeEvent(account: string, id: string, revision: number,
   // publish/unpublish races. Scope is checked in the write statement itself.
   const result=await queryD1(`UPDATE wpu_studio_events SET ${mutation}, actor_account_id=?, updated_at=strftime('%Y-%m-%dT%H:%M:%fZ','now')
     WHERE id=? AND revision=? AND published_revision IS ? AND ${eligible("wpu_studio_events.organisation_id")} RETURNING id`,
-    [...params,account,id,revision,current.publishedRevision,account]);
+    [...params,account,id,revision,current.publishedRevision,account]).catch((error:unknown)=>{
+      if (error instanceof Error && error.message.includes("registration locks published division rules")) return null;
+      throw error;
+    });
+  if (!result) return {status:"invalid" as const,issues:["Registration locks the published division, date and venue. An event with active entries cannot be taken offline."]};
   const event=await getEvent(account,id);
   if (!event) return { status:"missing" as const };
   return result.length ? {status:"ok" as const,event} : {status:"stale" as const};

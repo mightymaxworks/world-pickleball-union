@@ -272,7 +272,8 @@ export default function PassportDashboard() {
               <section className="pp-panel" id="sporting-record" aria-labelledby="pp-sport-title">
                 <div className="pp-section-title"><div><p className="pp-eyebrow">On court</p><h2 id="pp-sport-title">Sporting record</h2></div><span className="pp-tile-icon"><Icon name="trophy" /></span></div>
                 <div className="pp-record">
-                  <h3>Competition history</h3><p>Event registrations and results are not available in the Passport yet.</p>
+                  <h3>Competition history</h3><p>View your registration status. Competition results are not available here yet.</p>
+                  <Link className="pp-link" href="/passport/entries">My tournament entries</Link>
                 </div>
                 <div className="pp-record">
                   <h3>Official rankings</h3><p>WPU has not published official rankings yet.</p>

@@ -1,10 +1,12 @@
+import Link from "next/link";
+import { feeUnit, formatFee, type Registration } from "@/lib/entries/model";
 import { displayDate, kinds, publicProgramme, type PublicEvent } from "@/lib/events/model";
 
 import { canSanctionDivision, tierLabel } from "@/lib/events/sanction";
 import { describeEntry, divisionKinds, drawFormats } from "@/lib/events/competition";
 import { StartingScoreSummary } from "./starting-score";
 
-export default function PublicProgramme({event, spectator=false, preview=false}: {event:PublicEvent; spectator?:boolean;preview?:boolean}) {
+export default function PublicProgramme({event, spectator=false, preview=false, registrations=[], slug}: {event:PublicEvent; spectator?:boolean;preview?:boolean;registrations?:Registration[];slug?:string}) {
   const {programme,organiser,tiers}=event;
   const scheduled=publicProgramme(programme);
   return <article className="es-public-view">
@@ -31,8 +33,8 @@ export default function PublicProgramme({event, spectator=false, preview=false}:
       </div>
     </div>
     {!!scheduled.divisions.length && <div className="es-lineup-preview es-public-divisions">
-      <div className="es-preview-heading"><div><p className="es-kicker">Competition</p><h2>Divisions</h2></div><span>Registration not open</span></div>
-      <div className="es-public-cards">{scheduled.divisions.map(division=><section key={division.id} className="es-kind-tournament">
+      <div className="es-preview-heading"><div><p className="es-kicker">Competition</p><h2>Divisions</h2></div><span>{registrations.some(r=>r.accepting)?"Registration open":"Registration not open"}</span></div>
+      <div className="es-public-cards">{scheduled.divisions.map(division=>{const registration=registrations.find(r=>r.divisionId===division.id);return <section key={division.id} className="es-kind-tournament">
         <p className="es-kicker">{divisionKinds[division.kind].label}</p>
         <h3>{division.name || "Unnamed division"}</h3>
         <p className="es-public-entry">{describeEntry(division,displayDate)}</p>
@@ -41,8 +43,11 @@ export default function PublicProgramme({event, spectator=false, preview=false}:
         <p>{drawFormats[division.format]}{division.capacity===null?"":" · "+division.capacity+" "+divisionKinds[division.kind].units}</p>
         {division.kind==="doubles" && <StartingScoreSummary plan={division.startingScore}/>}
         {!canSanctionDivision(division) && <p>Participation only · No WPU ranking points</p>}
-      </section>)}</div>
-      <p className="es-disclaimer">{preview?"This is a preview. Publishing does not open registration.":"Only the tiers shown as sanctioned are confirmed. This page does not accept entries."}</p>
+        {registration&&slug&&<div className="es-entry-card"><p><strong>{formatFee(registration.fee)}</strong> · {feeUnit(registration.kind)}</p>
+          <Link className={registration.accepting?"es-primary":"es-secondary"} href={"/events/"+slug+"/enter/"+division.id}>
+            {registration.accepting?"Enter division":"View entry status"}</Link></div>}
+      </section>;})}</div>
+      <p className="es-disclaimer">{preview?"This is a preview. Publishing does not open registration.":"Only the tiers shown as sanctioned are confirmed."}</p>
     </div>}
     <div className="es-lineup-preview"><div className="es-preview-heading"><div><p className="es-kicker">{spectator ? "Plan your visit" : "One event · Different ways to join"}</p><h2>The lineup</h2></div><span>Local time · {programme.timezone}</span></div>
       {!scheduled.activities.length && <p>{scheduled.divisions.length?"The schedule has not been announced.":"Scheduled activities will appear here."}</p>}
@@ -51,7 +56,7 @@ export default function PublicProgramme({event, spectator=false, preview=false}:
         <h3>{activity.title}</h3>{activity.location && <p>{activity.location}</p>}{activity.description && <p>{activity.description}</p>}
         {spectator && activity.kind==="tournament" && <p>Check with the organiser for viewing details.</p>}
       </section>)}</div>
-      <p className="es-disclaimer">Programme information only. Registration and bookings are not available on this page.{!scheduled.divisions.length?" This programme does not indicate WPU sanctioning.":""}</p>
+      <p className="es-disclaimer">Programme subject to change.{!scheduled.divisions.length?" This programme does not indicate WPU sanctioning.":""}</p>
     </div>
   </article>;
 }

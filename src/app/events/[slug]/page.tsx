@@ -4,6 +4,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { cache } from "react";
 import { eventStudioReady, getPublicEvent } from "@/lib/events/service";
+import { entriesReady, publicRegistration } from "@/lib/entries/service";
 import PublicProgramme from "../../event-studio/programme";
 import "../../event-studio/studio.css";
 
@@ -18,11 +19,13 @@ export async function generateMetadata({params}:{params:Promise<{slug:string}>})
     alternates:{canonical:"/events/"+slug}};
 }
 export default async function EventPage({params}:{params:Promise<{slug:string}>}) {
-  const event=await eventFor((await params).slug);
+  const {slug}=await params;
+  const event=await eventFor(slug);
   if (!event) notFound();
+  const registrations=await (async()=>await entriesReady()?publicRegistration(slug):[])().catch(()=>[]);
   return <main className="es">
     <header className="es-header"><Link href="/" aria-label="World Pickleball Union home"><Image width={126} height={42} alt="World Pickleball Union" src="/brand/wpu-logo-approved.png" unoptimized/></Link><Link className="es-passport" href="/competitions">WPU Competitions</Link></header>
-    <div className="es-shell"><PublicProgramme event={event}/></div>
+    <div className="es-shell"><PublicProgramme event={event} registrations={registrations} slug={slug}/></div>
     <footer className="es-footer">Powered by Waypoint and OurOwn. (c) World Pickleball Union 2026. All Rights Reserved.</footer>
   </main>;
 }
