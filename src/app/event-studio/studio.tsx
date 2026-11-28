@@ -54,7 +54,7 @@ export default function Studio({organisations,initialEvents}:{organisations:Orga
   const sanction= sanctions?.key===sanctionKey?sanctions:undefined;
   const liveCount=Object.keys(sanction?.workspace?.live??{}).length;
   const previewTiers=issues.length?{}:!dirty && sanction?.workspace ? sanction.workspace.preview : localTiers(draft);
-  const hasLocal=draft.divisions.some(d=>d.entry.mode==="open");
+  const hasLocal=Object.keys(localTiers(draft)).length>0;
   const status=!current ? "Unsaved draft" : current.publishedRevision===null ? dirty ? "Unsaved changes" : "Saved draft" :
     current.publishedRevision!==current.revision || dirty ? "Public · unpublished edits" : "Published";
   const initialZone=()=>Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC";

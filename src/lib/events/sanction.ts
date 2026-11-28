@@ -1,5 +1,6 @@
 import type { Division } from "./competition.ts";
 import type { EventDraft } from "./model.ts";
+import { usesStartingHandicap } from "./starting-score.ts";
 
 export const LOCAL_SANCTION_POLICY=1;
 export const tierNames={T1:"Championship",T2:"Pro",T3:"Challenger",T4:"Development",T5:"Local"} as const;
@@ -26,8 +27,10 @@ export function sanctionBasis(draft:EventDraft,division:Division) {
     division.capacity,entry.mode,...(entry.mode==="ranking"?[entry.track,entry.minimum,entry.cutoffDate]:[null,null,null])]);
 }
 
+export const canSanctionDivision=(division:Division)=>!usesStartingHandicap(division.startingScore);
+
 export function localTiers(draft:EventDraft):TiersByDivision {
-  return Object.fromEntries(draft.divisions.filter(division=>division.entry.mode==="open").map(division=>[division.id,"T5"]));
+  return Object.fromEntries(draft.divisions.filter(division=>division.entry.mode==="open" && canSanctionDivision(division)).map(division=>[division.id,"T5"]));
 }
 
 export function readEvidence(input:unknown):Evidence|null {

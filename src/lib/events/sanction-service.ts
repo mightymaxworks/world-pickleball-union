@@ -3,7 +3,7 @@ import { queryD1 } from "../supporters-db.ts";
 import { organiserPredicate } from "./organiser-scope.ts";
 import { parseDraft, publishIssues, type EventDraft, type EventRecord } from "./model.ts";
 import {
-  isHigherTier, LOCAL_SANCTION_POLICY, localTiers, readEvidence, sanctionBasis,
+  canSanctionDivision, isHigherTier, LOCAL_SANCTION_POLICY, localTiers, readEvidence, sanctionBasis,
   type Evidence, type HigherTier, type SanctionRequest, type SanctionWorkspace, type StaffDecision, type TiersByDivision,
 } from "./sanction.ts";
 
@@ -13,12 +13,14 @@ export async function sanctionReviewReady() {
 }
 
 const basisMatch=(json:string)=>`EXISTS(SELECT 1 FROM json_each(${json},'$.divisions') d
-  WHERE json_extract(d.value,'$.id')=r.division_id AND json_array(
+  WHERE json_extract(d.value,'$.id')=r.division_id
+   AND NOT EXISTS(SELECT 1 FROM json_each(d.value,'$.startingScore.matchups') m WHERE json_extract(m.value,'$.ahead')<>'none')
+   AND json_array(
     json_extract(${json},'$.title'),json_extract(${json},'$.date'),json_extract(${json},'$.timezone'),json_extract(${json},'$.venue'),
     json_extract(d.value,'$.id'),json_extract(d.value,'$.kind'),json_extract(d.value,'$.name'),json_extract(d.value,'$.format'),
     json_extract(d.value,'$.capacity'),json_extract(d.value,'$.entry.mode'),json_extract(d.value,'$.entry.track'),
     json_extract(d.value,'$.entry.minimum'),json_extract(d.value,'$.entry.cutoffDate'))=r.basis_json)`;
-const asRequests=(draft:EventDraft)=>draft.divisions.map(d=>({divisionId:d.id,key:sanctionBasis(draft,d)}));
+const asRequests=(draft:EventDraft)=>draft.divisions.filter(canSanctionDivision).map(d=>({divisionId:d.id,key:sanctionBasis(draft,d)}));
 
 async function withApproved(eventId:string,draft:EventDraft,tiers:TiersByDivision) {
   if (!draft.divisions.length) return tiers;
@@ -61,6 +63,7 @@ export async function organiserSanctions(account:string,event:EventRecord):Promi
 
 export async function submitSanctions(account:string,event:EventRecord,ids:string[],tier:HigherTier,evidence:Evidence) {
   if (publishIssues(event.draft).length) return "incomplete";
+  if (event.draft.divisions.some(d=>ids.includes(d.id)&&!canSanctionDivision(d))) return "participation";
   const choices=asRequests(event.draft).filter(d=>ids.includes(d.divisionId)).map(d=>({...d,id:randomUUID()}));
   if (!ids.length || choices.length!==ids.length || !isHigherTier(tier) || !readEvidence(evidence)) return "incomplete";
   const data=JSON.stringify(choices);
