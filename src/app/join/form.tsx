@@ -6,7 +6,7 @@ import { residenceCountries as countries } from "@/lib/passport/regions";
 import "./membership.css";
 
 const localities:Record<string,string[]>={BT:["Thimphu","Paro","Punakha","Phuentsholing","Gelephu","Trongsa","Trashigang","Samdrup Jongkhar"],SG:["Singapore"],CN:["Beijing","Shanghai","Guangzhou","Shenzhen","Chengdu","Hangzhou","Hohhot"],MY:["Kuala Lumpur","Johor Bahru","George Town","Ipoh","Kuching","Kota Kinabalu"]};
-export default function MembershipForm({ federation, eventStudio, initialMode }: { federation: string | null; eventStudio: boolean; initialMode: "register" | "login" }) {
+export default function MembershipForm({ federation, eventStudio, entryPath, initialMode }: { federation: string | null; eventStudio: boolean; entryPath: string|null; initialMode: "register" | "login" }) {
  const [mode,setMode]=useState(initialMode);
  const [step,setStep]=useState<"details"|"code">("details");
  const [email,setEmail]=useState(""); const [givenName,setGivenName]=useState(""); const [familyName,setFamilyName]=useState(""); const [city,setCity]=useState(""); const [other,setOther]=useState("");
@@ -29,12 +29,12 @@ export default function MembershipForm({ federation, eventStudio, initialMode }:
   try{
    const r=await fetch("/api/auth/verify-code",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({email,code,...(mode==="register"?{givenName,familyName,gender:gender||null,country,locality:city==="other"?other:city,consent,adult}:{})})});
    if(!r.ok)throw Error("Verification unsuccessful. Check your code or request a new one. New members must register first.");
-   window.location.assign(federation ? "/federations/" + federation : eventStudio ? "/event-studio" : "/passport");
+   window.location.assign(federation ? "/federations/" + federation : eventStudio ? "/event-studio" : entryPath ?? "/passport");
   }catch(e){setError(e instanceof Error?e.message:"Please try again.");}finally{setBusy(false);}
  }
  return <main className="membership-shell"><section className="membership-intro">
  <Image src="/brand/wpu-logo-approved.png" alt="World Pickleball Union" width={210} height={70} style={{objectFit:"contain"}}/>
- <p className="membership-kicker">ONE GLOBAL IDENTITY</p><h1>Your game. Your world.</h1><p>Your WPU Passport connects your sporting journey, memberships and future competition records.</p><Link className="membership-back" href={federation ? "/federations/" + federation : eventStudio ? "/event-studio" : "/get-involved"}>← {federation ? "Back to your federation" : eventStudio ? "Back to Event Studio" : "Join WPU options"}</Link></section>
+ <p className="membership-kicker">ONE GLOBAL IDENTITY</p><h1>Your game. Your world.</h1><p>Your WPU Passport connects your sporting journey, memberships and future competition records.</p><Link className="membership-back" href={federation ? "/federations/" + federation : eventStudio ? "/event-studio" : entryPath ?? "/get-involved"}>← {federation ? "Back to your federation" : eventStudio ? "Back to Event Studio" : entryPath ? "Back to tournament entry" : "Join WPU options"}</Link></section>
  <section className="membership-panel"><h2>{step==="code"?"Check your email":mode==="register"?"Create your account":"Sign in"}</h2>
  <form onSubmit={submit}>
  {step==="details"?<>

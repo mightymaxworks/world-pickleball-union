@@ -5,6 +5,7 @@ import Link from "next/link";
 import { displayDate, emptyDraft, kinds, MAX_ACTIVITIES, publishIssues, type Activity, type ActivityKind, type EventDraft, type EventRecord, type Organisation } from "@/lib/events/model";
 import { localTiers, type SanctionWorkspace } from "@/lib/events/sanction";
 import PublicProgramme from "./programme";
+import Entries from "./entries";
 import Competition, { CompetitionStatus, EventDetails } from "./competition";
 
 const templates: {title:string;description:string;kinds:ActivityKind[];competition?:boolean}[]=[
@@ -144,7 +145,8 @@ export default function Studio({organisations,initialEvents}:{organisations:Orga
       {section==="competition" ? <fieldset className="es-comp-shell" disabled={busy}><Competition draft={draft} change={change} isPublic={current?.publishedRevision!=null} preview={preview}
         event={current} ready={!!current && !dirty && !issues.length} workspace={sanction?.workspace}
         updateSanction={workspace=>setSanctions({key:sanctionKey,workspace})} refreshSanction={()=>setSanctionReload(n=>n+1)}
-        sanctionError={sanction?.error??""}/></fieldset> :
+        sanctionError={sanction?.error??""}/>
+        <Entries key={current?.id??"new"} event={current} dirty={dirty}/></fieldset> :
       <fieldset className="es-grid" disabled={busy}>
         <section className="es-work">
           <p className="es-kicker">The lineup · {organiser.name}</p><h1>Programme</h1><p>Give the day a shape. You can always change it.</p>

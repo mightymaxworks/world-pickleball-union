@@ -36,7 +36,7 @@ Open Doubles allows men’s, women’s and mixed-gender pairs in the same draw. 
 
 A division with a nonzero head start is participation-only. It receives no WPU sanction tier or ranking points. A division where every game begins 0–0 remains eligible under the ordinary rules. Previously published draws keep their existing rules and tiers until the organiser publishes an update.
 
-Event Studio publishes the setting so entrants can read it in advance. When registration and live scoring are added, lock the division's rules when registration opens and retain the start separately from points earned through play. The scorer must not count the head start as points earned through play for point-differential tiebreaks.
+Event Studio publishes the setting so entrants can read it in advance. The first registration pilot is for standard divisions without a starting-score handicap. When live scoring is added, retain the start separately from points earned through play. The scorer must not count the head start as points earned through play for point-differential tiebreaks.
 
 ## Results and awards
 
@@ -47,3 +47,5 @@ Match results and published tiebreaks determine final placement. All WPU-sanctio
 Event Studio stores and previews divisions and entry rules. This release supports automatic T5 sanctioning and higher-tier requests and decisions. Registration, ranking snapshots, qualifying decisions and point awards are not activated.
 
 See the [WPU ranking policy](RANKING-POLICY.md) for settled rules and policy work still open.
+
+Registration details are in the [WPU tournament entry pilot](TOURNAMENT-ENTRY-PILOT.md).

@@ -18,7 +18,7 @@ vm.runInNewContext(outputText,{
  require(id){
    if(id==="@/lib/events/model") return model;
    if(id==="@/lib/events/sanction") return sanction;
-   if(id==="next/link" || id==="./programme" || id==="./competition") return {default:()=>null};
+   if(id==="next/link" || id==="./programme" || id==="./competition" || id==="./entries") return {default:()=>null};
    return require(id);
  },
 },{filename:"studio.tsx"});
