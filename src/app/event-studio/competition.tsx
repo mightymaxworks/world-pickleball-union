@@ -51,7 +51,6 @@ export function CompetitionStatus({isPublic,liveCount=0,hasLocal=false}:{isPubli
   return <dl className="es-comp-status" aria-label="Competition status">
     <div><dt>Event page</dt><dd>{isPublic?"Public":"Private draft"}</dd></div>
     <div><dt>WPU sanction</dt><dd>{liveCount ? liveCount+" sanctioned" : hasLocal ? "T5 on publish" : "Not sanctioned"}</dd></div>
-    <div><dt>Registration</dt><dd>Not open</dd></div>
   </dl>;
 }
 

@@ -60,8 +60,8 @@ export default function Studio({organisations,initialEvents}:{organisations:Orga
   const liveCount=Object.keys(sanction?.workspace?.live??{}).length;
   const previewTiers=issues.length?{}:!dirty && sanction?.workspace ? sanction.workspace.preview : localTiers(draft);
   const hasLocal=Object.keys(localTiers(draft)).length>0;
-  const status=!current ? "Unsaved draft" : current.publishedRevision===null ? dirty ? "Unsaved changes" : "Saved draft" :
-    current.publishedRevision!==current.revision || dirty ? "Public · unpublished edits" : "Published";
+  const status=!current ? "Event page · Unsaved" : current.publishedRevision===null ? dirty ? "Event page · Unsaved edits" : "Event page · Private" :
+    current.publishedRevision!==current.revision || dirty ? "Event page · Unpublished edits" : "Event page · Public";
   const isPublic=current?.publishedRevision!=null;
   const isCurrent=!!current && isPublic && !dirty && current.publishedRevision===current.revision;
   useEffect(()=>{
@@ -150,7 +150,7 @@ export default function Studio({organisations,initialEvents}:{organisations:Orga
       <div className="es-actions">
         {view==="edit" ? <button className="es-secondary" disabled={busy} onClick={preview}>Preview</button> :
           <div className="es-switch" aria-label="Preview audience"><button aria-pressed={audience==="player"} onClick={()=>setAudience("player")}>Player</button><button aria-pressed={audience==="spectator"} onClick={()=>setAudience("spectator")}>Spectator</button></div>}
-        <button className="es-secondary" disabled={busy || !!current&&!dirty} onClick={()=>void save(current?"save":"create")}>Save draft</button>
+        {(!current||dirty)&&<button className="es-secondary" disabled={busy} onClick={()=>void save(current?"save":"create")}>Save event draft</button>}
         <button className="es-primary es-review-trigger" disabled={busy} aria-expanded={review} aria-controls={review?"es-publication-review":undefined} onClick={openReview}>{isCurrent?"Public page":"Review & publish"}</button>
       </div></div>
     {(busy || message) && <p className="es-message" role="status">{busy?"Working…":message}</p>}{error && <p className="es-error" role="alert">{error}</p>}
@@ -166,7 +166,7 @@ export default function Studio({organisations,initialEvents}:{organisations:Orga
       <div className="es-publish-buttons">
         <button className="es-back" disabled={busy} onClick={closeReview}>Close review</button>
         {isPublic && <button className="es-secondary" disabled={busy} onClick={()=>setConfirmation("unpublish")}>Take offline</button>}
-        {!isCurrent && (!current || dirty) && <button className="es-secondary" disabled={busy} onClick={()=>void save(current?"save":"create")}>Save draft</button>}
+        {!isCurrent && (!current || dirty) && <button className="es-secondary" disabled={busy} onClick={()=>void save(current?"save":"create")}>Save event draft</button>}
         {!isCurrent && <button className="es-primary" disabled={busy || !current || dirty || !!issues.length} onClick={()=>setConfirmation("publish")}>{isPublic?"Publish changes":"Publish event page"}</button>}
       </div>
       {confirmation && <div className="es-confirm" role="group" aria-label="Confirm publication change">
@@ -189,7 +189,7 @@ export default function Studio({organisations,initialEvents}:{organisations:Orga
         updateSanction={workspace=>setSanctions({key:sanctionKey,workspace})} refreshSanction={()=>setSanctionReload(n=>n+1)}
         sanctionError={sanction?.error??""}/></fieldset> : section==="registration" ?
       <fieldset className="es-comp-shell" disabled={busy}><Entries key={current?.id??"new"} event={current} dirty={dirty}
-        saveEvent={()=>void save(current?"save":"create")}/></fieldset> :
+        saveEvent={()=>void save(current?"save":"create")} goCompetition={()=>setSection("competition")} reviewEvent={openReview}/></fieldset> :
       <fieldset className="es-grid" disabled={busy}>
         <section className="es-work">
           <p className="es-kicker">The lineup · {organiser.name}</p><h1>Programme</h1><p>Give the day a shape. You can always change it.</p>
